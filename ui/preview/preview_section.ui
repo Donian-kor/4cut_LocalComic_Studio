@@ -1,0 +1,10 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>PreviewSection</class>
+ <widget class="QWidget" name="PreviewSection">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item><widget class="QLabel" name="titleLabel"><property name="text"><string>완성 미리보기</string></property><property name="styleSheet"><string>font-size: 18px; font-weight: bold;</string></property></widget></item>
+   <item><widget class="QLabel" name="imageLabel"><property name="minimumSize"><size><width>500</width><height>400</height></size></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="text"><string>아직 생성된 만화가 없습니다.</string></property></widget></item>
+  </layout>
+ </widget>
+</ui>

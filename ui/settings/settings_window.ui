@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SettingsWindow</class>
+ <widget class="QDialog" name="SettingsWindow">
+  <property name="windowTitle"><string>4Cut Local - AI 연결 설정</string></property>
+  <property name="minimumSize"><size><width>650</width><height>500</height></size></property>
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item><widget class="QTabWidget" name="tabs">
+    <widget class="QWidget" name="lmstudioTab"><attribute name="title"><string>LM Studio</string></attribute>
+     <layout class="QFormLayout" name="lmForm">
+      <item row="0" column="0"><widget class="QLabel" name="lmHostLabel"><property name="text"><string>서버 주소</string></property></widget></item>
+      <item row="0" column="1"><widget class="QLineEdit" name="lmHostEdit"/></item>
+      <item row="1" column="0"><widget class="QLabel" name="lmPortLabel"><property name="text"><string>포트</string></property></widget></item>
+      <item row="1" column="1"><widget class="QSpinBox" name="lmPortSpin"><property name="maximum"><number>65535</number></property></widget></item>
+      <item row="2" column="0"><widget class="QLabel" name="lmApiLabel"><property name="text"><string>API 경로</string></property></widget></item>
+      <item row="2" column="1"><widget class="QLineEdit" name="lmApiEdit"/></item>
+      <item row="3" column="0"><widget class="QLabel" name="lmModelLabel"><property name="text"><string>모델</string></property></widget></item>
+      <item row="3" column="1"><widget class="QLineEdit" name="lmModelEdit"/></item>
+      <item row="4" column="1"><widget class="QPushButton" name="lmTestButton"><property name="text"><string>연결 테스트</string></property></widget></item>
+      <item row="5" column="1"><widget class="QLabel" name="lmStatusLabel"><property name="text"><string>상태: 테스트 전</string></property></widget></item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="comfyTab"><attribute name="title"><string>ComfyUI</string></attribute>
+     <layout class="QFormLayout" name="comfyForm">
+      <item row="0" column="0"><widget class="QLabel" name="comfyHostLabel"><property name="text"><string>서버 주소</string></property></widget></item>
+      <item row="0" column="1"><widget class="QLineEdit" name="comfyHostEdit"/></item>
+      <item row="1" column="0"><widget class="QLabel" name="comfyPortLabel"><property name="text"><string>포트</string></property></widget></item>
+      <item row="1" column="1"><widget class="QSpinBox" name="comfyPortSpin"><property name="maximum"><number>65535</number></property></widget></item>
+      <item row="2" column="0"><widget class="QLabel" name="comfyWorkflowLabel"><property name="text"><string>Workflow</string></property></widget></item>
+      <item row="2" column="1"><layout class="QHBoxLayout" name="workflowLayout">
+       <item><widget class="QLineEdit" name="comfyWorkflowEdit"/></item>
+       <item><widget class="QPushButton" name="browseWorkflowButton"><property name="text"><string>찾아보기</string></property></widget></item>
+      </layout></item>
+      <item row="3" column="1"><widget class="QPushButton" name="comfyTestButton"><property name="text"><string>연결 테스트</string></property></widget></item>
+      <item row="4" column="1"><widget class="QLabel" name="comfyStatusLabel"><property name="text"><string>상태: 테스트 전</string></property></widget></item>
+     </layout>
+    </widget>
+    <widget class="QWidget" name="generalTab"><attribute name="title"><string>일반</string></attribute>
+     <layout class="QFormLayout" name="generalForm">
+      <item row="0" column="0"><widget class="QLabel"><property name="text"><string>프로젝트 저장 위치</string></property></widget></item>
+      <item row="0" column="1"><widget class="QLineEdit" name="projectPathEdit"/></item>
+      <item row="1" column="0"><widget class="QLabel"><property name="text"><string>이미지 너비</string></property></widget></item>
+      <item row="1" column="1"><widget class="QSpinBox" name="widthSpin"><property name="maximum"><number>4096</number></property></widget></item>
+      <item row="2" column="0"><widget class="QLabel"><property name="text"><string>이미지 높이</string></property></widget></item>
+      <item row="2" column="1"><widget class="QSpinBox" name="heightSpin"><property name="maximum"><number>4096</number></property></widget></item>
+      <item row="3" column="1"><widget class="QCheckBox" name="autoSaveCheck"><property name="text"><string>결과 자동 저장</string></property></widget></item>
+     </layout>
+    </widget>
+   </widget></item>
+   <item><layout class="QHBoxLayout" name="buttonLayout">
+    <item><spacer name="buttonSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property></spacer></item>
+    <item><widget class="QPushButton" name="cancelButton"><property name="text"><string>취소</string></property></widget></item>
+    <item><widget class="QPushButton" name="applyButton"><property name="text"><string>적용</string></property></widget></item>
+   </layout></item>
+  </layout>
+ </widget>
+</ui>

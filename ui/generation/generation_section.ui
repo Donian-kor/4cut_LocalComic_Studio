@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>GenerationSection</class>
+ <widget class="QWidget" name="GenerationSection">
+  <layout class="QVBoxLayout" name="verticalLayout">
+   <item><widget class="QLabel" name="statusLabel"><property name="text"><string>대기 중</string></property></widget></item>
+   <item><widget class="QProgressBar" name="progressBar"><property name="maximum"><number>4</number></property><property name="value"><number>0</number></property></widget></item>
+   <item><layout class="QHBoxLayout" name="actionLayout">
+    <item><spacer name="leftSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property></spacer></item>
+    <item><widget class="QPushButton" name="cancelButton"><property name="text"><string>■ 생성 취소</string></property><property name="enabled"><bool>false</bool></property></widget></item>
+   </layout></item>
+  </layout>
+ </widget>
+</ui>

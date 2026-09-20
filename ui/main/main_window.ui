@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindow</class>
+ <widget class="QMainWindow" name="MainWindow">
+  <property name="windowTitle"><string>4Cut Local</string></property>
+  <property name="minimumSize"><size><width>1000</width><height>760</height></size></property>
+  <widget class="QWidget" name="centralwidget">
+   <layout class="QVBoxLayout" name="verticalLayout">
+    <item><widget class="QFrame" name="ideaContainer"><property name="frameShape"><enum>QFrame::StyledPanel</enum></property></widget></item>
+    <item><widget class="QFrame" name="generationContainer"><property name="frameShape"><enum>QFrame::StyledPanel</enum></property></widget></item>
+    <item><widget class="QFrame" name="previewContainer"><property name="frameShape"><enum>QFrame::StyledPanel</enum></property></widget></item>
+    <item><widget class="QFrame" name="resultContainer"><property name="frameShape"><enum>QFrame::StyledPanel</enum></property></widget></item>
+   </layout>
+  </widget>
+  <widget class="QMenuBar" name="menubar">
+   <widget class="QMenu" name="menuSettings"><property name="title"><string>설정</string></property>
+    <addaction name="actionAISettings"/>
+   </widget>
+   <addaction name="menuSettings"/>
+  </widget>
+  <widget class="QStatusBar" name="statusbar"/>
+  <action name="actionAISettings"><property name="text"><string>AI 연결 설정</string></property></action>
+ </widget>
+</ui>
