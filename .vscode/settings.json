@@ -5,5 +5,11 @@
             "envManager": "ms-python.python:venv",
             "packageManager": "ms-python.python:pip"
         }
-    ]
+    ],
+    "chat.tools.terminal.autoApprove": {
+        "/^\\.venv\\\\Scripts\\\\python\\.exe app\\.py$/": {
+            "approve": true,
+            "matchCommandLine": true
+        }
+    }
 }

@@ -10,10 +10,11 @@ class GenerationController:
         worker.failed.connect(self._failed)
         worker.cancelled.connect(self._cancelled)
         self.widget.set_generating(True)
+        self.widget.set_status("생성을 준비하는 중...", 0, 4)
 
     def cancel(self):
         if self.worker and self.worker.isRunning():
-            self.widget.set_cancel_enabled(False)
+            self.widget.set_generating(False)
             self.worker.cancel()
 
     def _progress(self, message, current, total):

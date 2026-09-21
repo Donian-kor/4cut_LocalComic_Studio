@@ -1,5 +1,6 @@
 from pathlib import Path
 
+
 class ImageService:
     def __init__(self, comfy_client, workflow_adapter, width=768, height=768):
         self.comfy = comfy_client
@@ -7,10 +8,12 @@ class ImageService:
         self.width = width
         self.height = height
 
-    def generate_panel(self, panel, output_dir):
+    def generate_panel(self, panel, output_dir, cancel_check=None):
         workflow = self.workflow.prepare(panel.image_prompt, panel.seed, self.width, self.height)
         prompt_id = self.comfy.queue_prompt(workflow)
-        data = self.comfy.wait_for_image(prompt_id)
+        data = self.comfy.wait_for_image(prompt_id, cancel_check=cancel_check)
+        if cancel_check and cancel_check():
+            raise InterruptedError("이미지 생성이 취소되었습니다.")
         output_dir = Path(output_dir)
         output_dir.mkdir(parents=True, exist_ok=True)
         path = output_dir / f"panel_{panel.index}.png"

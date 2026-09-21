@@ -15,7 +15,7 @@
       <item row="2" column="0"><widget class="QLabel" name="lmApiLabel"><property name="text"><string>API 경로</string></property></widget></item>
       <item row="2" column="1"><widget class="QLineEdit" name="lmApiEdit"/></item>
       <item row="3" column="0"><widget class="QLabel" name="lmModelLabel"><property name="text"><string>모델</string></property></widget></item>
-      <item row="3" column="1"><widget class="QLineEdit" name="lmModelEdit"/></item>
+      <item row="3" column="1"><widget class="QComboBox" name="lmModelCombo"><property name="editable"><bool>true</bool></property></widget></item>
       <item row="4" column="1"><widget class="QPushButton" name="lmTestButton"><property name="text"><string>연결 테스트</string></property></widget></item>
       <item row="5" column="1"><widget class="QLabel" name="lmStatusLabel"><property name="text"><string>상태: 테스트 전</string></property></widget></item>
      </layout>
