@@ -1,5 +1,38 @@
 import random
+import re
 from core.models.comic import Comic, Character, Panel
+
+
+# ComfyUI(SD 계열) positive prompt에 들어가면 "한 이미지 안에
+# 여러 컷을 그려버리는" 다컷 유발 키워드 목록.
+_MULTI_PANEL_PATTERNS = (
+    r"4[\s\-_]*panel(?:s)?",
+    r"four[\s\-_]*panel(?:s)?",
+    r"2\s*[x×]\s*2\s*(?:grid|panel|layout|comic)?",
+    r"multi[\s\-_]*panel",
+    r"comic[\s\-_]*strip",
+    r"comic[\s\-_]*page",
+    r"4[\s\-_]*cut",
+    r"4[\s\-_]*컷",
+    r"네[\s\-_]*컷",
+    r"사[\s\-_]*컷",
+    r"컷[\s\-_]*만화",
+    r"컷[\s\-_]*구성",
+    r"분할[\s\-_]*컷",
+    r"여러[\s\-_]*컷",
+)
+_MULTI_PANEL_RE = re.compile("|".join(f"(?:{p})" for p in _MULTI_PANEL_PATTERNS), re.IGNORECASE)
+
+
+def clean_panel_text(text):
+    """다컷 유발 키워드를 제거하고 남은 텍스트를 정제한다.
+
+    공백이 무너지지 않게 치환 후 압축하며, 문장부호가 남으면 유지한다.
+    """
+    cleaned = _MULTI_PANEL_RE.sub(" ", str(text or ""))
+    cleaned = re.sub(r"[ \t]+", " ", cleaned).strip()
+    cleaned = re.sub(r"\s+([,.!?;:])", r"\1", cleaned)
+    return cleaned
 
 
 class StoryService:
@@ -24,6 +57,8 @@ Return ONLY valid JSON with exactly this structure:
   ]
 }
 There must be exactly 4 panels. Every panel must have a non-empty image_prompt.
+ Every image_prompt must describe ONE SINGLE SCENE only (one moment, one continuous illustration).
+Do NOT write grid, split, multi-section or broken-frame layouts in image_prompt.
 Keep the story short, coherent, humorous or emotionally clear, and visually drawable.
 Repeat the same character appearance consistently in every image_prompt.
 '''
@@ -56,12 +91,13 @@ Repeat the same character appearance consistently in every image_prompt.
                 seed=random.randint(0, 2**32 - 1),
             ))
 
-        char = comic.character.prompt_description()
-        style_text = comic.style
+        char = clean_panel_text(comic.character.prompt_description())
+        style_text = clean_panel_text(comic.style)
         for p in comic.panels:
             p.image_prompt = (
-                f"{char}. Scene: {p.image_prompt}. Style: {style_text}. "
-                "4-panel comic illustration, consistent character design, clear composition."
+                f"{char}. Scene: {clean_panel_text(p.image_prompt)}. Style: {style_text}. "
+                "One single scene illustration, one continuous moment, single full-frame image, "
+                "no split, no grid, no multiple sections, consistent character design, clear composition."
             )
         return comic
 

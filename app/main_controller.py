@@ -17,6 +17,7 @@ class MainController(QObject):
         self.result = ResultController(main_window.result)
         self.last_idea = ""
         self.last_style = ""
+        self.workers = []  # 실행 중인 ComicWorker 참조 보관 (조기 GC 방지)
         main_window.idea.generateRequested.connect(self.start_generation)
         main_window.generation.cancelRequested.connect(self.cancel_generation)
         main_window.result.regenerateRequested.connect(self.regenerate)
@@ -37,11 +38,26 @@ class MainController(QObject):
         self.window.idea.set_enabled(False)
         worker = ComicWorker(self.service, self.last_idea, self.last_style)
         self.generation.attach_worker(worker)
+        self.workers.append(worker)
         worker.finished_comic.connect(self.on_finished)
         worker.failed.connect(self.on_failed)
         worker.cancelled.connect(self.on_cancelled)
-        worker.finished.connect(worker.deleteLater)
+        worker.finished.connect(self.release_worker)
         worker.start()
+
+    def release_worker(self):
+        """스레드가 완전히 끝난 뒤에만 ComicWorker 참조를 놓는다.
+
+        run() 이 반환되기 전에 ComicWorker 참조가 사라지면 QThread 객체가
+        파괴되면서 'QThread: Destroyed while thread ... is still running' 과 함께
+        프로세스가 즉시 종료된다.
+        """
+        worker = self.sender()
+        if worker is None:
+            return
+        worker.wait()
+        if worker in self.workers:
+            self.workers.remove(worker)
 
     def cancel_generation(self):
         self.generation.cancel()

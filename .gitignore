@@ -24,6 +24,7 @@ Thumbs.db
 *.db-shm
 logs/
 *.log
+*.png
 
 # Qt Designer 생성물(자동 생성 파이썬 UI)은 필요 시 재생성하므로 무시
 novel_studio/ui/forms/*_ui.py
