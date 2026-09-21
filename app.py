@@ -5,6 +5,7 @@ from settings.settings_manager import SettingsManager
 from integrations.lmstudio.client import LMStudioClient
 from integrations.comfyui.client import ComfyUIClient
 from integrations.comfyui.workflow import WorkflowAdapter
+from settings.model_manager import ImageModelManager
 from core.services.comic_service import ComicService
 from ui.main.main_window import MainWindow
 from app.main_controller import MainController
@@ -15,8 +16,12 @@ def build_service(settings):
     comfy_settings = dict(settings.section("comfyui"))
     lm = LMStudioClient(lm_settings)
     comfy = ComfyUIClient(comfy_settings)
-    workflow = WorkflowAdapter(comfy_settings.get("workflow", "workflows/4cut_default.json"), settings.base_dir)
-    return ComicService(lm, comfy, workflow, settings.data, settings.base_dir)
+    model_manager = ImageModelManager(settings)
+    profile = model_manager.get()
+    if profile is None:
+        raise RuntimeError("사용할 이미지 모델 프로필이 없습니다.")
+    workflow = WorkflowAdapter(profile.workflow, settings.base_dir, profile)
+    return ComicService(lm, comfy, workflow, settings.data, settings.base_dir, image_model=profile)
 
 
 def main():

@@ -6,14 +6,15 @@ from core.services.compose_service import ComposeService
 
 
 class ComicService:
-    def __init__(self, llm_client, comfy_client, workflow_adapter, settings, base_dir=None):
+    def __init__(self, llm_client, comfy_client, workflow_adapter, settings, base_dir=None, image_model=None):
         self.llm_client = llm_client
         self.comfy_client = comfy_client
         self.workflow = workflow_adapter
+        self.image_model = image_model
         self.story = StoryService(llm_client)
         general = settings.get("general", {})
-        self.width = int(general.get("width", 768))
-        self.height = int(general.get("height", 768))
+        self.width = int(getattr(image_model, "width", general.get("width", 768)))
+        self.height = int(getattr(image_model, "height", general.get("height", 768)))
         self.image = ImageService(comfy_client, workflow_adapter, self.width, self.height)
         self.compose_service = ComposeService()
         self.project_path = Path(general.get("project_path", "projects"))

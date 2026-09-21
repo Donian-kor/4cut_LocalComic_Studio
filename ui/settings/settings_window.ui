@@ -35,6 +35,51 @@
       <item row="4" column="1"><widget class="QLabel" name="comfyStatusLabel"><property name="text"><string>상태: 테스트 전</string></property></widget></item>
      </layout>
     </widget>
+    <widget class="QWidget" name="imageModelTab"><attribute name="title"><string>이미지 모델</string></attribute>
+     <layout class="QHBoxLayout" name="imageModelMainLayout">
+      <item>
+       <layout class="QVBoxLayout" name="imageModelListLayout">
+        <item><widget class="QLabel" name="imageModelListLabel"><property name="text"><string>등록된 이미지 모델</string></property></widget></item>
+        <item><widget class="QListWidget" name="imageModelList"/></item>
+        <item><layout class="QHBoxLayout" name="imageModelButtonLayout">
+         <item><widget class="QPushButton" name="addImageModelButton"><property name="text"><string>+ 추가</string></property></widget></item>
+         <item><widget class="QPushButton" name="removeImageModelButton"><property name="text"><string>삭제</string></property></widget></item>
+        </layout></item>
+       </layout>
+      </item>
+      <item>
+       <layout class="QFormLayout" name="imageModelForm">
+        <item row="0" column="0"><widget class="QLabel"><property name="text"><string>모델 이름</string></property></widget></item>
+        <item row="0" column="1"><widget class="QLineEdit" name="imageModelNameEdit"/></item>
+        <item row="1" column="0"><widget class="QLabel"><property name="text"><string>모델 파일</string></property></widget></item>
+        <item row="1" column="1"><layout class="QHBoxLayout" name="imageModelFileLayout">
+         <item><widget class="QLineEdit" name="imageModelFileEdit"/></item>
+         <item><widget class="QPushButton" name="browseImageModelButton"><property name="text"><string>찾아보기</string></property></widget></item>
+        </layout></item>
+        <item row="2" column="0"><widget class="QLabel"><property name="text"><string>Workflow</string></property></widget></item>
+        <item row="2" column="1"><layout class="QHBoxLayout" name="imageModelWorkflowLayout">
+         <item><widget class="QLineEdit" name="imageModelWorkflowEdit"/></item>
+         <item><widget class="QPushButton" name="browseImageModelWorkflowButton"><property name="text"><string>찾아보기</string></property></widget></item>
+        </layout></item>
+        <item row="3" column="0"><widget class="QLabel"><property name="text"><string>너비</string></property></widget></item>
+        <item row="3" column="1"><widget class="QSpinBox" name="imageModelWidthSpin"><property name="maximum"><number>4096</number></property><property name="minimum"><number>64</number></property></widget></item>
+        <item row="4" column="0"><widget class="QLabel"><property name="text"><string>높이</string></property></widget></item>
+        <item row="4" column="1"><widget class="QSpinBox" name="imageModelHeightSpin"><property name="maximum"><number>4096</number></property><property name="minimum"><number>64</number></property></widget></item>
+        <item row="5" column="0"><widget class="QLabel"><property name="text"><string>Steps</string></property></widget></item>
+        <item row="5" column="1"><widget class="QSpinBox" name="imageModelStepsSpin"><property name="maximum"><number>200</number></property><property name="minimum"><number>1</number></property></widget></item>
+        <item row="6" column="0"><widget class="QLabel"><property name="text"><string>CFG</string></property></widget></item>
+        <item row="6" column="1"><widget class="QDoubleSpinBox" name="imageModelCfgSpin"><property name="maximum"><double>30.000000000000000</double></property><property name="decimals"><number>2</number></property><property name="singleStep"><double>0.5</double></property></widget></item>
+        <item row="7" column="0"><widget class="QLabel"><property name="text"><string>Sampler</string></property></widget></item>
+        <item row="7" column="1"><widget class="QComboBox" name="imageModelSamplerCombo"><property name="editable"><bool>true</bool></property></widget></item>
+        <item row="8" column="0"><widget class="QLabel"><property name="text"><string>Scheduler</string></property></widget></item>
+        <item row="8" column="1"><widget class="QComboBox" name="imageModelSchedulerCombo"><property name="editable"><bool>true</bool></property></widget></item>
+        <item row="9" column="0"><widget class="QLabel"><property name="text"><string>Negative Prompt</string></property></widget></item>
+        <item row="9" column="1"><widget class="QPlainTextEdit" name="imageModelNegativeEdit"/></item>
+        <item row="10" column="1"><widget class="QPushButton" name="saveImageModelButton"><property name="text"><string>모델 정보 저장</string></property></widget></item>
+       </layout>
+      </item>
+     </layout>
+    </widget>
     <widget class="QWidget" name="generalTab"><attribute name="title"><string>일반</string></attribute>
      <layout class="QFormLayout" name="generalForm">
       <item row="0" column="0"><widget class="QLabel"><property name="text"><string>프로젝트 저장 위치</string></property></widget></item>

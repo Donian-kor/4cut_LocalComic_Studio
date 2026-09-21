@@ -1,7 +1,9 @@
 from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QDialog, QFileDialog
+from PySide6.QtWidgets import QDialog, QFileDialog, QListWidgetItem
+from settings.model_manager import ImageModelManager
+from core.models.image_model import ImageModelProfile
 
 
 class ConnectionWorker(QThread):
@@ -27,6 +29,8 @@ class SettingsWindow:
         self.lm_factory = lm_factory
         self.comfy_factory = comfy_factory
         self.worker = None
+        self.image_models = ImageModelManager(manager)
+        self._loading_model = False
 
         loader = QUiLoader()
         ui_path = Path(__file__).resolve().parent.parent / "ui" / "settings" / "settings_window.ui"
@@ -40,6 +44,13 @@ class SettingsWindow:
         self.form.lmTestButton.clicked.connect(self.test_lm)
         self.form.comfyTestButton.clicked.connect(self.test_comfy)
         self.form.browseWorkflowButton.clicked.connect(self.browse_workflow)
+
+        self.form.imageModelList.currentRowChanged.connect(self._model_row_changed)
+        self.form.addImageModelButton.clicked.connect(self.add_image_model)
+        self.form.removeImageModelButton.clicked.connect(self.remove_image_model)
+        self.form.saveImageModelButton.clicked.connect(self.save_image_model)
+        self.form.browseImageModelButton.clicked.connect(self.browse_image_model)
+        self.form.browseImageModelWorkflowButton.clicked.connect(self.browse_image_model_workflow)
 
     def _load(self):
         lm = self.manager.section("lmstudio")
@@ -59,6 +70,14 @@ class SettingsWindow:
         self.form.widthSpin.setValue(int(g.get("width", 768)))
         self.form.heightSpin.setValue(int(g.get("height", 768)))
         self.form.autoSaveCheck.setChecked(bool(g.get("auto_save", True)))
+
+        self.form.imageModelSamplerCombo.addItems([
+            "euler_ancestral", "euler", "dpmpp_2m", "dpmpp_2m_sde", "ddim", "uni_pc"
+        ])
+        self.form.imageModelSchedulerCombo.addItems([
+            "beta", "normal", "sgm_uniform", "simple", "karras", "exponential"
+        ])
+        self._refresh_model_list(self.image_models.selected_id())
 
     def _capture(self):
         return {
@@ -117,7 +136,6 @@ class SettingsWindow:
         combo.setToolTip("\n".join(ids))
         if ids:
             self.form.lmStatusLabel.setText(f"상태: ✓ {msg} · 모델 {len(ids)}개")
-            combo.showPopup()
         else:
             self.form.lmStatusLabel.setText(f"상태: ✓ {msg} (모델 없음)")
 
@@ -126,10 +144,134 @@ class SettingsWindow:
         if path:
             self.form.comfyWorkflowEdit.setText(path)
 
+    # ----- Image model manager -----
+    def _refresh_model_list(self, selected_id=None):
+        self._loading_model = True
+        try:
+            self.form.imageModelList.clear()
+            profiles = self.image_models.profiles()
+            target = selected_id or self.image_models.selected_id()
+            row = 0
+            for i, profile in enumerate(profiles):
+                item = QListWidgetItem(profile.name)
+                item.setData(32, profile.id)
+                self.form.imageModelList.addItem(item)
+                if profile.id == target:
+                    row = i
+            if profiles:
+                self.form.imageModelList.setCurrentRow(row)
+        finally:
+            self._loading_model = False
+        self._load_model_row(self.form.imageModelList.currentRow())
+
+    def _model_row_changed(self, row):
+        if not self._loading_model:
+            profiles = self.image_models.profiles()
+            if 0 <= row < len(profiles):
+                self.image_models.select(profiles[row].id)
+            self._load_model_row(row)
+
+    def _load_model_row(self, row):
+        profiles = self.image_models.profiles()
+        if row < 0 or row >= len(profiles):
+            return
+        profile = profiles[row]
+        self._loading_model = True
+        try:
+            self.form.imageModelNameEdit.setText(profile.name)
+            self.form.imageModelFileEdit.setText(profile.model_file)
+            self.form.imageModelWorkflowEdit.setText(profile.workflow)
+            self.form.imageModelWidthSpin.setValue(profile.width)
+            self.form.imageModelHeightSpin.setValue(profile.height)
+            self.form.imageModelStepsSpin.setValue(profile.steps)
+            self.form.imageModelCfgSpin.setValue(profile.cfg)
+            self.form.imageModelSamplerCombo.setCurrentText(profile.sampler)
+            self.form.imageModelSchedulerCombo.setCurrentText(profile.scheduler)
+            self.form.imageModelNegativeEdit.setPlainText(profile.negative_prompt)
+        finally:
+            self._loading_model = False
+
+    def _form_profile(self):
+        row = self.form.imageModelList.currentRow()
+        profiles = self.image_models.profiles()
+        old_id = profiles[row].id if 0 <= row < len(profiles) else ""
+        return ImageModelProfile(
+            id=old_id,
+            name=self.form.imageModelNameEdit.text().strip() or "Custom Model",
+            model_file=self.form.imageModelFileEdit.text().strip(),
+            workflow=self.form.imageModelWorkflowEdit.text().strip(),
+            width=self.form.imageModelWidthSpin.value(),
+            height=self.form.imageModelHeightSpin.value(),
+            steps=self.form.imageModelStepsSpin.value(),
+            cfg=self.form.imageModelCfgSpin.value(),
+            sampler=self.form.imageModelSamplerCombo.currentText().strip() or "euler_ancestral",
+            scheduler=self.form.imageModelSchedulerCombo.currentText().strip() or "normal",
+            negative_prompt=self.form.imageModelNegativeEdit.toPlainText().strip(),
+        )
+
+    def save_image_model(self):
+        profile = self._form_profile()
+        if not profile.model_file:
+            return
+        saved = self.image_models.upsert(profile)
+        self.image_models.save()
+        self._refresh_model_list(saved.id)
+
+    def add_image_model(self):
+        existing_ids = {p.id for p in self.image_models.profiles()}
+        model_id = "custom_model"
+        index = 2
+        while model_id in existing_ids:
+            model_id = f"custom_model_{index}"
+            index += 1
+        profile = ImageModelProfile(
+            id=model_id,
+            name="새 이미지 모델",
+            model_file="",
+            workflow="",
+            width=self.form.widthSpin.value(),
+            height=self.form.heightSpin.value(),
+            steps=28,
+            cfg=4.0,
+            sampler="euler_ancestral",
+            scheduler="normal",
+            negative_prompt="low quality, blurry, deformed",
+        )
+        saved = self.image_models.upsert(profile)
+        self.image_models.save()
+        self._refresh_model_list(saved.id)
+
+    def remove_image_model(self):
+        row = self.form.imageModelList.currentRow()
+        profiles = self.image_models.profiles()
+        if row < 0 or row >= len(profiles) or len(profiles) <= 1:
+            return
+        model_id = profiles[row].id
+        self.image_models.remove(model_id)
+        self.image_models.save()
+        self._refresh_model_list(self.image_models.selected_id())
+
+    def browse_image_model(self):
+        path, _ = QFileDialog.getOpenFileName(
+            self.form, "ComfyUI 이미지 모델 선택", "", "Model (*.safetensors *.gguf);;All Files (*)"
+        )
+        if path:
+            self.form.imageModelFileEdit.setText(Path(path).name)
+
+    def browse_image_model_workflow(self):
+        path, _ = QFileDialog.getOpenFileName(self.form, "이미지 모델 Workflow 선택", "", "JSON (*.json)")
+        if path:
+            self.form.imageModelWorkflowEdit.setText(path)
+
     def apply(self):
+        # Persist the currently edited image model as part of Apply.
+        if self.form.imageModelList.currentRow() >= 0:
+            profile = self._form_profile()
+            if profile.model_file and profile.workflow:
+                self.image_models.upsert(profile)
         values = self._capture()
         self.manager.data.update(values)
-        self.manager.save()
+        self.image_models.save()
         self.form.accept()
 
     def exec(self):
