@@ -20,7 +20,12 @@ def build_service(settings):
     profile = model_manager.get()
     if profile is None:
         raise RuntimeError("사용할 이미지 모델 프로필이 없습니다.")
-    workflow = WorkflowAdapter(profile.workflow, settings.base_dir, profile)
+    workflow = WorkflowAdapter(
+        profile.workflow, settings.base_dir, profile,
+        font_path=comfy_settings.get("font_path", ""),
+        font_size=comfy_settings.get("font_size", 32),
+        stage2_path=profile.workflow.replace(".json", "_stage2.json"),
+    )
     return ComicService(lm, comfy, workflow, settings.data, settings.base_dir, image_model=profile)
 
 

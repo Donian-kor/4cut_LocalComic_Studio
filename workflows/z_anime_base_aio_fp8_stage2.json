@@ -1,0 +1,110 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": ""
+    }
+  },
+  "2": {
+    "class_type": "UltralyticsDetectorProvider",
+    "inputs": {
+      "model_name": "bbox/comic-speech-bubble-detector.pt"
+    }
+  },
+  "3": {
+    "class_type": "BboxDetectorSEGS",
+    "inputs": {
+      "bbox_detector": ["2", 0],
+      "image": ["1", 0],
+      "threshold": 0.35,
+      "dilation": 10,
+      "crop_factor": 3.0,
+      "drop_size": 64,
+      "labels": "text_bubble"
+    }
+  },
+  "4": {
+    "class_type": "ImpactSEGSOrderedFilter",
+    "inputs": {
+      "segs": ["3", 0],
+      "target": "area(=w*h)",
+      "order": true,
+      "take_start": 0,
+      "take_count": 1
+    }
+  },
+  "5": {
+    "class_type": "ImpactDecomposeSEGS",
+    "inputs": {
+      "segs": ["4", 0]
+    }
+  },
+  "6": {
+    "class_type": "ImpactFrom_SEG_ELT",
+    "inputs": {
+      "seg_elt": ["5", 1]
+    }
+  },
+  "7": {
+    "class_type": "ImpactFrom_SEG_ELT_bbox",
+    "inputs": {
+      "bbox": ["6", 4]
+    }
+  },
+  "8": {
+    "class_type": "ComfyMathExpression",
+    "inputs": {
+      "expression": "int((a + b) / 2 - c / 2)",
+      "values.a": ["7", 0],
+      "values.b": ["7", 2],
+      "values.c": ["10", 0]
+    }
+  },
+  "9": {
+    "class_type": "ComfyMathExpression",
+    "inputs": {
+      "expression": "int((a + b) / 2 - c / 2)",
+      "values.a": ["7", 1],
+      "values.b": ["7", 3],
+      "values.c": ["11", 0]
+    }
+  },
+  "10": {
+    "class_type": "ImpactInt",
+    "inputs": {
+      "value": 768
+    }
+  },
+  "11": {
+    "class_type": "ImpactInt",
+    "inputs": {
+      "value": 768
+    }
+  },
+  "12": {
+    "class_type": "DrawText+",
+    "inputs": {
+      "text": "",
+      "font": "malgun.ttf",
+      "size": 28,
+      "color": "#000000",
+      "background_color": "#00000000",
+      "shadow_distance": 6,
+      "shadow_blur": 8,
+      "shadow_color": "#FFFFFF",
+      "horizontal_align": "center",
+      "vertical_align": "center",
+      "offset_x": ["8", 1],
+      "offset_y": ["9", 1],
+      "direction": "ltr",
+      "img_composite": ["1", 0]
+    }
+  },
+  "13": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "4cut_dialogue",
+      "images": ["12", 0]
+    }
+  }
+}

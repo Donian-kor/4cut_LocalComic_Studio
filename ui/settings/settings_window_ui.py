@@ -16,7 +16,8 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
-    QFormLayout, QHBoxLayout, QLabel, QLineEdit,
+    QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel,
+    QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit,
     QPushButton, QSizePolicy, QSpacerItem, QSpinBox,
     QTabWidget, QVBoxLayout, QWidget)
 class Ui_SettingsWindow(object):
@@ -141,24 +142,200 @@ class Ui_SettingsWindow(object):
         self.comfyForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.comfyStatusLabel)
 
         self.tabs.addTab(self.comfyTab, "")
+        self.imageModelTab = QWidget()
+        self.imageModelTab.setObjectName(u"imageModelTab")
+        self.imageModelMainLayout = QHBoxLayout(self.imageModelTab)
+        self.imageModelMainLayout.setObjectName(u"imageModelMainLayout")
+        self.imageModelListLayout = QVBoxLayout()
+        self.imageModelListLayout.setObjectName(u"imageModelListLayout")
+        self.imageModelListLabel = QLabel(self.imageModelTab)
+        self.imageModelListLabel.setObjectName(u"imageModelListLabel")
+
+        self.imageModelListLayout.addWidget(self.imageModelListLabel)
+
+        self.imageModelList = QListWidget(self.imageModelTab)
+        self.imageModelList.setObjectName(u"imageModelList")
+
+        self.imageModelListLayout.addWidget(self.imageModelList)
+
+        self.imageModelButtonLayout = QHBoxLayout()
+        self.imageModelButtonLayout.setObjectName(u"imageModelButtonLayout")
+        self.addImageModelButton = QPushButton(self.imageModelTab)
+        self.addImageModelButton.setObjectName(u"addImageModelButton")
+
+        self.imageModelButtonLayout.addWidget(self.addImageModelButton)
+
+        self.removeImageModelButton = QPushButton(self.imageModelTab)
+        self.removeImageModelButton.setObjectName(u"removeImageModelButton")
+
+        self.imageModelButtonLayout.addWidget(self.removeImageModelButton)
+
+
+        self.imageModelListLayout.addLayout(self.imageModelButtonLayout)
+
+
+        self.imageModelMainLayout.addLayout(self.imageModelListLayout)
+
+        self.imageModelForm = QFormLayout()
+        self.imageModelForm.setObjectName(u"imageModelForm")
+        self.label = QLabel(self.imageModelTab)
+        self.label.setObjectName(u"label")
+
+        self.imageModelForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label)
+
+        self.imageModelNameEdit = QLineEdit(self.imageModelTab)
+        self.imageModelNameEdit.setObjectName(u"imageModelNameEdit")
+
+        self.imageModelForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.imageModelNameEdit)
+
+        self.label1 = QLabel(self.imageModelTab)
+        self.label1.setObjectName(u"label1")
+
+        self.imageModelForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label1)
+
+        self.imageModelFileLayout = QHBoxLayout()
+        self.imageModelFileLayout.setObjectName(u"imageModelFileLayout")
+        self.imageModelFileEdit = QLineEdit(self.imageModelTab)
+        self.imageModelFileEdit.setObjectName(u"imageModelFileEdit")
+
+        self.imageModelFileLayout.addWidget(self.imageModelFileEdit)
+
+        self.browseImageModelButton = QPushButton(self.imageModelTab)
+        self.browseImageModelButton.setObjectName(u"browseImageModelButton")
+
+        self.imageModelFileLayout.addWidget(self.browseImageModelButton)
+
+
+        self.imageModelForm.setLayout(1, QFormLayout.ItemRole.FieldRole, self.imageModelFileLayout)
+
+        self.label2 = QLabel(self.imageModelTab)
+        self.label2.setObjectName(u"label2")
+
+        self.imageModelForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label2)
+
+        self.imageModelWorkflowLayout = QHBoxLayout()
+        self.imageModelWorkflowLayout.setObjectName(u"imageModelWorkflowLayout")
+        self.imageModelWorkflowEdit = QLineEdit(self.imageModelTab)
+        self.imageModelWorkflowEdit.setObjectName(u"imageModelWorkflowEdit")
+
+        self.imageModelWorkflowLayout.addWidget(self.imageModelWorkflowEdit)
+
+        self.browseImageModelWorkflowButton = QPushButton(self.imageModelTab)
+        self.browseImageModelWorkflowButton.setObjectName(u"browseImageModelWorkflowButton")
+
+        self.imageModelWorkflowLayout.addWidget(self.browseImageModelWorkflowButton)
+
+
+        self.imageModelForm.setLayout(2, QFormLayout.ItemRole.FieldRole, self.imageModelWorkflowLayout)
+
+        self.label3 = QLabel(self.imageModelTab)
+        self.label3.setObjectName(u"label3")
+
+        self.imageModelForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label3)
+
+        self.imageModelWidthSpin = QSpinBox(self.imageModelTab)
+        self.imageModelWidthSpin.setObjectName(u"imageModelWidthSpin")
+        self.imageModelWidthSpin.setMaximum(4096)
+        self.imageModelWidthSpin.setMinimum(64)
+
+        self.imageModelForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.imageModelWidthSpin)
+
+        self.label4 = QLabel(self.imageModelTab)
+        self.label4.setObjectName(u"label4")
+
+        self.imageModelForm.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label4)
+
+        self.imageModelHeightSpin = QSpinBox(self.imageModelTab)
+        self.imageModelHeightSpin.setObjectName(u"imageModelHeightSpin")
+        self.imageModelHeightSpin.setMaximum(4096)
+        self.imageModelHeightSpin.setMinimum(64)
+
+        self.imageModelForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.imageModelHeightSpin)
+
+        self.label5 = QLabel(self.imageModelTab)
+        self.label5.setObjectName(u"label5")
+
+        self.imageModelForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label5)
+
+        self.imageModelStepsSpin = QSpinBox(self.imageModelTab)
+        self.imageModelStepsSpin.setObjectName(u"imageModelStepsSpin")
+        self.imageModelStepsSpin.setMaximum(200)
+        self.imageModelStepsSpin.setMinimum(1)
+
+        self.imageModelForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.imageModelStepsSpin)
+
+        self.label6 = QLabel(self.imageModelTab)
+        self.label6.setObjectName(u"label6")
+
+        self.imageModelForm.setWidget(6, QFormLayout.ItemRole.LabelRole, self.label6)
+
+        self.imageModelCfgSpin = QDoubleSpinBox(self.imageModelTab)
+        self.imageModelCfgSpin.setObjectName(u"imageModelCfgSpin")
+        self.imageModelCfgSpin.setMaximum(30.000000000000000)
+        self.imageModelCfgSpin.setDecimals(2)
+        self.imageModelCfgSpin.setSingleStep(0.500000000000000)
+
+        self.imageModelForm.setWidget(6, QFormLayout.ItemRole.FieldRole, self.imageModelCfgSpin)
+
+        self.label7 = QLabel(self.imageModelTab)
+        self.label7.setObjectName(u"label7")
+
+        self.imageModelForm.setWidget(7, QFormLayout.ItemRole.LabelRole, self.label7)
+
+        self.imageModelSamplerCombo = QComboBox(self.imageModelTab)
+        self.imageModelSamplerCombo.setObjectName(u"imageModelSamplerCombo")
+        self.imageModelSamplerCombo.setEditable(True)
+
+        self.imageModelForm.setWidget(7, QFormLayout.ItemRole.FieldRole, self.imageModelSamplerCombo)
+
+        self.label8 = QLabel(self.imageModelTab)
+        self.label8.setObjectName(u"label8")
+
+        self.imageModelForm.setWidget(8, QFormLayout.ItemRole.LabelRole, self.label8)
+
+        self.imageModelSchedulerCombo = QComboBox(self.imageModelTab)
+        self.imageModelSchedulerCombo.setObjectName(u"imageModelSchedulerCombo")
+        self.imageModelSchedulerCombo.setEditable(True)
+
+        self.imageModelForm.setWidget(8, QFormLayout.ItemRole.FieldRole, self.imageModelSchedulerCombo)
+
+        self.label9 = QLabel(self.imageModelTab)
+        self.label9.setObjectName(u"label9")
+
+        self.imageModelForm.setWidget(9, QFormLayout.ItemRole.LabelRole, self.label9)
+
+        self.imageModelNegativeEdit = QPlainTextEdit(self.imageModelTab)
+        self.imageModelNegativeEdit.setObjectName(u"imageModelNegativeEdit")
+
+        self.imageModelForm.setWidget(9, QFormLayout.ItemRole.FieldRole, self.imageModelNegativeEdit)
+
+        self.saveImageModelButton = QPushButton(self.imageModelTab)
+        self.saveImageModelButton.setObjectName(u"saveImageModelButton")
+
+        self.imageModelForm.setWidget(10, QFormLayout.ItemRole.FieldRole, self.saveImageModelButton)
+
+
+        self.imageModelMainLayout.addLayout(self.imageModelForm)
+
+        self.tabs.addTab(self.imageModelTab, "")
         self.generalTab = QWidget()
         self.generalTab.setObjectName(u"generalTab")
         self.generalForm = QFormLayout(self.generalTab)
         self.generalForm.setObjectName(u"generalForm")
-        self.label = QLabel(self.generalTab)
-        self.label.setObjectName(u"label")
+        self.label10 = QLabel(self.generalTab)
+        self.label10.setObjectName(u"label10")
 
-        self.generalForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label)
+        self.generalForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.label10)
 
         self.projectPathEdit = QLineEdit(self.generalTab)
         self.projectPathEdit.setObjectName(u"projectPathEdit")
 
         self.generalForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.projectPathEdit)
 
-        self.label1 = QLabel(self.generalTab)
-        self.label1.setObjectName(u"label1")
+        self.label11 = QLabel(self.generalTab)
+        self.label11.setObjectName(u"label11")
 
-        self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label1)
+        self.generalForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.label11)
 
         self.widthSpin = QSpinBox(self.generalTab)
         self.widthSpin.setObjectName(u"widthSpin")
@@ -166,10 +343,10 @@ class Ui_SettingsWindow(object):
 
         self.generalForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.widthSpin)
 
-        self.label2 = QLabel(self.generalTab)
-        self.label2.setObjectName(u"label2")
+        self.label12 = QLabel(self.generalTab)
+        self.label12.setObjectName(u"label12")
 
-        self.generalForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label2)
+        self.generalForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.label12)
 
         self.heightSpin = QSpinBox(self.generalTab)
         self.heightSpin.setObjectName(u"heightSpin")
@@ -181,6 +358,28 @@ class Ui_SettingsWindow(object):
         self.autoSaveCheck.setObjectName(u"autoSaveCheck")
 
         self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.autoSaveCheck)
+
+        self.label13 = QLabel(self.generalTab)
+        self.label13.setObjectName(u"label13")
+
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label13)
+
+        self.stylePromptEdit = QPlainTextEdit(self.generalTab)
+        self.stylePromptEdit.setObjectName(u"stylePromptEdit")
+
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.stylePromptEdit)
+
+        self.label14 = QLabel(self.generalTab)
+        self.label14.setObjectName(u"label14")
+
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label14)
+
+        self.bubbleFontSpin = QSpinBox(self.generalTab)
+        self.bubbleFontSpin.setObjectName(u"bubbleFontSpin")
+        self.bubbleFontSpin.setMaximum(200)
+        self.bubbleFontSpin.setMinimum(8)
+
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.bubbleFontSpin)
 
         self.tabs.addTab(self.generalTab, "")
 
@@ -227,10 +426,29 @@ class Ui_SettingsWindow(object):
         self.comfyTestButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc5f0\uacb0 \ud14c\uc2a4\ud2b8", None))
         self.comfyStatusLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc0c1\ud0dc: \ud14c\uc2a4\ud2b8 \uc804", None))
         self.tabs.setTabText(self.tabs.indexOf(self.comfyTab), QCoreApplication.translate("SettingsWindow", u"ComfyUI", None))
-        self.label.setText(QCoreApplication.translate("SettingsWindow", u"\ud504\ub85c\uc81d\ud2b8 \uc800\uc7a5 \uc704\uce58", None))
-        self.label1.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub108\ube44", None))
-        self.label2.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub192\uc774", None))
+        self.imageModelListLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ub4f1\ub85d\ub41c \uc774\ubbf8\uc9c0 \ubaa8\ub378", None))
+        self.addImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"+ \ucd94\uac00", None))
+        self.removeImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc0ad\uc81c", None))
+        self.label.setText(QCoreApplication.translate("SettingsWindow", u"\ubaa8\ub378 \uc774\ub984", None))
+        self.label1.setText(QCoreApplication.translate("SettingsWindow", u"\ubaa8\ub378 \ud30c\uc77c", None))
+        self.browseImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucc3e\uc544\ubcf4\uae30", None))
+        self.label2.setText(QCoreApplication.translate("SettingsWindow", u"Workflow", None))
+        self.browseImageModelWorkflowButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucc3e\uc544\ubcf4\uae30", None))
+        self.label3.setText(QCoreApplication.translate("SettingsWindow", u"\ub108\ube44", None))
+        self.label4.setText(QCoreApplication.translate("SettingsWindow", u"\ub192\uc774", None))
+        self.label5.setText(QCoreApplication.translate("SettingsWindow", u"Steps", None))
+        self.label6.setText(QCoreApplication.translate("SettingsWindow", u"CFG", None))
+        self.label7.setText(QCoreApplication.translate("SettingsWindow", u"Sampler", None))
+        self.label8.setText(QCoreApplication.translate("SettingsWindow", u"Scheduler", None))
+        self.label9.setText(QCoreApplication.translate("SettingsWindow", u"Negative Prompt", None))
+        self.saveImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"\ubaa8\ub378 \uc815\ubcf4 \uc800\uc7a5", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.imageModelTab), QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ubaa8\ub378", None))
+        self.label10.setText(QCoreApplication.translate("SettingsWindow", u"\ud504\ub85c\uc81d\ud2b8 \uc800\uc7a5 \uc704\uce58", None))
+        self.label11.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub108\ube44", None))
+        self.label12.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub192\uc774", None))
         self.autoSaveCheck.setText(QCoreApplication.translate("SettingsWindow", u"\uacb0\uacfc \uc790\ub3d9 \uc800\uc7a5", None))
+        self.label13.setText(QCoreApplication.translate("SettingsWindow", u"\uadf8\ub9bc\uccb4 \ud504\ub86c\ud504\ud2b8", None))
+        self.label14.setText(QCoreApplication.translate("SettingsWindow", u"\ub9d0\ud48d\uc120 \uae00\uc790 \ud06c\uae30", None))
         self.tabs.setTabText(self.tabs.indexOf(self.generalTab), QCoreApplication.translate("SettingsWindow", u"\uc77c\ubc18", None))
         self.cancelButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucde8\uc18c", None))
         self.applyButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc801\uc6a9", None))

@@ -1,6 +1,23 @@
 import os
 from pathlib import Path
-from PIL import ImageFont
+from PIL import Image, ImageDraw, ImageFont
+
+
+def find_font_path(explicit=None):
+    candidates = []
+    if explicit:
+        candidates.append(explicit)
+    candidates += [
+        os.environ.get("COMFY_FONT_PATH", ""),
+        os.environ.get("WINDIR", "C:/Windows") + "/Fonts/malgun.ttf",
+        os.environ.get("WINDIR", "C:/Windows") + "/Fonts/malgunbd.ttf",
+        "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
+        "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
+    ]
+    for path in candidates:
+        if path and Path(path).exists():
+            return str(path).replace("\\", "/")
+    return ""
 
 
 def find_font(size):
@@ -32,6 +49,21 @@ def _wrap_text(draw, text, font, max_width):
                 current = test
         lines.append(current)
     return lines
+
+
+def wrap_text(text, max_width, font_size=28, font=None):
+    """DrawText+용: 폰트 메트릭스로 대사를 max_width 픽셀 안에서 줄바꿈한다.
+
+    DrawText+ 노드는 자동 줄바꿈이 없어 개행(\\n)을 미리 넣어야 하며,
+    각 줄은 노드에서 가로 중앙 정렬된다.
+    """
+    if not text:
+        return ""
+    if font is None:
+        font = find_font(int(font_size))
+    dummy = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+    lines = _wrap_text(dummy, str(text), font, max(40, int(max_width)))
+    return "\n".join(lines)
 
 
 def draw_dialogue(draw, box, text, font=None):

@@ -19,6 +19,7 @@ class Panel:
     speaker: str = ""
     seed: int = 0
     image_path: str = ""
+    dialogue_composited: bool = False
 
 @dataclass
 class Comic:

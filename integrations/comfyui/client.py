@@ -1,4 +1,6 @@
 import time
+from pathlib import Path
+
 import requests
 
 
@@ -51,7 +53,14 @@ class ComfyUIClient:
                 if status.get("status_str") == "error" or status.get("completed") is False and status.get("messages"):
                     raise RuntimeError(f"ComfyUI workflow 실행 오류: {status}")
                 for node_output in item.get("outputs", {}).values():
+                    # 최종 결과물(output)을 우선하고, 임시 미리보기(temp)는 나중에 본다.
+                    candidates = []
                     for img in node_output.get("images", []):
+                        candidates.append(img)
+                        if img.get("type", "output") == "output":
+                            return self.download_image(img["filename"], img.get("subfolder", ""), img.get("type", "output"))
+                    if candidates:
+                        img = candidates[0]
                         return self.download_image(img["filename"], img.get("subfolder", ""), img.get("type", "output"))
             time.sleep(poll)
         raise TimeoutError("ComfyUI 이미지 생성 시간이 초과되었습니다. (600초)")
@@ -61,3 +70,20 @@ class ComfyUIClient:
         r = requests.get(self.base_url + "/view", params=params, timeout=30)
         r.raise_for_status()
         return r.content
+
+    def upload_image(self, path, timeout=60):
+        """이미지를 ComfyUI input 폴더에 업로드하고 LoadImage용 이름을 반환한다."""
+        p = Path(path)
+        with p.open("rb") as f:
+            r = requests.post(
+                self.base_url + "/upload/image",
+                files={"image": (p.name, f, "image/png")},
+                data={"overwrite": "true"},
+                timeout=timeout,
+            )
+        r.raise_for_status()
+        data = r.json()
+        name = data.get("name")
+        if not name:
+            raise RuntimeError(f"ComfyUI 이미지 업로드 실패: {data}")
+        return name

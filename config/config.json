@@ -3,12 +3,14 @@
     "host": "127.0.0.1",
     "port": 1234,
     "api_path": "/v1",
-    "model": "gemma-4-e4b-uncensored-hauhaucs-aggressive"
+    "model": "kanana-2-30b-a3b-instruct-2601"
   },
   "comfyui": {
     "host": "127.0.0.1",
     "port": 8188,
-    "workflow": "workflows/4cut_default.json"
+    "workflow": "workflows/4cut_default.json",
+    "font_path": "",
+    "font_size": 32
   },
   "general": {
     "project_path": "projects",

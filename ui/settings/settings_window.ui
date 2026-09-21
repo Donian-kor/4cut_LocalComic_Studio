@@ -89,6 +89,10 @@
       <item row="2" column="0"><widget class="QLabel"><property name="text"><string>이미지 높이</string></property></widget></item>
       <item row="2" column="1"><widget class="QSpinBox" name="heightSpin"><property name="maximum"><number>4096</number></property></widget></item>
       <item row="3" column="1"><widget class="QCheckBox" name="autoSaveCheck"><property name="text"><string>결과 자동 저장</string></property></widget></item>
+           <item row="4" column="0"><widget class="QLabel"><property name="text"><string>그림체 프롬프트</string></property></widget></item>
+      <item row="4" column="1"><widget class="QPlainTextEdit" name="stylePromptEdit"/></item>
+      <item row="5" column="0"><widget class="QLabel"><property name="text"><string>말풍선 글자 크기</string></property></widget></item>
+      <item row="5" column="1"><widget class="QSpinBox" name="bubbleFontSpin"><property name="maximum"><number>200</number></property><property name="minimum"><number>8</number></property></widget></item>
      </layout>
     </widget>
    </widget></item>

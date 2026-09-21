@@ -56,6 +56,11 @@ class SettingsWindow:
         lm = self.manager.section("lmstudio")
         cf = self.manager.section("comfyui")
         g = self.manager.section("general")
+        from compose.bubble import find_font_path
+        if not cf.get("font_path"):
+            cf["font_path"] = find_font_path("")
+        if not cf.get("font_size"):
+            cf["font_size"] = 32
         self.form.lmHostEdit.setText(str(lm.get("host", "127.0.0.1")))
         self.form.lmPortSpin.setValue(int(lm.get("port", 1234)))
         self.form.lmApiEdit.setText(str(lm.get("api_path", "/v1")))
@@ -70,6 +75,10 @@ class SettingsWindow:
         self.form.widthSpin.setValue(int(g.get("width", 768)))
         self.form.heightSpin.setValue(int(g.get("height", 768)))
         self.form.autoSaveCheck.setChecked(bool(g.get("auto_save", True)))
+        self.form.stylePromptEdit.setPlainText(
+            str(g.get("style_prompt", "") or "")
+        )
+        self.form.bubbleFontSpin.setValue(int(g.get("bubble_font_size", 28) or 28))
 
         self.form.imageModelSamplerCombo.addItems([
             "euler_ancestral", "euler", "dpmpp_2m", "dpmpp_2m_sde", "ddim", "uni_pc"
@@ -97,6 +106,8 @@ class SettingsWindow:
                 "width": self.form.widthSpin.value(),
                 "height": self.form.heightSpin.value(),
                 "auto_save": self.form.autoSaveCheck.isChecked(),
+                "style_prompt": self.form.stylePromptEdit.toPlainText().strip(),
+                "bubble_font_size": self.form.bubbleFontSpin.value(),
             },
         }
 
@@ -270,7 +281,9 @@ class SettingsWindow:
             if profile.model_file and profile.workflow:
                 self.image_models.upsert(profile)
         values = self._capture()
-        self.manager.data.update(values)
+        # 섹션 전체를 덮어쓰지 않고 병합한다. (폼에 없는 키 보존: font_path 등)
+        for section, section_values in values.items():
+            self.manager.data.setdefault(section, {}).update(section_values)
         self.image_models.save()
         self.form.accept()
 
