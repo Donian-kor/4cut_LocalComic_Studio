@@ -19,22 +19,21 @@ class ComicService:
         self.compose_service = ComposeService(
             font_size=int(general.get("bubble_font_size", 28) or 28)
         )
-        comfy_section = settings.get("comfyui", {}) if isinstance(settings, dict) else {}
         self.font_name = self._resolve_font_name(workflow_adapter)
-        self.font_size = int(comfy_section.get("font_size", 32) or 32)
-
-    @staticmethod
-    def _resolve_font_name(workflow_adapter):
-        """폰트 절대 경로를 DrawText+ 폰트 폴더 기준 파일명으로 변환한다."""
-        from pathlib import Path as _P
-        font_path = getattr(workflow_adapter, "font_path", "") or ""
-        return _P(font_path).name if font_path else "malgun.ttf"
+        # DrawText+ 글자 크기는 일반 설정의 말풍선 글자 크기를 따른다.
+        self.font_size = int(general.get("bubble_font_size", 32) or 32)
         self.project_path = Path(general.get("project_path", "projects"))
         if not self.project_path.is_absolute() and base_dir:
             self.project_path = Path(base_dir) / self.project_path
         self.auto_save = bool(general.get("auto_save", True))
         self.style_prompt = str(general.get("style_prompt", "") or "")
         self._run_folder = None
+
+    @staticmethod
+    def _resolve_font_name(workflow_adapter):
+        """폰트 절대 경로를 DrawText+ 폰트 폴더 기준 파일명으로 변환한다."""
+        font_path = getattr(workflow_adapter, "font_path", "") or ""
+        return Path(font_path).name if font_path else "malgun.ttf"
 
     def plan(self, idea, style=""):
         return self.story.create_comic(idea, style)

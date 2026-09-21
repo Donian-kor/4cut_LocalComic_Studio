@@ -3,20 +3,22 @@
     "host": "127.0.0.1",
     "port": 1234,
     "api_path": "/v1",
-    "model": "kanana-2-30b-a3b-instruct-2601"
+    "model": "gemma-4-e4b-uncensored-hauhaucs-aggressive"
   },
   "comfyui": {
     "host": "127.0.0.1",
     "port": 8188,
     "workflow": "workflows/4cut_default.json",
-    "font_path": "",
+    "font_path": "C:/WINDOWS/Fonts/malgun.ttf",
     "font_size": 32
   },
   "general": {
     "project_path": "projects",
-    "width": 768,
-    "height": 768,
-    "auto_save": true
+    "width": 512,
+    "height": 512,
+    "auto_save": true,
+    "style_prompt": "clean anime cel shading, crisp lineart, flat colors, consistent character design",
+    "bubble_font_size": 28
   },
   "image_model": "z_anime_base_aio_fp8",
   "image_models": [
