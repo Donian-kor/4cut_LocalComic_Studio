@@ -9,16 +9,21 @@ class PreviewSection(QWidget):
     def __init__(self, parent=None):
         super().__init__(parent)
         loader = QUiLoader()
-        self.form = loader.load(str(Path(__file__).parent / "preview_section.ui"), None)
+        ui_path = Path(__file__).resolve().parent / "preview_section.ui"
+        self.form = loader.load(str(ui_path), None)
         if self.form is None:
-            raise RuntimeError("UI 파일 로드 실패: preview_section.ui")
-        wrapper = QVBoxLayout(self); wrapper.setContentsMargins(0, 0, 0, 0); wrapper.addWidget(self.form)
+            raise RuntimeError(f"UI 파일 로드 실패: {ui_path}")
+        wrapper = QVBoxLayout(self)
+        wrapper.setContentsMargins(0, 0, 0, 0)
+        wrapper.addWidget(self.form)
         self._pixmap = None
 
     def show_comic(self, comic):
         if comic.output_path:
-            self._pixmap = QPixmap(comic.output_path)
-            self._refresh()
+            pixmap = QPixmap(comic.output_path)
+            if not pixmap.isNull():
+                self._pixmap = pixmap
+                self._refresh()
 
     def resizeEvent(self, event):
         super().resizeEvent(event)
@@ -26,6 +31,8 @@ class PreviewSection(QWidget):
 
     def _refresh(self):
         if self._pixmap and not self._pixmap.isNull():
-            self.form.imageLabel.setPixmap(self._pixmap.scaled(
-                self.form.imageLabel.size(), Qt.KeepAspectRatio, Qt.SmoothTransformation
-            ))
+            target = self.form.imageLabel.size()
+            if target.width() > 0 and target.height() > 0:
+                self.form.imageLabel.setPixmap(
+                    self._pixmap.scaled(target, Qt.KeepAspectRatio, Qt.SmoothTransformation)
+                )

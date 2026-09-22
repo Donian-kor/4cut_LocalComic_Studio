@@ -3,6 +3,7 @@ from pathlib import Path
 from PIL import Image, ImageDraw, ImageFont
 
 from compose.bubble import find_font
+from core.services.bubble_detector import BubbleDetector
 
 _FONT_CACHE = {}
 
@@ -33,11 +34,12 @@ def _wrap_cjk(text, max_width, font):
 
 
 class ImageService:
-    def __init__(self, comfy_client, workflow_adapter, width=768, height=768):
+    def __init__(self, comfy_client, workflow_adapter, width=768, height=768, detector=None):
         self.comfy = comfy_client
         self.workflow = workflow_adapter
         self.width = width
         self.height = height
+        self.detector = detector or BubbleDetector()
 
     def generate_panel(self, panel, output_dir, cancel_check=None, style_prompt=""):
         workflow = self.workflow.prepare(
@@ -57,41 +59,59 @@ class ImageService:
         return str(path)
 
     def apply_dialogue(self, panel, font_name=None, font_size=32, cancel_check=None):
-        """2단계: 생성된 컷의 말풍선을 감지해 대사를 합성한다.
-
-        DrawText+는 자동 줄바꿈이 없으므로 Python에서 폰트 메트릭스로
-        미리 줄바꿈한 텍스트를 넘긴다. 말풍선이 감지되지 않은 컷은
-        ComfyUI 실행 오류가 나므로, 호출자(comic_service)가 원본을 유지한다.
-        """
+        """2단계: 생성된 컷의 말풍선을 YOLO로 감지해 적절한 위치에 대사를 합성한다."""
         dialogue = str(getattr(panel, "dialogue", "") or "").strip()
         if not dialogue or not panel.image_path:
             return panel.image_path
 
-        text, font_size = self._fit_dialogue_text(dialogue, font_size)
+        # 1. YOLO 말풍선 탐지 (미검출 시 안전 기본 오프셋 자동 계산)
+        bubble_target = self.detector.get_best_bubble_target(
+            panel.image_path,
+            img_width=self.width,
+            img_height=self.height,
+        )
+
+        offset_x = bubble_target["offset_x"]
+        offset_y = bubble_target["offset_y"]
+        target_w = bubble_target.get("bubble_width", int(self.width * 0.6))
+        target_h = bubble_target.get("bubble_height", int(self.height * 0.25))
+
+        # 2. 실제 말풍선 영역 너비에 맞게 동적 줄바꿈 및 폰트 크기 조절
+        text, final_font_size = self._fit_dialogue_text(
+            dialogue,
+            font_size,
+            target_width=target_w,
+            target_height=target_h,
+        )
+
+        # 3. ComfyUI 업로드 및 2단계 실행
         image_name = self.comfy.upload_image(panel.image_path)
         workflow = self.workflow.prepare_stage2(
             image_name, text,
             width=self.width, height=self.height,
-            font_name=font_name, font_size=font_size,
+            font_name=font_name, font_size=final_font_size,
+            offset_x=offset_x, offset_y=offset_y,
         )
         prompt_id = self.comfy.queue_prompt(workflow)
         data = self.comfy.wait_for_image(prompt_id, cancel_check=cancel_check)
         if cancel_check and cancel_check():
             raise InterruptedError("대사 합성이 취소되었습니다.")
-        # 기존 파일을 덮어쓰지 않고 대사 합성 이미지를 새 파일로 저장한다.
+
+        # 4. 합성된 이미지 저장 및 상태 플래그 갱신
         path = Path(panel.image_path)
         dialogued_path = path.with_name(f"panel_{panel.index}_dialogue.png")
         dialogued_path.write_bytes(data)
         panel.image_path = str(dialogued_path)
-        # ComposeService의 PIL 말풍선 이중 합성을 방지한다.
         panel.dialogue_composited = True
+        print(f"[ImageService] 패널 {panel.index} 대사 합성 완료 -> {dialogued_path.name}")
         return panel.image_path
 
-    def _fit_dialogue_text(self, dialogue, font_size):
-        """말풍선 크기 추정치(너비 55%, 높이 25%)에 맞게 대사를 줄바꿈하고 폰트 크기를 조정한다."""
+    def _fit_dialogue_text(self, dialogue, font_size, target_width=None, target_height=None):
+        """실제 말풍선 크기(또는 기본 영역)에 맞게 대사를 줄바꿈하고 폰트 크기를 조정한다."""
         font_size = int(font_size or 32)
-        max_width = max(80, int(self.width * 0.55))
-        max_block = max(60, int(self.height * 0.25))
+        pad = 20
+        max_width = max(80, int((target_width or (self.width * 0.55)) - pad * 2))
+        max_block = max(60, int((target_height or (self.height * 0.25)) - pad * 2))
         while True:
             font = _get_font(font_size)
             lines = _wrap_cjk(dialogue, max_width, font)
@@ -99,7 +119,7 @@ class ImageService:
                 (0, 0), "가Ag", font=font
             )
             line_height = max(24, bbox[3] - bbox[1]) + 6
-            if len(lines) * line_height <= max_block or font_size <= 12:
+            if len(lines) * line_height <= max_block or font_size <= 14:
                 break
             font_size -= 2
         return "\n".join(lines), font_size

@@ -16,114 +16,130 @@ from PySide6.QtGui import (QBrush, QColor, QConicalGradient, QCursor,
     QImage, QKeySequence, QLinearGradient, QPainter,
     QPalette, QPixmap, QRadialGradient, QTransform)
 from PySide6.QtWidgets import (QApplication, QCheckBox, QComboBox, QDialog,
-    QDoubleSpinBox, QFormLayout, QHBoxLayout, QLabel,
-    QLineEdit, QListWidget, QListWidgetItem, QPlainTextEdit,
-    QPushButton, QSizePolicy, QSpacerItem, QSpinBox,
-    QTabWidget, QVBoxLayout, QWidget)
+    QDoubleSpinBox, QFormLayout, QFrame, QGroupBox,
+    QHBoxLayout, QLabel, QLineEdit, QListWidget,
+    QListWidgetItem, QPlainTextEdit, QPushButton, QSizePolicy,
+    QSpacerItem, QSpinBox, QTabWidget, QVBoxLayout,
+    QWidget)
+
 class Ui_SettingsWindow(object):
     def setupUi(self, SettingsWindow):
         if not SettingsWindow.objectName():
             SettingsWindow.setObjectName(u"SettingsWindow")
-        SettingsWindow.setMinimumSize(QSize(650, 500))
+        SettingsWindow.resize(700, 666)
+        SettingsWindow.setMinimumSize(QSize(700, 620))
         self.verticalLayout = QVBoxLayout(SettingsWindow)
         self.verticalLayout.setObjectName(u"verticalLayout")
         self.tabs = QTabWidget(SettingsWindow)
         self.tabs.setObjectName(u"tabs")
-        self.lmstudioTab = QWidget()
-        self.lmstudioTab.setObjectName(u"lmstudioTab")
-        self.lmForm = QFormLayout(self.lmstudioTab)
+        self.aiServerTab = QWidget()
+        self.aiServerTab.setObjectName(u"aiServerTab")
+        self.aiServerLayout = QVBoxLayout(self.aiServerTab)
+        self.aiServerLayout.setObjectName(u"aiServerLayout")
+        self.lmGroup = QGroupBox(self.aiServerTab)
+        self.lmGroup.setObjectName(u"lmGroup")
+        self.lmForm = QFormLayout(self.lmGroup)
         self.lmForm.setObjectName(u"lmForm")
-        self.lmHostLabel = QLabel(self.lmstudioTab)
+        self.lmHostLabel = QLabel(self.lmGroup)
         self.lmHostLabel.setObjectName(u"lmHostLabel")
 
         self.lmForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.lmHostLabel)
 
-        self.lmHostEdit = QLineEdit(self.lmstudioTab)
+        self.lmHostEdit = QLineEdit(self.lmGroup)
         self.lmHostEdit.setObjectName(u"lmHostEdit")
 
         self.lmForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.lmHostEdit)
 
-        self.lmPortLabel = QLabel(self.lmstudioTab)
+        self.lmPortLabel = QLabel(self.lmGroup)
         self.lmPortLabel.setObjectName(u"lmPortLabel")
 
         self.lmForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.lmPortLabel)
 
-        self.lmPortSpin = QSpinBox(self.lmstudioTab)
+        self.lmPortSpin = QSpinBox(self.lmGroup)
         self.lmPortSpin.setObjectName(u"lmPortSpin")
         self.lmPortSpin.setMaximum(65535)
 
         self.lmForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.lmPortSpin)
 
-        self.lmApiLabel = QLabel(self.lmstudioTab)
+        self.lmApiLabel = QLabel(self.lmGroup)
         self.lmApiLabel.setObjectName(u"lmApiLabel")
 
         self.lmForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.lmApiLabel)
 
-        self.lmApiEdit = QLineEdit(self.lmstudioTab)
+        self.lmApiEdit = QLineEdit(self.lmGroup)
         self.lmApiEdit.setObjectName(u"lmApiEdit")
 
         self.lmForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.lmApiEdit)
 
-        self.lmModelLabel = QLabel(self.lmstudioTab)
+        self.lmModelLabel = QLabel(self.lmGroup)
         self.lmModelLabel.setObjectName(u"lmModelLabel")
 
         self.lmForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.lmModelLabel)
 
-        self.lmModelCombo = QComboBox(self.lmstudioTab)
+        self.lmModelCombo = QComboBox(self.lmGroup)
         self.lmModelCombo.setObjectName(u"lmModelCombo")
         self.lmModelCombo.setEditable(True)
 
         self.lmForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.lmModelCombo)
 
-        self.lmTestButton = QPushButton(self.lmstudioTab)
+        self.lmTestButton = QPushButton(self.lmGroup)
         self.lmTestButton.setObjectName(u"lmTestButton")
 
         self.lmForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.lmTestButton)
 
-        self.lmStatusLabel = QLabel(self.lmstudioTab)
+        self.lmStatusLabel = QLabel(self.lmGroup)
         self.lmStatusLabel.setObjectName(u"lmStatusLabel")
 
         self.lmForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.lmStatusLabel)
 
-        self.tabs.addTab(self.lmstudioTab, "")
-        self.comfyTab = QWidget()
-        self.comfyTab.setObjectName(u"comfyTab")
-        self.comfyForm = QFormLayout(self.comfyTab)
+
+        self.aiServerLayout.addWidget(self.lmGroup)
+
+        self.serverDivider = QFrame(self.aiServerTab)
+        self.serverDivider.setObjectName(u"serverDivider")
+        self.serverDivider.setFrameShape(QFrame.Shape.HLine)
+        self.serverDivider.setFrameShadow(QFrame.Shadow.Sunken)
+
+        self.aiServerLayout.addWidget(self.serverDivider)
+
+        self.comfyGroup = QGroupBox(self.aiServerTab)
+        self.comfyGroup.setObjectName(u"comfyGroup")
+        self.comfyForm = QFormLayout(self.comfyGroup)
         self.comfyForm.setObjectName(u"comfyForm")
-        self.comfyHostLabel = QLabel(self.comfyTab)
+        self.comfyHostLabel = QLabel(self.comfyGroup)
         self.comfyHostLabel.setObjectName(u"comfyHostLabel")
 
         self.comfyForm.setWidget(0, QFormLayout.ItemRole.LabelRole, self.comfyHostLabel)
 
-        self.comfyHostEdit = QLineEdit(self.comfyTab)
+        self.comfyHostEdit = QLineEdit(self.comfyGroup)
         self.comfyHostEdit.setObjectName(u"comfyHostEdit")
 
         self.comfyForm.setWidget(0, QFormLayout.ItemRole.FieldRole, self.comfyHostEdit)
 
-        self.comfyPortLabel = QLabel(self.comfyTab)
+        self.comfyPortLabel = QLabel(self.comfyGroup)
         self.comfyPortLabel.setObjectName(u"comfyPortLabel")
 
         self.comfyForm.setWidget(1, QFormLayout.ItemRole.LabelRole, self.comfyPortLabel)
 
-        self.comfyPortSpin = QSpinBox(self.comfyTab)
+        self.comfyPortSpin = QSpinBox(self.comfyGroup)
         self.comfyPortSpin.setObjectName(u"comfyPortSpin")
         self.comfyPortSpin.setMaximum(65535)
 
         self.comfyForm.setWidget(1, QFormLayout.ItemRole.FieldRole, self.comfyPortSpin)
 
-        self.comfyWorkflowLabel = QLabel(self.comfyTab)
+        self.comfyWorkflowLabel = QLabel(self.comfyGroup)
         self.comfyWorkflowLabel.setObjectName(u"comfyWorkflowLabel")
 
         self.comfyForm.setWidget(2, QFormLayout.ItemRole.LabelRole, self.comfyWorkflowLabel)
 
         self.workflowLayout = QHBoxLayout()
         self.workflowLayout.setObjectName(u"workflowLayout")
-        self.comfyWorkflowEdit = QLineEdit(self.comfyTab)
+        self.comfyWorkflowEdit = QLineEdit(self.comfyGroup)
         self.comfyWorkflowEdit.setObjectName(u"comfyWorkflowEdit")
 
         self.workflowLayout.addWidget(self.comfyWorkflowEdit)
 
-        self.browseWorkflowButton = QPushButton(self.comfyTab)
+        self.browseWorkflowButton = QPushButton(self.comfyGroup)
         self.browseWorkflowButton.setObjectName(u"browseWorkflowButton")
 
         self.workflowLayout.addWidget(self.browseWorkflowButton)
@@ -131,17 +147,24 @@ class Ui_SettingsWindow(object):
 
         self.comfyForm.setLayout(2, QFormLayout.ItemRole.FieldRole, self.workflowLayout)
 
-        self.comfyTestButton = QPushButton(self.comfyTab)
+        self.comfyTestButton = QPushButton(self.comfyGroup)
         self.comfyTestButton.setObjectName(u"comfyTestButton")
 
         self.comfyForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.comfyTestButton)
 
-        self.comfyStatusLabel = QLabel(self.comfyTab)
+        self.comfyStatusLabel = QLabel(self.comfyGroup)
         self.comfyStatusLabel.setObjectName(u"comfyStatusLabel")
 
         self.comfyForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.comfyStatusLabel)
 
-        self.tabs.addTab(self.comfyTab, "")
+
+        self.aiServerLayout.addWidget(self.comfyGroup)
+
+        self.serverSpacer = QSpacerItem(0, 0, QSizePolicy.Policy.Minimum, QSizePolicy.Policy.Expanding)
+
+        self.aiServerLayout.addItem(self.serverSpacer)
+
+        self.tabs.addTab(self.aiServerTab, "")
         self.imageModelTab = QWidget()
         self.imageModelTab.setObjectName(u"imageModelTab")
         self.imageModelMainLayout = QHBoxLayout(self.imageModelTab)
@@ -235,8 +258,8 @@ class Ui_SettingsWindow(object):
 
         self.imageModelWidthSpin = QSpinBox(self.imageModelTab)
         self.imageModelWidthSpin.setObjectName(u"imageModelWidthSpin")
-        self.imageModelWidthSpin.setMaximum(4096)
         self.imageModelWidthSpin.setMinimum(64)
+        self.imageModelWidthSpin.setMaximum(4096)
 
         self.imageModelForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.imageModelWidthSpin)
 
@@ -247,8 +270,8 @@ class Ui_SettingsWindow(object):
 
         self.imageModelHeightSpin = QSpinBox(self.imageModelTab)
         self.imageModelHeightSpin.setObjectName(u"imageModelHeightSpin")
-        self.imageModelHeightSpin.setMaximum(4096)
         self.imageModelHeightSpin.setMinimum(64)
+        self.imageModelHeightSpin.setMaximum(4096)
 
         self.imageModelForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.imageModelHeightSpin)
 
@@ -259,8 +282,8 @@ class Ui_SettingsWindow(object):
 
         self.imageModelStepsSpin = QSpinBox(self.imageModelTab)
         self.imageModelStepsSpin.setObjectName(u"imageModelStepsSpin")
-        self.imageModelStepsSpin.setMaximum(200)
         self.imageModelStepsSpin.setMinimum(1)
+        self.imageModelStepsSpin.setMaximum(200)
 
         self.imageModelForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.imageModelStepsSpin)
 
@@ -271,8 +294,8 @@ class Ui_SettingsWindow(object):
 
         self.imageModelCfgSpin = QDoubleSpinBox(self.imageModelTab)
         self.imageModelCfgSpin.setObjectName(u"imageModelCfgSpin")
-        self.imageModelCfgSpin.setMaximum(30.000000000000000)
         self.imageModelCfgSpin.setDecimals(2)
+        self.imageModelCfgSpin.setMaximum(30.000000000000000)
         self.imageModelCfgSpin.setSingleStep(0.500000000000000)
 
         self.imageModelForm.setWidget(6, QFormLayout.ItemRole.FieldRole, self.imageModelCfgSpin)
@@ -354,22 +377,23 @@ class Ui_SettingsWindow(object):
 
         self.generalForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.heightSpin)
 
-        self.autoSaveCheck = QCheckBox(self.generalTab)
-        self.autoSaveCheck.setObjectName(u"autoSaveCheck")
-
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.autoSaveCheck)
-
         self.label13 = QLabel(self.generalTab)
         self.label13.setObjectName(u"label13")
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label13)
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label13)
 
         self.bubbleFontSpin = QSpinBox(self.generalTab)
         self.bubbleFontSpin.setObjectName(u"bubbleFontSpin")
-        self.bubbleFontSpin.setMaximum(200)
         self.bubbleFontSpin.setMinimum(8)
+        self.bubbleFontSpin.setMaximum(200)
 
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.FieldRole, self.bubbleFontSpin)
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.bubbleFontSpin)
+
+        self.autoSaveCheck = QCheckBox(self.generalTab)
+        self.autoSaveCheck.setObjectName(u"autoSaveCheck")
+        self.autoSaveCheck.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
+
+        self.generalForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.autoSaveCheck)
 
         self.tabs.addTab(self.generalTab, "")
 
@@ -397,25 +421,29 @@ class Ui_SettingsWindow(object):
 
         self.retranslateUi(SettingsWindow)
 
+        self.tabs.setCurrentIndex(2)
+
+
         QMetaObject.connectSlotsByName(SettingsWindow)
     # setupUi
 
     def retranslateUi(self, SettingsWindow):
-        SettingsWindow.setWindowTitle(QCoreApplication.translate("SettingsWindow", u"4Cut Local - AI \uc5f0\uacb0 \uc124\uc815", None))
+        SettingsWindow.setWindowTitle(QCoreApplication.translate("SettingsWindow", u"4cut Studio - \uc124\uc815", None))
+        self.lmGroup.setTitle(QCoreApplication.translate("SettingsWindow", u"LM Studio \u00b7 \uc774\uc57c\uae30/\ub300\uc0ac \uc0dd\uc131", None))
         self.lmHostLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc11c\ubc84 \uc8fc\uc18c", None))
         self.lmPortLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ud3ec\ud2b8", None))
         self.lmApiLabel.setText(QCoreApplication.translate("SettingsWindow", u"API \uacbd\ub85c", None))
         self.lmModelLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ubaa8\ub378", None))
         self.lmTestButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc5f0\uacb0 \ud14c\uc2a4\ud2b8", None))
         self.lmStatusLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc0c1\ud0dc: \ud14c\uc2a4\ud2b8 \uc804", None))
-        self.tabs.setTabText(self.tabs.indexOf(self.lmstudioTab), QCoreApplication.translate("SettingsWindow", u"AI \uc11c\ubc84", None))
+        self.comfyGroup.setTitle(QCoreApplication.translate("SettingsWindow", u"ComfyUI \u00b7 \uc774\ubbf8\uc9c0 \uc0dd\uc131", None))
         self.comfyHostLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc11c\ubc84 \uc8fc\uc18c", None))
         self.comfyPortLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ud3ec\ud2b8", None))
-        self.comfyWorkflowLabel.setText(QCoreApplication.translate("SettingsWindow", u"Workflow", None))
+        self.comfyWorkflowLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uae30\ubcf8 Workflow", None))
         self.browseWorkflowButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucc3e\uc544\ubcf4\uae30", None))
         self.comfyTestButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc5f0\uacb0 \ud14c\uc2a4\ud2b8", None))
         self.comfyStatusLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc0c1\ud0dc: \ud14c\uc2a4\ud2b8 \uc804", None))
-        self.tabs.setTabText(self.tabs.indexOf(self.comfyTab), QCoreApplication.translate("SettingsWindow", u"ComfyUI (\uc774\ubbf8\uc9c0 \uc0dd\uc131)", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.aiServerTab), QCoreApplication.translate("SettingsWindow", u"AI \uc11c\ubc84", None))
         self.imageModelListLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ub4f1\ub85d\ub41c \uc774\ubbf8\uc9c0 \ubaa8\ub378", None))
         self.addImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"+ \ucd94\uac00", None))
         self.removeImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc0ad\uc81c", None))
@@ -436,8 +464,8 @@ class Ui_SettingsWindow(object):
         self.label10.setText(QCoreApplication.translate("SettingsWindow", u"\ud504\ub85c\uc81d\ud2b8 \uc800\uc7a5 \uc704\uce58", None))
         self.label11.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub108\ube44", None))
         self.label12.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub192\uc774", None))
-        self.autoSaveCheck.setText(QCoreApplication.translate("SettingsWindow", u"\uacb0\uacfc \uc790\ub3d9 \uc800\uc7a5", None))
         self.label13.setText(QCoreApplication.translate("SettingsWindow", u"\ub9d0\ud48d\uc120 \uae00\uc790 \ud06c\uae30", None))
+        self.autoSaveCheck.setText(QCoreApplication.translate("SettingsWindow", u"\uacb0\uacfc \uc790\ub3d9 \uc800\uc7a5", None))
         self.tabs.setTabText(self.tabs.indexOf(self.generalTab), QCoreApplication.translate("SettingsWindow", u"\uc77c\ubc18", None))
         self.cancelButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucde8\uc18c", None))
         self.applyButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc801\uc6a9", None))

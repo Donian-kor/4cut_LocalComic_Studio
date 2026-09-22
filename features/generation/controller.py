@@ -3,6 +3,12 @@ class GenerationController:
         self.widget = widget
         self.worker = None
 
+    def set_generating(self, generating):
+        self.widget.set_generating(generating)
+
+    def set_status(self, message, current, total):
+        self.widget.set_status(message, current, total)
+
     def attach_worker(self, worker):
         self.worker = worker
         worker.progress.connect(self._progress)

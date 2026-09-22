@@ -3,13 +3,23 @@
  <class>IdeaSection</class>
  <widget class="QWidget" name="IdeaSection">
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item><widget class="QLabel" name="titleLabel"><property name="text"><string>4컷 만화 만들기</string></property><property name="styleSheet"><string>font-size: 22px; font-weight: bold;</string></property></widget></item>
-   <item><widget class="QPlainTextEdit" name="ideaEdit"><property name="placeholderText"><string>만들고 싶은 4컷 만화 아이디어를 입력하세요.</string></property><property name="minimumHeight"><number>90</number></property></widget></item>
-   <item><layout class="QHBoxLayout" name="styleLayout">
-    <item><widget class="QLabel" name="styleLabel"><property name="text"><string>스타일</string></property></widget></item>
-    <item><widget class="QLineEdit" name="styleEdit"><property name="placeholderText"><string>예: 따뜻한 일상 코믹</string></property></widget></item>
-    <item><widget class="QPushButton" name="generateButton"><property name="text"><string>✨ 4컷 만화 생성</string></property></widget></item>
-   </layout></item>
+   <property name="spacing"><number>18</number></property>
+   <item><spacer name="topSpacer"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property></spacer></item>
+   <item><widget class="QLabel" name="eyebrowLabel"><property name="text"><string>✦ AI 4-CUT MAKER</string></property></widget></item>
+   <item><widget class="QLabel" name="titleLabel"><property name="text"><string>무엇을 만들어볼까요?</string></property></widget></item>
+   <item><widget class="QLabel" name="subtitleLabel"><property name="text"><string>아이디어만 적어주세요. 스토리, 장면, 대사, 그림까지 AI가 4컷으로 완성합니다.</string></property></widget></item>
+   <item><widget class="QPlainTextEdit" name="ideaEdit"><property name="placeholderText"><string>예: 퇴근하려는데 상사가 갑자기 춤을 추기 시작한 황당한 회사 이야기로 4컷 개그 만화를 만들어줘.</string></property><property name="minimumHeight"><number>150</number></property></widget></item>
+   <item>
+    <layout class="QHBoxLayout" name="optionLayout">
+     <property name="spacing"><number>10</number></property>
+     <item><widget class="QLabel" name="styleLabel"><property name="text"><string>분위기</string></property></widget></item>
+     <item><widget class="QComboBox" name="styleEdit"><property name="editable"><bool>false</bool></property><item><property name="text"><string>자동</string></property></item><item><property name="text"><string>개그</string></property></item><item><property name="text"><string>일상</string></property></item><item><property name="text"><string>로맨스</string></property></item><item><property name="text"><string>판타지</string></property></item></widget></item>
+     <item><spacer name="optionSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property></spacer></item>
+    </layout>
+   </item>
+   <item><widget class="QPushButton" name="generateButton"><property name="minimumHeight"><number>58</number></property><property name="text"><string>✦ 4컷 만화 만들기</string></property></widget></item>
+   <item><widget class="QLabel" name="hintLabel"><property name="text"><string>AI가 4컷 구성 · 캐릭터 · 이미지 · 대사를 자동으로 처리합니다.</string></property></widget></item>
+   <item><spacer name="bottomSpacer"><property name="orientation"><enum>Qt::Vertical</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property></spacer></item>
   </layout>
  </widget>
 </ui>

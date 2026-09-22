@@ -25,6 +25,7 @@ class ComposeService:
                 panel = img.convert("RGB")
                 # 2단계(ComfyUI 감지 기반)로 대사가 이미 합성된 패널은 건너뛴다.
                 if p.dialogue and not getattr(p, "dialogue_composited", False):
+                    print(f"[ComposeService] 패널 {p.index}: 2단계 합성이 되지 않아 Pillow로 대체 합성합니다.")
                     draw = ImageDraw.Draw(panel)
                     w, h = panel.size
                     font = find_font(int(self.font_size))

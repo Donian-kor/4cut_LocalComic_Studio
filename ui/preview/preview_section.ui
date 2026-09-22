@@ -3,8 +3,10 @@
  <class>PreviewSection</class>
  <widget class="QWidget" name="PreviewSection">
   <layout class="QVBoxLayout" name="verticalLayout">
-   <item><widget class="QLabel" name="titleLabel"><property name="text"><string>완성 미리보기</string></property><property name="styleSheet"><string>font-size: 18px; font-weight: bold;</string></property></widget></item>
-   <item><widget class="QLabel" name="imageLabel"><property name="minimumSize"><size><width>500</width><height>400</height></size></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="text"><string>아직 생성된 만화가 없습니다.</string></property></widget></item>
+   <property name="spacing"><number>8</number></property>
+   <item><widget class="QLabel" name="titleLabel"><property name="text"><string>완성된 4컷</string></property></widget></item>
+   <item><widget class="QLabel" name="subtitleLabel"><property name="text"><string>AI가 만든 결과입니다. 마음에 들지 않는 부분은 자연어로 다시 요청할 수 있어요.</string></property></widget></item>
+   <item><widget class="QLabel" name="imageLabel"><property name="minimumSize"><size><width>560</width><height>420</height></size></property><property name="alignment"><set>Qt::AlignCenter</set></property><property name="text"><string>아직 생성된 만화가 없습니다.</string></property></widget></item>
   </layout>
  </widget>
 </ui>

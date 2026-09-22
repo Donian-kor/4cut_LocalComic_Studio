@@ -38,6 +38,24 @@ class SettingsWindow:
         if self.form is None or not isinstance(self.form, QDialog):
             raise RuntimeError(f"settings_window.ui를 QDialog로 로드할 수 없습니다: {ui_path}")
 
+        self.form.setStyleSheet("""
+            QDialog, QWidget { background: #0b0d13; color: #f5f7fb; }
+            QTabWidget::pane { border: 1px solid #252a38; background: #10131c; border-radius: 8px; }
+            QTabBar::tab { background: #131720; color: #8f97a9; padding: 10px 18px; border: 1px solid #252a38; border-bottom: none; }
+            QTabBar::tab:selected { background: #1a1f2c; color: #ffffff; }
+            QGroupBox { background: #10131c; border: 1px solid #252a38; border-radius: 10px; margin-top: 12px; padding-top: 12px; }
+            QGroupBox::title { color: #dce1ec; padding: 0 8px; }
+            QLabel { color: #aeb6c6; }
+            QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QListWidget { background: #131720; color: #f5f7fb; border: 1px solid #303748; border-radius: 7px; padding: 7px; }
+            QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus { border-color: #6366f1; }
+            QListWidget::item:selected { background: #2c3260; color: #ffffff; }
+            QPushButton { background: #1a1f2c; color: #e8ebf2; border: 1px solid #303748; border-radius: 8px; padding: 8px 14px; }
+            QPushButton:hover { background: #22283a; border-color: #59627a; }
+            QPushButton:disabled { color: #646b7a; background: #141720; }
+            QPushButton#applyButton { background: #6366f1; color: #ffffff; border: none; font-weight: 700; }
+            QPushButton#applyButton:hover { background: #7477f5; }
+        """)
+
         self._load()
         self.form.applyButton.clicked.connect(self.apply)
         self.form.cancelButton.clicked.connect(self.form.reject)
@@ -68,9 +86,11 @@ class SettingsWindow:
         if saved_model:
             self.form.lmModelCombo.addItem(saved_model)
         self.form.lmModelCombo.setCurrentText(saved_model)
+        self.form.lmStatusLabel.setText("상태: 연결 확인 필요")
         self.form.comfyHostEdit.setText(str(cf.get("host", "127.0.0.1")))
         self.form.comfyPortSpin.setValue(int(cf.get("port", 8188)))
         self.form.comfyWorkflowEdit.setText(str(cf.get("workflow", "workflows/4cut_default.json")))
+        self.form.comfyStatusLabel.setText("상태: 연결 확인 필요")
         self.form.projectPathEdit.setText(str(g.get("project_path", "projects")))
         self.form.widthSpin.setValue(int(g.get("width", 768)))
         self.form.heightSpin.setValue(int(g.get("height", 768)))
@@ -108,6 +128,8 @@ class SettingsWindow:
         }
 
     def test_lm(self):
+        if self.worker is not None and self.worker.isRunning():
+            return
         values = self._capture()["lmstudio"]
         self.form.lmStatusLabel.setText("상태: 연결 테스트 중...")
         self.form.lmTestButton.setEnabled(False)
@@ -116,6 +138,8 @@ class SettingsWindow:
         self.worker.start()
 
     def test_comfy(self):
+        if self.worker is not None and self.worker.isRunning():
+            return
         values = self._capture()["comfyui"]
         self.form.comfyStatusLabel.setText("상태: 연결 테스트 중...")
         self.form.comfyTestButton.setEnabled(False)
@@ -271,6 +295,9 @@ class SettingsWindow:
             self.form.imageModelWorkflowEdit.setText(path)
 
     def apply(self):
+        if self.worker is not None and self.worker.isRunning():
+            self.worker.quit()
+            self.worker.wait(1000)
         # Persist the currently edited image model as part of Apply.
         if self.form.imageModelList.currentRow() >= 0:
             profile = self._form_profile()

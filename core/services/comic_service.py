@@ -68,10 +68,9 @@ class ComicService:
                 raise
             except FileNotFoundError:
                 pass
-            except Exception:
-                # 말풍선이 감지되지 않은 컷 등은 대사 없이 원본 이미지를 유지한다.
-                pass
-        return path
+            except Exception as e:
+                print(f"[ComicService] 패널 {panel.index} 2단계 대사 합성 중 예외 발생: {e}")
+        return panel.image_path or path
 
     def compose(self, comic):
         folder = self._run_folder or self.begin_run()

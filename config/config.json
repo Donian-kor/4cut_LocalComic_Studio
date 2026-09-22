@@ -17,7 +17,7 @@
     "width": 512,
     "height": 512,
     "auto_save": true,
-    "style_prompt": "clean anime cel shading, crisp lineart, flat colors, consistent character design",
+    "style_prompt": "clean anime cel shading, crisp lineart, flat colors, expressive comedic timing, consistent character design",
     "bubble_font_size": 28
   },
   "image_model": "z_anime_base_aio_fp8",

@@ -12,11 +12,11 @@ class WorkflowAdapter:
     2단계 워크플로우 파일이 없거나 대사가 비어 있으면 1단계 결과만 반환한다.
     """
 
-    # 1단계 positive 프롬프트에 추가할 말풍선 위치/크기 제약.
-    # 감지 안정성을 위해 말풍선을 항상 같은 위치·크기로 그리게 유도한다.
+    # 1단계 positive 프롬프트에 추가할 말풍선 위치/크기 제약 (가중치 강화).
     BUBBLE_PROMPT = (
-        "large white speech bubble at top center occupying upper 25% of image, "
-        "empty speech bubble, same position every panel"
+        "(large empty white speech bubble at top center:1.3), "
+        "(upper 25% empty comic dialogue balloon:1.2), "
+        "solid clean white fill inside speech bubble, clean outlines, same position every panel"
     )
 
     def __init__(self, path, base_dir=None, profile=None, font_path=None, font_size=None, stage2_path=None):
@@ -95,12 +95,8 @@ class WorkflowAdapter:
         # ComfyUI에서 대사 합성 안 함. dialogue 인자는 하위 호환용으로만 유지.
         return wf
 
-    def prepare_stage2(self, image_name, dialogue, width=768, height=768, font_name=None, font_size=32):
-        """2단계 워크플로우: 말풍선 감지 → bbox 중심 좌표 → DrawText+ 대사 합성.
-
-        좌표는 그래프 안에서 실시간 계산되어 DrawText+ offset에 연결되므로,
-        말풍선이 어디에 있든 대사는 항상 말풍선 정중앙에 놓인다.
-        """
+    def prepare_stage2(self, image_name, dialogue, width=768, height=768, font_name=None, font_size=32, offset_x=0, offset_y=0):
+        """2단계 워크플로우: 안전하게 계산된 오프셋 좌표로 DrawText+ 대사를 합성한다."""
         if not self.stage2_path or not self.stage2_path.exists():
             raise FileNotFoundError(f"2단계(대사 합성) workflow 파일이 없습니다: {self.stage2_path}")
         data = json.loads(self.stage2_path.read_text(encoding="utf-8"))
@@ -118,9 +114,11 @@ class WorkflowAdapter:
         draw["text"] = str(dialogue or "")
         draw["font"] = font_name or "malgun.ttf"
         draw["size"] = int(font_size or 32)
+        # 오프셋 직접 주입 (외부에서 전달된 안전 좌표)
+        draw["offset_x"] = int(offset_x)
+        draw["offset_y"] = int(offset_y)
 
-        # ImpactInt 노드 2개(너비, 높이)에 이미지 크기를 채운다.
-        # JSON 선언 순서대로 첫 번째는 너비, 두 번째는 높이에 대응한다.
+        # ImpactInt 노드가 있는 레거시 워크플로우와의 하위 호환성 유지
         int_nodes = list(self._find_nodes(wf, "ImpactInt").items())
         if len(int_nodes) >= 2:
             int_nodes[0][1].setdefault("inputs", {})["value"] = int(width)
