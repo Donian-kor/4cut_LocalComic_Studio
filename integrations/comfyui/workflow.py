@@ -14,10 +14,15 @@ class WorkflowAdapter:
 
     # 1단계 positive 프롬프트에 추가할 말풍선 위치/크기 제약 (가중치 강화).
     BUBBLE_PROMPT = (
-        "(large empty white speech bubble at top center:1.3), "
-        "(upper 25% empty comic dialogue balloon:1.2), "
-        "solid clean white fill inside speech bubble, clean outlines, same position every panel"
+        "(large empty white speech bubble at top center:1.2), "
+        "solid clean white fill inside speech bubble, clean outlines"
     )
+
+    DEFAULT_NEGATIVE_TAGS = [
+        "text", "letters", "watermark",
+        "multiple panels", "split screen", "grid layout", "comic strip",
+        "manga page", "panel divider", "2x2 grid", "multiple views", "split frame"
+    ]
 
     def __init__(self, path, base_dir=None, profile=None, font_path=None, font_size=None, stage2_path=None):
         p = Path(path)
@@ -53,15 +58,14 @@ class WorkflowAdapter:
         text_nodes = self._find_nodes(wf, "CLIPTextEncode")
         if not text_nodes:
             raise ValueError("workflow에서 CLIPTextEncode 노드를 찾을 수 없습니다.")
-        positive_id, negative_id = self._select_prompt_nodes(text_nodes)
+        positive_id, negative_id = self._select_prompt_nodes(wf, text_nodes)
         wf[positive_id].setdefault("inputs", {})["text"] = full_prompt
         if negative_id:
             base_neg = str(getattr(profile, "negative_prompt", "") or "")
             parts = [p.strip() for p in base_neg.split(",") if p.strip()]
-            # 말풍선은 그리도록 유도하므로 negative에서 speech bubble은 제외한다.
-            # (텍스트/글자는 AI가 그리지 못하게 계속 차단한다)
-            for extra in ("text", "letters", "watermark"):
-                if extra not in [p.lower() for p in parts]:
+            existing_lower = [p.lower() for p in parts]
+            for extra in self.DEFAULT_NEGATIVE_TAGS:
+                if extra.lower() not in existing_lower:
                     parts.append(extra)
             wf[negative_id].setdefault("inputs", {})["text"] = ", ".join(parts)
 
@@ -162,7 +166,21 @@ class WorkflowAdapter:
         return next(iter(nodes.values()), None)
 
     @staticmethod
-    def _select_prompt_nodes(nodes):
+    def _select_prompt_nodes(wf, nodes):
+        """KSampler 노드의 positive/negative 연결을 먼저 추적하고, 없을 경우 노드 ID 순서로 결정한다."""
+        sampler = WorkflowAdapter._first_node(wf, "KSampler")
+        if sampler:
+            inputs = sampler.get("inputs", {})
+            pos_ref = inputs.get("positive")
+            neg_ref = inputs.get("negative")
+            pos_id = str(pos_ref[0]) if isinstance(pos_ref, list) and len(pos_ref) > 0 else None
+            neg_id = str(neg_ref[0]) if isinstance(neg_ref, list) and len(neg_ref) > 0 else None
+
+            if pos_id and pos_id in nodes:
+                positive = pos_id
+                negative = neg_id if neg_id and neg_id in nodes else None
+                return positive, negative
+
         ids = list(nodes.keys())
         positive = ids[0]
         negative = ids[1] if len(ids) > 1 else None

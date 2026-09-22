@@ -16,12 +16,8 @@ class ComicService:
         self.width = int(getattr(image_model, "width", general.get("width", 768)))
         self.height = int(getattr(image_model, "height", general.get("height", 768)))
         self.image = ImageService(comfy_client, workflow_adapter, self.width, self.height)
-        self.compose_service = ComposeService(
-            font_size=int(general.get("bubble_font_size", 28) or 28)
-        )
+        self.compose_service = ComposeService()
         self.font_name = self._resolve_font_name(workflow_adapter)
-        # DrawText+ 글자 크기는 일반 설정의 말풍선 글자 크기를 따른다.
-        self.font_size = int(general.get("bubble_font_size", 32) or 32)
         self.project_path = Path(general.get("project_path", "projects"))
         if not self.project_path.is_absolute() and base_dir:
             self.project_path = Path(base_dir) / self.project_path
@@ -67,7 +63,6 @@ class ComicService:
                 self.image.apply_dialogue(
                     panel,
                     font_name=self.font_name,
-                    font_size=self.font_size,
                     cancel_check=cancel_check,
                 )
             except InterruptedError:

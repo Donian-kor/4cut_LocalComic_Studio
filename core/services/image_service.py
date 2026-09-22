@@ -58,7 +58,7 @@ class ImageService:
         panel.image_path = str(path)
         return str(path)
 
-    def apply_dialogue(self, panel, font_name=None, font_size=32, cancel_check=None):
+    def apply_dialogue(self, panel, font_name=None, font_size=None, cancel_check=None):
         """2단계: 생성된 컷의 말풍선을 YOLO로 감지해 적절한 위치에 대사를 합성한다."""
         dialogue = str(getattr(panel, "dialogue", "") or "").strip()
         if not dialogue or not panel.image_path:
@@ -76,10 +76,9 @@ class ImageService:
         target_w = bubble_target.get("bubble_width", int(self.width * 0.6))
         target_h = bubble_target.get("bubble_height", int(self.height * 0.25))
 
-        # 2. 실제 말풍선 영역 너비에 맞게 동적 줄바꿈 및 폰트 크기 조절
+        # 2. 실제 말풍선 크기(85% 가용 영역)에 맞게 폰트 크기 및 개행 자동 피팅 (Auto-Fit)
         text, final_font_size = self._fit_dialogue_text(
             dialogue,
-            font_size,
             target_width=target_w,
             target_height=target_h,
         )
@@ -103,23 +102,50 @@ class ImageService:
         dialogued_path.write_bytes(data)
         panel.image_path = str(dialogued_path)
         panel.dialogue_composited = True
-        print(f"[ImageService] 패널 {panel.index} 대사 합성 완료 -> {dialogued_path.name}")
+        print(f"[ImageService] 패널 {panel.index} 대사 합성 완료 (폰트 {final_font_size}px, 오프셋: {offset_x},{offset_y}) -> {dialogued_path.name}")
         return panel.image_path
 
-    def _fit_dialogue_text(self, dialogue, font_size, target_width=None, target_height=None):
-        """실제 말풍선 크기(또는 기본 영역)에 맞게 대사를 줄바꿈하고 폰트 크기를 조정한다."""
-        font_size = int(font_size or 32)
-        pad = 20
-        max_width = max(80, int((target_width or (self.width * 0.55)) - pad * 2))
-        max_block = max(60, int((target_height or (self.height * 0.25)) - pad * 2))
-        while True:
-            font = _get_font(font_size)
-            lines = _wrap_cjk(dialogue, max_width, font)
-            bbox = ImageDraw.Draw(Image.new("RGB", (8, 8))).textbbox(
-                (0, 0), "가Ag", font=font
-            )
-            line_height = max(24, bbox[3] - bbox[1]) + 6
-            if len(lines) * line_height <= max_block or font_size <= 14:
-                break
-            font_size -= 2
-        return "\n".join(lines), font_size
+    def _fit_dialogue_text(self, dialogue, target_width=None, target_height=None):
+        """말풍선 크기(너비, 높이)의 85% 영역(15% 여백)에 가장 꽉 차는 최적 폰트 크기를 이분 탐색으로 계산한다."""
+        target_w = target_width or (self.width * 0.6)
+        target_h = target_height or (self.height * 0.25)
+
+        # 15% 여백 적용 (가로 85%, 세로 85% 가용 상자)
+        safe_w = max(80, int(target_w * 0.85))
+        safe_h = max(50, int(target_h * 0.85))
+
+        dummy = ImageDraw.Draw(Image.new("RGB", (8, 8)))
+
+        # 이분 탐색 (Binary Search: 14px ~ 110px)
+        low, high = 14, 110
+        best_size = 14
+        best_lines = [dialogue]
+
+        while low <= high:
+            mid = (low + high) // 2
+            font = _get_font(mid)
+            lines = _wrap_cjk(dialogue, safe_w, font)
+
+            # 전체 텍스트 블록의 가로/세로 바운딩 박스 계산
+            line_widths = []
+            for l in lines:
+                if not l:
+                    continue
+                bbox = dummy.textbbox((0, 0), l, font=font)
+                line_widths.append(bbox[2] - bbox[0])
+
+            max_line_w = max(line_widths) if line_widths else 0
+            sample_bbox = dummy.textbbox((0, 0), "가Ag", font=font)
+            single_line_h = max(16, sample_bbox[3] - sample_bbox[1])
+            line_spacing = max(4, int(mid * 0.2))
+            total_block_h = len(lines) * single_line_h + max(0, len(lines) - 1) * line_spacing
+
+            # 가용 상자(85%) 수용 여부 판별
+            if max_line_w <= safe_w and total_block_h <= safe_h:
+                best_size = mid
+                best_lines = lines
+                low = mid + 1  # 더 큰 폰트 크기 시도
+            else:
+                high = mid - 1  # 폰트 크기 축소
+
+        return "\n".join(best_lines), best_size

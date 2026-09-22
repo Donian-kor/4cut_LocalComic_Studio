@@ -95,7 +95,6 @@ class SettingsWindow:
         self.form.widthSpin.setValue(int(g.get("width", 768)))
         self.form.heightSpin.setValue(int(g.get("height", 768)))
         self.form.autoSaveCheck.setChecked(bool(g.get("auto_save", True)))
-        self.form.bubbleFontSpin.setValue(int(g.get("bubble_font_size", 28) or 28))
 
         self.form.imageModelSamplerCombo.addItems([
             "euler_ancestral", "euler", "dpmpp_2m", "dpmpp_2m_sde", "ddim", "uni_pc"
@@ -123,7 +122,6 @@ class SettingsWindow:
                 "width": self.form.widthSpin.value(),
                 "height": self.form.heightSpin.value(),
                 "auto_save": self.form.autoSaveCheck.isChecked(),
-                "bubble_font_size": self.form.bubbleFontSpin.value(),
             },
         }
 

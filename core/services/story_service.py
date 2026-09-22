@@ -57,8 +57,8 @@ Return ONLY valid JSON with exactly this structure:
   ]
 }
 There must be exactly 4 panels. Every panel must have a non-empty image_prompt.
- Every image_prompt must describe ONE SINGLE SCENE only (one moment, one continuous illustration).
-Do NOT write grid, split, multi-section or broken-frame layouts in image_prompt.
+Every image_prompt must describe ONE SINGLE STATIC SCENE only (one subject, one moment, single camera angle).
+Do NOT describe sequential actions ("first X then Y"), multi-angle shots, split frames, or storyboard layouts in image_prompt.
 Keep the story short, coherent, humorous or emotionally clear, and visually drawable.
 Repeat the same character appearance consistently in every image_prompt.
 CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entirely in Korean (한국어). Do not use English or any other language for dialogue or speaker. The "image_prompt" may use English for visual clarity.
@@ -97,8 +97,8 @@ CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entir
         for p in comic.panels:
             p.image_prompt = (
                 f"{char}. Scene: {clean_panel_text(p.image_prompt)}. Style: {style_text}. "
-                "One single scene illustration, one continuous moment, single full-frame image, "
-                "no split, no grid, no multiple sections, consistent character design, clear composition."
+                "Single frame illustration, solo main subject, single camera angle, "
+                "no split screen, no grid layout, no multiple panels, consistent character design, clear composition."
             )
         return comic
 

@@ -19,7 +19,7 @@
     "auto_save": true,
     "style_prompt": "",
     "bubble_font_size": 28,
-    "art_style_prompt": "watercolor illustration style, soft translucent colors, gentle color bleeding, delicate brushstrokes, natural paper texture, warm atmospheric colors, subtle shading, hand-painted organic appearance"
+    "art_style_prompt": "Japanese manga illustration style, distinctive manga character design, clean bold linework, expressive eyes and facial expressions, dynamic character poses, traditional manga shading, screentone texture, detailed black and white or limited-color artwork"
   },
   "image_model": "z_anime_base_aio_fp8",
   "image_models": [

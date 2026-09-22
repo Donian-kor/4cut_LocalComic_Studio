@@ -377,23 +377,11 @@ class Ui_SettingsWindow(object):
 
         self.generalForm.setWidget(2, QFormLayout.ItemRole.FieldRole, self.heightSpin)
 
-        self.label13 = QLabel(self.generalTab)
-        self.label13.setObjectName(u"label13")
-
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.LabelRole, self.label13)
-
-        self.bubbleFontSpin = QSpinBox(self.generalTab)
-        self.bubbleFontSpin.setObjectName(u"bubbleFontSpin")
-        self.bubbleFontSpin.setMinimum(8)
-        self.bubbleFontSpin.setMaximum(200)
-
-        self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.bubbleFontSpin)
-
         self.autoSaveCheck = QCheckBox(self.generalTab)
         self.autoSaveCheck.setObjectName(u"autoSaveCheck")
         self.autoSaveCheck.setLayoutDirection(Qt.LayoutDirection.LeftToRight)
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.autoSaveCheck)
+        self.generalForm.setWidget(3, QFormLayout.ItemRole.FieldRole, self.autoSaveCheck)
 
         self.tabs.addTab(self.generalTab, "")
 
@@ -464,7 +452,6 @@ class Ui_SettingsWindow(object):
         self.label10.setText(QCoreApplication.translate("SettingsWindow", u"\ud504\ub85c\uc81d\ud2b8 \uc800\uc7a5 \uc704\uce58", None))
         self.label11.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub108\ube44", None))
         self.label12.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub192\uc774", None))
-        self.label13.setText(QCoreApplication.translate("SettingsWindow", u"\ub9d0\ud48d\uc120 \uae00\uc790 \ud06c\uae30", None))
         self.autoSaveCheck.setText(QCoreApplication.translate("SettingsWindow", u"\uacb0\uacfc \uc790\ub3d9 \uc800\uc7a5", None))
         self.tabs.setTabText(self.tabs.indexOf(self.generalTab), QCoreApplication.translate("SettingsWindow", u"\uc77c\ubc18", None))
         self.cancelButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucde8\uc18c", None))

@@ -3,6 +3,7 @@ from PySide6.QtCore import QThread, Signal
 
 class ComicWorker(QThread):
     progress = Signal(str, int, int)
+    panel_completed = Signal(int, str)
     finished_comic = Signal(object)
     failed = Signal(str)
     cancelled = Signal()
@@ -33,7 +34,8 @@ class ComicWorker(QThread):
                 if self.cancel_requested:
                     self.cancelled.emit(); return
                 self.progress.emit(f"{i + 1}컷 이미지 생성 중", i, 4)
-                self.service.generate_panel(comic, panel, cancel_check=lambda: self.cancel_requested, style_prompt=self.style)
+                path = self.service.generate_panel(comic, panel, cancel_check=lambda: self.cancel_requested, style_prompt=self.style)
+                self.panel_completed.emit(i + 1, path or panel.image_path)
                 self.progress.emit(f"{i + 1}컷 이미지 완료", i + 1, 4)
 
             if self.cancel_requested:
