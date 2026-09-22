@@ -61,6 +61,7 @@ There must be exactly 4 panels. Every panel must have a non-empty image_prompt.
 Do NOT write grid, split, multi-section or broken-frame layouts in image_prompt.
 Keep the story short, coherent, humorous or emotionally clear, and visually drawable.
 Repeat the same character appearance consistently in every image_prompt.
+CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entirely in Korean (한국어). Do not use English or any other language for dialogue or speaker. The "image_prompt" may use English for visual clarity.
 '''
         user = f"User idea: {idea.strip()}\nRequested style: {style.strip() or 'auto'}"
         data = self.llm.chat_json(system, user)
