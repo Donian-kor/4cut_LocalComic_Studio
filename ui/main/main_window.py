@@ -25,17 +25,17 @@ class MainWindow(QMainWindow):
         self.setMenuBar(self.form.menubar)
         self.setStatusBar(self.form.statusbar)
 
-        self.idea = IdeaSection(); self.generation = GenerationSection()
+        self.settings_manager = settings_manager
+        self.lm_factory = lm_factory
+        self.comfy_factory = comfy_factory
+        self.settings_dialog = None
+
+        self.idea = IdeaSection(self.settings_manager); self.generation = GenerationSection()
         self.preview = PreviewSection(); self.result = ResultSection()
         self._put(self.form.ideaContainer, self.idea)
         self._put(self.form.generationContainer, self.generation)
         self._put(self.form.previewContainer, self.preview)
         self._put(self.form.resultContainer, self.result)
-
-        self.settings_manager = settings_manager
-        self.lm_factory = lm_factory
-        self.comfy_factory = comfy_factory
-        self.settings_dialog = None
         self.form.actionAISettings.triggered.connect(self.open_settings)
 
     def _put(self, container, widget):

@@ -75,9 +75,6 @@ class SettingsWindow:
         self.form.widthSpin.setValue(int(g.get("width", 768)))
         self.form.heightSpin.setValue(int(g.get("height", 768)))
         self.form.autoSaveCheck.setChecked(bool(g.get("auto_save", True)))
-        self.form.stylePromptEdit.setPlainText(
-            str(g.get("style_prompt", "") or "")
-        )
         self.form.bubbleFontSpin.setValue(int(g.get("bubble_font_size", 28) or 28))
 
         self.form.imageModelSamplerCombo.addItems([
@@ -106,7 +103,6 @@ class SettingsWindow:
                 "width": self.form.widthSpin.value(),
                 "height": self.form.heightSpin.value(),
                 "auto_save": self.form.autoSaveCheck.isChecked(),
-                "style_prompt": self.form.stylePromptEdit.toPlainText().strip(),
                 "bubble_font_size": self.form.bubbleFontSpin.value(),
             },
         }

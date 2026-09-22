@@ -362,17 +362,7 @@ class Ui_SettingsWindow(object):
         self.label13 = QLabel(self.generalTab)
         self.label13.setObjectName(u"label13")
 
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.LabelRole, self.label13)
-
-        self.stylePromptEdit = QPlainTextEdit(self.generalTab)
-        self.stylePromptEdit.setObjectName(u"stylePromptEdit")
-
-        self.generalForm.setWidget(4, QFormLayout.ItemRole.FieldRole, self.stylePromptEdit)
-
-        self.label14 = QLabel(self.generalTab)
-        self.label14.setObjectName(u"label14")
-
-        self.generalForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label14)
+        self.generalForm.setWidget(5, QFormLayout.ItemRole.LabelRole, self.label13)
 
         self.bubbleFontSpin = QSpinBox(self.generalTab)
         self.bubbleFontSpin.setObjectName(u"bubbleFontSpin")
@@ -418,14 +408,14 @@ class Ui_SettingsWindow(object):
         self.lmModelLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ubaa8\ub378", None))
         self.lmTestButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc5f0\uacb0 \ud14c\uc2a4\ud2b8", None))
         self.lmStatusLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc0c1\ud0dc: \ud14c\uc2a4\ud2b8 \uc804", None))
-        self.tabs.setTabText(self.tabs.indexOf(self.lmstudioTab), QCoreApplication.translate("SettingsWindow", u"LM Studio", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.lmstudioTab), QCoreApplication.translate("SettingsWindow", u"AI \uc11c\ubc84", None))
         self.comfyHostLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc11c\ubc84 \uc8fc\uc18c", None))
         self.comfyPortLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ud3ec\ud2b8", None))
         self.comfyWorkflowLabel.setText(QCoreApplication.translate("SettingsWindow", u"Workflow", None))
         self.browseWorkflowButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucc3e\uc544\ubcf4\uae30", None))
         self.comfyTestButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc5f0\uacb0 \ud14c\uc2a4\ud2b8", None))
         self.comfyStatusLabel.setText(QCoreApplication.translate("SettingsWindow", u"\uc0c1\ud0dc: \ud14c\uc2a4\ud2b8 \uc804", None))
-        self.tabs.setTabText(self.tabs.indexOf(self.comfyTab), QCoreApplication.translate("SettingsWindow", u"ComfyUI", None))
+        self.tabs.setTabText(self.tabs.indexOf(self.comfyTab), QCoreApplication.translate("SettingsWindow", u"ComfyUI (\uc774\ubbf8\uc9c0 \uc0dd\uc131)", None))
         self.imageModelListLabel.setText(QCoreApplication.translate("SettingsWindow", u"\ub4f1\ub85d\ub41c \uc774\ubbf8\uc9c0 \ubaa8\ub378", None))
         self.addImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"+ \ucd94\uac00", None))
         self.removeImageModelButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc0ad\uc81c", None))
@@ -447,8 +437,7 @@ class Ui_SettingsWindow(object):
         self.label11.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub108\ube44", None))
         self.label12.setText(QCoreApplication.translate("SettingsWindow", u"\uc774\ubbf8\uc9c0 \ub192\uc774", None))
         self.autoSaveCheck.setText(QCoreApplication.translate("SettingsWindow", u"\uacb0\uacfc \uc790\ub3d9 \uc800\uc7a5", None))
-        self.label13.setText(QCoreApplication.translate("SettingsWindow", u"\uadf8\ub9bc\uccb4 \ud504\ub86c\ud504\ud2b8", None))
-        self.label14.setText(QCoreApplication.translate("SettingsWindow", u"\ub9d0\ud48d\uc120 \uae00\uc790 \ud06c\uae30", None))
+        self.label13.setText(QCoreApplication.translate("SettingsWindow", u"\ub9d0\ud48d\uc120 \uae00\uc790 \ud06c\uae30", None))
         self.tabs.setTabText(self.tabs.indexOf(self.generalTab), QCoreApplication.translate("SettingsWindow", u"\uc77c\ubc18", None))
         self.cancelButton.setText(QCoreApplication.translate("SettingsWindow", u"\ucde8\uc18c", None))
         self.applyButton.setText(QCoreApplication.translate("SettingsWindow", u"\uc801\uc6a9", None))

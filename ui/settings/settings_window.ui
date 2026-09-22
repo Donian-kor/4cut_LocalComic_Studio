@@ -6,7 +6,7 @@
   <property name="minimumSize"><size><width>650</width><height>500</height></size></property>
   <layout class="QVBoxLayout" name="verticalLayout">
    <item><widget class="QTabWidget" name="tabs">
-    <widget class="QWidget" name="lmstudioTab"><attribute name="title"><string>LM Studio</string></attribute>
+    <widget class="QWidget" name="lmstudioTab"><attribute name="title"><string>AI 서버</string></attribute>
      <layout class="QFormLayout" name="lmForm">
       <item row="0" column="0"><widget class="QLabel" name="lmHostLabel"><property name="text"><string>서버 주소</string></property></widget></item>
       <item row="0" column="1"><widget class="QLineEdit" name="lmHostEdit"/></item>
@@ -20,7 +20,7 @@
       <item row="5" column="1"><widget class="QLabel" name="lmStatusLabel"><property name="text"><string>상태: 테스트 전</string></property></widget></item>
      </layout>
     </widget>
-    <widget class="QWidget" name="comfyTab"><attribute name="title"><string>ComfyUI</string></attribute>
+    <widget class="QWidget" name="comfyTab"><attribute name="title"><string>ComfyUI (이미지 생성)</string></attribute>
      <layout class="QFormLayout" name="comfyForm">
       <item row="0" column="0"><widget class="QLabel" name="comfyHostLabel"><property name="text"><string>서버 주소</string></property></widget></item>
       <item row="0" column="1"><widget class="QLineEdit" name="comfyHostEdit"/></item>
@@ -89,8 +89,6 @@
       <item row="2" column="0"><widget class="QLabel"><property name="text"><string>이미지 높이</string></property></widget></item>
       <item row="2" column="1"><widget class="QSpinBox" name="heightSpin"><property name="maximum"><number>4096</number></property></widget></item>
       <item row="3" column="1"><widget class="QCheckBox" name="autoSaveCheck"><property name="text"><string>결과 자동 저장</string></property></widget></item>
-           <item row="4" column="0"><widget class="QLabel"><property name="text"><string>그림체 프롬프트</string></property></widget></item>
-      <item row="4" column="1"><widget class="QPlainTextEdit" name="stylePromptEdit"/></item>
       <item row="5" column="0"><widget class="QLabel"><property name="text"><string>말풍선 글자 크기</string></property></widget></item>
       <item row="5" column="1"><widget class="QSpinBox" name="bubbleFontSpin"><property name="maximum"><number>200</number></property><property name="minimum"><number>8</number></property></widget></item>
      </layout>
