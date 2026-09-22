@@ -19,66 +19,64 @@ class IdeaSection(QWidget):
     # 사용자에게는 간단한 이름만 노출하고, 내부에서 ComfyUI용 상세 프롬프트로 변환한다.
     ART_STYLE_PRESETS = {
     "캐주얼 만화": (
-        "casual comic style, cute and relaxed comic artwork, "
-        "clean lineart, bright cheerful colors, expressive exaggerated facial expressions, "
-        "simple readable backgrounds, soft cel shading, "
-        "clear four-panel comic storytelling, consistent character design"
+        "casual comic illustration, cute and relaxed visual style, "
+        "clean lineart, bright cheerful colors, "
+        "expressive facial expressions, simple shapes, "
+        "soft cel shading, friendly and playful appearance"
     ),
 
     "웹툰": (
-        "modern Korean webtoon style, "
-        "crisp character design, clean lineart, natural vibrant coloring, "
-        "expressive facial expressions, cinematic but readable panel composition, "
-        "soft lighting, clear four-panel comic storytelling, "
-        "consistent character appearance across panels"
+        "modern Korean webtoon illustration style, "
+        "clean crisp lineart, polished character design, "
+        "natural vibrant colors, smooth cel shading, "
+        "expressive facial features, soft cinematic lighting, "
+        "clean polished digital artwork"
     ),
 
     "SD / 치비": (
-        "super deformed chibi comic style, "
-        "cute small characters with large heads and small bodies, "
-        "clean bold outlines, bright cheerful colors, "
-        "highly expressive faces, simple minimal backgrounds, "
-        "clear four-panel comic storytelling, consistent character design"
+        "super deformed chibi illustration style, "
+        "cute characters with large heads and small bodies, "
+        "rounded shapes, clean bold outlines, "
+        "bright cheerful colors, simple shading, "
+        "highly expressive cute facial expressions"
     ),
 
     "일본 만화": (
-        "Japanese manga comic style, "
-        "expressive character acting, dynamic poses, bold clean outlines, "
-        "dramatic facial expressions, manga screentone shading, "
-        "clear four-panel comic composition, strong visual storytelling, "
-        "consistent character appearance across panels"
+        "Japanese manga illustration style, "
+        "distinctive manga character design, clean bold linework, "
+        "expressive eyes and facial expressions, "
+        "dynamic character poses, traditional manga shading, "
+        "screentone texture, detailed black and white or limited-color artwork"
     ),
 
     "수채화": (
-        "watercolor comic illustration style, "
-        "soft bleeding colors, delicate brushstrokes, subtle paper texture, "
-        "warm and gentle atmosphere, organic hand-painted appearance, "
-        "clear character expressions, readable four-panel comic storytelling, "
-        "consistent character design across panels"
+        "watercolor illustration style, "
+        "soft translucent colors, gentle color bleeding, "
+        "delicate brushstrokes, natural paper texture, "
+        "warm atmospheric colors, subtle shading, "
+        "hand-painted organic appearance"
     ),
 
     "연필 스케치": (
-        "pencil sketch comic style, "
-        "hand-drawn appearance, visible graphite pencil lines, "
+        "pencil sketch illustration style, "
+        "hand-drawn graphite lines, visible pencil strokes, "
         "natural rough sketch texture, monochrome or low-saturation tones, "
-        "expressive character drawings, simple backgrounds, "
-        "clear four-panel comic storytelling, consistent character appearance"
+        "soft graphite shading, imperfect handmade appearance"
     ),
 
     "잉크 만화": (
-        "traditional ink comic style, "
-        "strong confident pen lines, high-contrast black and white artwork, "
-        "bold linework, expressive character drawings, "
-        "halftone and ink shading, clear panel separation, "
-        "four-panel comic storytelling, consistent character design"
+        "traditional ink illustration style, "
+        "strong confident pen lines, bold black outlines, "
+        "high contrast black and white artwork, "
+        "expressive linework, cross-hatching, halftone shading, "
+        "classic hand-inked appearance"
     ),
 
     "레트로 만화": (
-        "retro comic book style, "
-        "limited vintage color palette, bold clean outlines, "
-        "slightly faded colors, vintage print texture, "
-        "classic comic book atmosphere, expressive characters, "
-        "clear four-panel comic storytelling, consistent character appearance"
+        "retro comic illustration style, "
+        "limited vintage color palette, bold outlines, "
+        "slightly faded colors, vintage printing texture, "
+        "subtle paper grain, classic old comic book appearance"
     ),
 }
 
@@ -175,9 +173,21 @@ class IdeaSection(QWidget):
         if not idea:
             self.form.ideaEdit.setFocus()
             return
-        label = self.form.styleEdit.currentText().strip() or "자동"
-        style = self.STYLE_PRESETS.get(label, label)
-        self.generateRequested.emit(idea, style)
+
+        # 분위기(장르) 프롬프트
+        mood_label = self.form.styleEdit.currentText().strip() or "자동"
+        mood = self.STYLE_PRESETS.get(mood_label, "")
+
+        # 그림체(아트 스타일) 프롬프트
+        art_label = self.form.artStyleEdit.currentText().strip()
+        art_prompt = self.ART_STYLE_PRESETS.get(art_label, "")
+
+        # 우선순위: 그림체 > 분위기.
+        # 그림체가 시각적 렌더링에 더 직접적이므로 앞쪽에 배치한다.
+        parts = [p for p in (art_prompt, mood) if p]
+        combined_style = ", ".join(parts)
+
+        self.generateRequested.emit(idea, combined_style)
 
     def set_enabled(self, enabled):
         self.form.generateButton.setEnabled(enabled)

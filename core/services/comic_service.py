@@ -53,12 +53,13 @@ class ComicService:
         self._run_folder = folder
         return folder
 
-    def generate_panel(self, comic, panel, cancel_check=None):
+    def generate_panel(self, comic, panel, cancel_check=None, style_prompt=None):
         folder = self._run_folder or self.begin_run()
+        # 외부에서 전달된 style(우선순위 높음)이 있으면 그것을, 없으면 설정 기반 self.style_prompt를 사용한다.
         path = self.image.generate_panel(
             panel, folder,
             cancel_check=cancel_check,
-            style_prompt=self.style_prompt,
+            style_prompt=style_prompt or self.style_prompt,
         )
         # 2단계: 말풍선 감지 기반 대사 합성. 2단계 workflow가 없으면 생략한다.
         if getattr(self.workflow, "stage2_path", None):

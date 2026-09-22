@@ -33,7 +33,7 @@ class ComicWorker(QThread):
                 if self.cancel_requested:
                     self.cancelled.emit(); return
                 self.progress.emit(f"{i + 1}컷 이미지 생성 중", i, 4)
-                self.service.generate_panel(comic, panel, cancel_check=lambda: self.cancel_requested)
+                self.service.generate_panel(comic, panel, cancel_check=lambda: self.cancel_requested, style_prompt=self.style)
                 self.progress.emit(f"{i + 1}컷 이미지 완료", i + 1, 4)
 
             if self.cancel_requested:
