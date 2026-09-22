@@ -17,8 +17,9 @@
     "width": 512,
     "height": 512,
     "auto_save": true,
-    "style_prompt": "clean anime cel shading, crisp lineart, flat colors, expressive comedic timing, consistent character design",
-    "bubble_font_size": 28
+    "style_prompt": "",
+    "bubble_font_size": 28,
+    "art_style_prompt": "retro comic book style, limited vintage color palette, bold clean outlines, slightly faded colors, vintage print texture, classic comic book atmosphere, expressive characters, clear four-panel comic storytelling, consistent character appearance"
   },
   "image_model": "z_anime_base_aio_fp8",
   "image_models": [

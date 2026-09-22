@@ -14,6 +14,8 @@
      <property name="spacing"><number>10</number></property>
      <item><widget class="QLabel" name="styleLabel"><property name="text"><string>분위기</string></property></widget></item>
      <item><widget class="QComboBox" name="styleEdit"><property name="editable"><bool>false</bool></property><item><property name="text"><string>자동</string></property></item><item><property name="text"><string>개그</string></property></item><item><property name="text"><string>일상</string></property></item><item><property name="text"><string>로맨스</string></property></item><item><property name="text"><string>판타지</string></property></item></widget></item>
+     <item><widget class="QLabel" name="artStyleLabel"><property name="text"><string>그림체</string></property></widget></item>
+     <item><widget class="QComboBox" name="artStyleEdit"><property name="editable"><bool>false</bool></property><item><property name="text"><string>캐주얼 만화</string></property></item><item><property name="text"><string>웹툰</string></property></item><item><property name="text"><string>SD / 치비</string></property></item><item><property name="text"><string>일본 만화</string></property></item><item><property name="text"><string>수채화</string></property></item><item><property name="text"><string>연필 스케치</string></property></item><item><property name="text"><string>잉크 만화</string></property></item><item><property name="text"><string>레트로 만화</string></property></item></widget></item>
      <item><spacer name="optionSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeType"><enum>QSizePolicy::Expanding</enum></property></spacer></item>
     </layout>
    </item>

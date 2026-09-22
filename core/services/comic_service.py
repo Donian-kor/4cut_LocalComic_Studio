@@ -26,7 +26,12 @@ class ComicService:
         if not self.project_path.is_absolute() and base_dir:
             self.project_path = Path(base_dir) / self.project_path
         self.auto_save = bool(general.get("auto_save", True))
-        self.style_prompt = str(general.get("style_prompt", "") or "")
+        # 분위기(장르) + 그림체(아트 스타일) 프롬프트를 결합한다.
+        # 그림체가 시각적 렌더링에 더 직접적이므로 앞쪽에 배치한다.
+        mood_prompt = str(general.get("style_prompt", "") or "")
+        art_style_prompt = str(general.get("art_style_prompt", "") or "")
+        parts = [p for p in (art_style_prompt, mood_prompt) if p]
+        self.style_prompt = ", ".join(parts)
         self._run_folder = None
 
     @staticmethod
