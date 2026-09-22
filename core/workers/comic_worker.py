@@ -25,7 +25,7 @@ class ComicWorker(QThread):
         try:
             self.progress.emit("아이디어 분석 및 4컷 스토리 생성", 0, 4)
             self.service.begin_run()
-            comic = self.service.plan(self.idea, self.style)
+            comic = self.service.plan(self.idea, self.style, cancel_check=lambda: self.cancel_requested)
             if self.cancel_requested:
                 self.cancelled.emit(); return
 

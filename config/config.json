@@ -19,7 +19,7 @@
     "auto_save": true,
     "style_prompt": "",
     "bubble_font_size": 28,
-    "art_style_prompt": "retro comic book style, limited vintage color palette, bold clean outlines, slightly faded colors, vintage print texture, classic comic book atmosphere, expressive characters, clear four-panel comic storytelling, consistent character appearance"
+    "art_style_prompt": "watercolor illustration style, soft translucent colors, gentle color bleeding, delicate brushstrokes, natural paper texture, warm atmospheric colors, subtle shading, hand-painted organic appearance"
   },
   "image_model": "z_anime_base_aio_fp8",
   "image_models": [

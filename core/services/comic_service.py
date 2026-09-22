@@ -40,8 +40,8 @@ class ComicService:
         font_path = getattr(workflow_adapter, "font_path", "") or ""
         return Path(font_path).name if font_path else "malgun.ttf"
 
-    def plan(self, idea, style=""):
-        return self.story.create_comic(idea, style)
+    def plan(self, idea, style="", cancel_check=None):
+        return self.story.create_comic(idea, style, cancel_check=cancel_check)
 
     def begin_run(self):
         timestamp = datetime.now().strftime("%Y-%m-%d_%H%M%S_%f")[:-3]

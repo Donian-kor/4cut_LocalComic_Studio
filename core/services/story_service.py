@@ -39,7 +39,7 @@ class StoryService:
     def __init__(self, llm_client):
         self.llm = llm_client
 
-    def create_comic(self, idea, style=""):
+    def create_comic(self, idea, style="", cancel_check=None):
         if not idea.strip():
             raise ValueError("아이디어를 입력해 주세요.")
         system = '''
@@ -64,10 +64,10 @@ Repeat the same character appearance consistently in every image_prompt.
 CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entirely in Korean (한국어). Do not use English or any other language for dialogue or speaker. The "image_prompt" may use English for visual clarity.
 '''
         user = f"User idea: {idea.strip()}\nRequested style: {style.strip() or 'auto'}"
-        data = self.llm.chat_json(system, user)
+        data = self.llm.chat_json(system, user, cancel_check=cancel_check)
         if not self._valid(data):
             repair = system + "\nIMPORTANT: Your previous response was invalid. Return exactly four complete panels with no omissions."
-            data = self.llm.chat_json(repair, user)
+            data = self.llm.chat_json(repair, user, cancel_check=cancel_check)
         if not self._valid(data):
             raise ValueError("LM Studio가 완전한 4컷 만화 JSON을 생성하지 못했습니다. 모델의 JSON 출력 설정을 확인해 주세요.")
 
