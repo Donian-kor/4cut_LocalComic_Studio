@@ -19,7 +19,8 @@
     "auto_save": true,
     "style_prompt": "clean anime cel shading, crisp lineart, flat colors, expressive comedic timing, consistent character design",
     "bubble_font_size": 28,
-    "art_style_prompt": "super deformed chibi illustration style, cute characters with large heads and small bodies, rounded shapes, clean bold outlines, bright cheerful colors, simple shading, highly expressive cute facial expressions"
+    "art_style_prompt": "super deformed chibi illustration style, cute characters with large heads and small bodies, rounded shapes, clean bold outlines, bright cheerful colors, simple shading, highly expressive cute facial expressions",
+    "ui_font_family": null
   },
   "image_model": "z_anime_base_aio_fp8",
   "image_models": [
@@ -28,8 +29,8 @@
       "name": "Z-Anime Base AIO FP8",
       "model_file": "z-anime-base-aio-fp8.safetensors",
       "workflow": "workflows/z_anime_base_aio_fp8.json",
-      "width": 512,
-      "height": 512,
+      "width": 256,
+      "height": 256,
       "steps": 28,
       "cfg": 4.0,
       "sampler": "euler_ancestral",

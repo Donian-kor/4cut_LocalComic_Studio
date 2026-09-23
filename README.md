@@ -2,7 +2,7 @@
 
 ## 현재 버전
 
-**v1.0**
+**v1.1**
 
 4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다. UI는 단일 테마 토큰(ui/theme.py) 기반의 웜 그레이 + 코랄 악센트 디자인이며, UI 폰트는 설정에서 고를 수 있습니다(기본값 Malgun Gothic).
 
@@ -23,7 +23,7 @@
 - 단일 테마 토큰(ui/theme.py) 기반 UI(웜 그레이 + 코랄 악센트, 상태색 각 1종, 카드 그림자, 커스텀 스크롤바)
 - 설정 - 일반 탭에서 UI 폰트 선택
 - 전송 버튼 연필 아이콘(assets/icons/send_pen.svg)
-- 프로그램 버전 표기 `v1.0` 기준 관리
+- 프로그램 버전 표기 `v1.1` 기준 관리
 
 ## UI 기준
 
@@ -125,7 +125,7 @@ Character Prompt / Style Prompt / Master Seed 확정
 
 - 프로그램명: **4cut Local Comic Studio**
 - 테마: `ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
-- 현재 버전: **v1.0**
+- 현재 버전: **v1.1**
 - UI 프레임워크: PySide6
 - 스토리/대사: LM Studio Local Server
 - 이미지 생성: ComfyUI API
@@ -190,6 +190,7 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 - UI 폰트를 설정 - 일반 탭에서 선택(기본값 Malgun Gothic), 적용 버튼으로 즉시 반영
 - 전송 버튼을 연필 아이콘(assets/icons/send_pen.svg)으로 변경, 생성 중 ... 표시
 - 설정 적용 시 설정 값 저장 누락(manager.save) 수정
+- Qt Designer 기반 UI 파일(main_window.ui, settings_window_ui.py) 제거, UI 정의를 코드 기반으로 마이그레이션
 
 ### v1.0
 - 최종 기준본 재정립
