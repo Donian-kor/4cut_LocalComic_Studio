@@ -2,7 +2,7 @@
 from pathlib import Path
 import shutil
 
-from PySide6.QtCore import Qt, Signal, QThread
+from PySide6.QtCore import QSize, Qt, Signal, QThread
 from PySide6.QtWidgets import (
     QComboBox,
     QFrame,
@@ -20,6 +20,8 @@ from PySide6.QtWidgets import (
     QVBoxLayout,
     QWidget,
 )
+
+from PySide6.QtGui import QColor, QIcon
 
 from settings.settings_window import SettingsWindow
 from core.models.chat import ChatMessageData, ChatSession
@@ -235,9 +237,15 @@ class Composer(QFrame):
         bottom.addWidget(QLabel("그림체"))
         bottom.addWidget(self.art)
         bottom.addStretch(1)
-        self.send = QPushButton("↑")
+        self.send = QPushButton()
         self.send.setObjectName("sendButton")
         self.send.setToolTip("전송")
+        icon_path = Path(__file__).resolve().parent.parent.parent / "assets" / "icons" / "send_pen.svg"
+        if icon_path.exists():
+            self.send.setIcon(QIcon(str(icon_path)))
+            self.send.setIconSize(QSize(20, 20))
+        else:
+            self.send.setText("↑")
         self.send.clicked.connect(self._submit)
         bottom.addWidget(self.send)
         layout.addLayout(bottom)
@@ -269,7 +277,17 @@ class Composer(QFrame):
         self.mood.setEnabled(not busy)
         self.art.setEnabled(not busy)
         self.send.setEnabled(not busy)
-        self.send.setText("…" if busy else "↑")
+        if busy:
+            self.send.setIcon(QIcon())
+            self.send.setText("…")
+        else:
+            icon_path = Path(__file__).resolve().parent.parent.parent / "assets" / "icons" / "send_pen.svg"
+            if icon_path.exists():
+                self.send.setIcon(QIcon(str(icon_path)))
+                self.send.setText("")
+            else:
+                self.send.setIcon(QIcon())
+                self.send.setText("↑")
 
     def load_session_options(self, session):
         self.mood.setCurrentText(session.mood or "자동")

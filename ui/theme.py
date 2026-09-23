@@ -70,8 +70,8 @@ RADIUS_LG = "16px"
 
 # --- 폰트 ---
 DEFAULT_FONT_FAMILY = "Malgun Gothic"
-FALLBACK_FONT_STACK = "`'Malgun Gothic`', `'Noto Sans KR`', sans-serif"
-MONO_STACK = "`'Consolas`', `'Cascadia Mono`', `'Malgun Gothic`', monospace"
+FALLBACK_FONT_STACK = "'Malgun Gothic', 'Noto Sans KR', sans-serif"
+MONO_STACK = "'Consolas', 'Cascadia Mono', 'Malgun Gothic', monospace"
 
 _FONT_FAMILY = None
 _FONT_STACK = None
@@ -101,7 +101,7 @@ def load_fonts():
         _FONT_STACK = FALLBACK_FONT_STACK
         return _FONT_STACK
     if _FONT_FAMILY is not None:
-        _FONT_STACK = f"`'{_FONT_FAMILY}`', {FALLBACK_FONT_STACK}"
+        _FONT_STACK = f"'{_FONT_FAMILY}', {FALLBACK_FONT_STACK}"
     else:
         _FONT_STACK = FALLBACK_FONT_STACK
     return _FONT_STACK
