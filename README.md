@@ -4,7 +4,7 @@
 
 **v1.0**
 
-4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다.
+4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다. UI는 단일 테마 토큰(ui/theme.py) 기반의 웜 그레이 + 코랄 악센트 디자인이며, UI 폰트는 설정에서 고를 수 있습니다(기본값 Malgun Gothic).
 
 ## 핵심 기능
 
@@ -20,10 +20,17 @@
 - 개별 컷 변경 후 최종 4컷 자동 재합성
 - 생성 중 세션 삭제/이름 변경 차단
 - 세션 JSON 저장/복원
+- 단일 테마 토큰(ui/theme.py) 기반 UI(웜 그레이 + 코랄 악센트, 상태색 각 1종, 카드 그림자, 커스텀 스크롤바)
+- 설정 - 일반 탭에서 UI 폰트 선택
+- 전송 버튼 연필 아이콘(assets/icons/send_pen.svg)
 - 프로그램 버전 표기 `v1.0` 기준 관리
 
 ## UI 기준
 
+- 테마는 ui/theme.py의 단일 토큰(색상-폰트-라디우스-그림자)에서 관리한다. 배경은 웜 그레이 계열, 악센트는 코랄 단일(#e87e60), 상태색은 성공-경고-오류 각 1종만 쓴다.
+- 사용자 말풍선은 #33221c, AI 말풍선은 #171412를 쓴다. 카드에는 배경 톤에 맞춘 웜 틴트 그림자를 쓴다.
+- UI 폰트는 설정 - 일반 탭의 UI 폰트 콤보에서 고른다. 기본값은 Malgun Gothic이다.
+- 전송 버튼은 연필 아이콘(assets/icons/send_pen.svg) 버튼이며, 생성 중에는 ... 표시로 바뀐다.
 - 하단 Composer는 기본 최대 2줄 높이를 유지하고 입력량이 늘어나면 내부 세로 스크롤을 사용합니다.
 - 메인 우측 상단에는 중복 설정 버튼을 두지 않고 사이드바의 설정 버튼만 사용합니다.
 - AI 작업 상태 라벨은 일반 상태보다 크게 표시하며 생성 중에는 작업 상태, 생성 완료 후에는 녹색 `● 생성 완료` 상태로 표시합니다.
@@ -117,6 +124,7 @@ Character Prompt / Style Prompt / Master Seed 확정
 ## 프로그램 정보
 
 - 프로그램명: **4cut Local Comic Studio**
+- 테마: `ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
 - 현재 버전: **v1.0**
 - UI 프레임워크: PySide6
 - 스토리/대사: LM Studio Local Server
@@ -130,8 +138,18 @@ Character Prompt / Style Prompt / Master Seed 확정
 app.py
 app/version.py
 app/main_controller.py
+ui/theme.py
 ui/main/main_window.py
 ui/chat/chat_widgets.py
+ui/generation/generation_section.py
+ui/idea/idea_section.py
+ui/preview/preview_section.py
+ui/result/result_section.py
+settings/settings_window.py
+settings/settings_manager.py
+settings/model_manager.py
+tests/
+assets/icons/send_pen.svg
 core/models/comic.py
 core/models/chat.py
 core/services/story_service.py
@@ -166,6 +184,12 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 ## 버전 규칙 및 이력
 
 프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
+
+### v1.1 (테마-폰트-전송 버튼)
+- 단일 테마 토큰(ui/theme.py) 기반 UI: 웜 그레이 배경, 코랄 악센트(#e87e60) 단일, 상태색 각 1종
+- UI 폰트를 설정 - 일반 탭에서 선택(기본값 Malgun Gothic), 적용 버튼으로 즉시 반영
+- 전송 버튼을 연필 아이콘(assets/icons/send_pen.svg)으로 변경, 생성 중 ... 표시
+- 설정 적용 시 설정 값 저장 누락(manager.save) 수정
 
 ### v1.0
 - 최종 기준본 재정립
