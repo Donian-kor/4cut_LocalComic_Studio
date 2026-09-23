@@ -1,4 +1,4 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """디자인 토큰과 QSS 템플릿이 온전히 치환되는지 검증한다.
 
 토큰 누락(치환 안 된 $TOKEN)이나 이전 악센트 색이 남아 있으면 실패한다.
@@ -24,6 +24,8 @@ def qapp():
 
 
 def test_tokens_have_no_placeholder_leftovers(qapp):
+    theme.apply_font(None)
+    theme.load_fonts()
     for template in (MainWindow.QSS_TEMPLATE, SETTINGS_QSS_TEMPLATE):
         rendered = theme.render(template)
         assert "$" not in rendered
@@ -32,6 +34,8 @@ def test_tokens_have_no_placeholder_leftovers(qapp):
 
 
 def test_legacy_ai_purple_is_removed(qapp):
+    theme.apply_font(None)
+    theme.load_fonts()
     for template in (MainWindow.QSS_TEMPLATE, SETTINGS_QSS_TEMPLATE):
         rendered = theme.render(template).lower()
         for legacy in LEGACY_ACCENT_COLORS:
@@ -46,10 +50,14 @@ def test_single_accent_and_one_color_per_status(qapp):
     assert theme.DANGER == "#e0575f"
 
 
-def test_bundled_pretendard_fonts_are_loaded(qapp):
-    family = theme.load_fonts()
-    assert family == "Pretendard"
-    assert "Pretendard" in theme.font_stack()
+def test_ui_font_selection_changes_font_stack(qapp):
+    assert "Pretendard" not in theme.font_stack()
+    theme.apply_font("Malgun Gothic")
+    assert "Malgun Gothic" in theme.font_stack()
+    theme.apply_font(None)
+    stack = theme.font_stack()
+    assert "Pretendard" not in stack
+    assert theme.DEFAULT_FONT_FAMILY in stack
 
 
 def test_qss_renders_interactive_states(qapp):

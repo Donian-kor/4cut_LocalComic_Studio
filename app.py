@@ -1,4 +1,4 @@
-import sys
+﻿import sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
 from settings.settings_manager import SettingsManager
@@ -36,8 +36,8 @@ def main():
     app.setApplicationName(APP_NAME)
     app.setApplicationDisplayName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
-    theme.load_fonts()
     settings = SettingsManager()
+    theme.apply_font(settings.data.get("general", {}).get("ui_font_family"))
     window = MainWindow(settings, LMStudioClient, ComfyUIClient)
     controller = MainController(window, lambda model_id=None: build_service(settings, model_id))
     window.show()

@@ -1,4 +1,4 @@
-import json
+﻿import json
 import shutil
 import time
 from pathlib import Path
@@ -12,6 +12,7 @@ DEFAULTS = {
         "height": 768,
         "auto_save": True,
         "style_prompt": "clean anime cel shading, crisp lineart, flat colors, consistent character design",
+        "ui_font_family": None,
     },
 }
 

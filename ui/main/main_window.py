@@ -1,4 +1,4 @@
-from datetime import datetime
+﻿from datetime import datetime
 from pathlib import Path
 import shutil
 
@@ -1182,6 +1182,10 @@ class MainWindow(QMainWindow):
         if errors and self.current_session:
             self.statusBar().showMessage("AI 서버 연결을 확인하세요. 설정에서 주소와 연결 상태를 확인할 수 있습니다.", 6000)
 
+    def reload_theme(self):
+        theme.load_fonts()
+        self.setStyleSheet(theme.render(self.QSS_TEMPLATE))
+
     def open_settings(self):
         if getattr(self, "settings_dialog", None) is not None:
             self.settings_dialog.raise_()
@@ -1192,6 +1196,7 @@ class MainWindow(QMainWindow):
             result = self.settings_dialog.form.exec()
             if result:
                 self.settingsApplied.emit()
+                self.reload_theme()
                 self._set_status_label("● 설정 저장됨 · 서버 확인 중...", "checking")
                 self.statusBar().showMessage("설정이 저장되었습니다. 서버 연결을 다시 확인합니다.", 4000)
                 self.refresh_server_status()

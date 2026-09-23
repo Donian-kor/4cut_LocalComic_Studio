@@ -1,7 +1,7 @@
-from pathlib import Path
+﻿from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QDialog, QFileDialog, QListWidgetItem
+from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QLabel, QListWidgetItem
 from settings.model_manager import ImageModelManager
 from core.models.image_model import ImageModelProfile
 from ui import theme
@@ -64,6 +64,7 @@ class SettingsWindow:
         self.worker = None
         self.image_models = ImageModelManager(manager)
         self._loading_model = False
+        self.parent_widget = parent
 
         loader = QUiLoader()
         ui_path = Path(__file__).resolve().parent.parent / "ui" / "settings" / "settings_window.ui"
@@ -72,6 +73,8 @@ class SettingsWindow:
             raise RuntimeError(f"settings_window.ui를 QDialog로 로드할 수 없습니다: {ui_path}")
 
         self.form.setStyleSheet(theme.render(SETTINGS_QSS_TEMPLATE))
+
+        self._setup_font_combo()
 
         self._load()
         self.form.applyButton.clicked.connect(self.apply)
@@ -86,6 +89,33 @@ class SettingsWindow:
         self.form.saveImageModelButton.clicked.connect(self.save_image_model)
         self.form.browseImageModelButton.clicked.connect(self.browse_image_model)
         self.form.browseImageModelWorkflowButton.clicked.connect(self.browse_image_model_workflow)
+
+    def _setup_font_combo(self):
+        label = QLabel("UI 폰트", self.form)
+        combo = QComboBox(self.form)
+        combo.setObjectName("uiFontCombo")
+        combo.addItem("시스템 기본")
+        families = [f for f in theme._system_font_families() if f != "시스템 기본"]
+        if len(families) > 400:
+            families = families[:400]
+        combo.addItems(families)
+        combo.setToolTip("앱 전체에 쓰는 UI 폰트를 고른다. 고르는 즉시 설정창에 미리보기된다.")
+        self.form.generalForm.addRow(label, combo)
+        self.uiFontLabel = label
+        self.uiFontCombo = combo
+        combo.currentTextChanged.connect(self._preview_font)
+
+    def _preview_font(self):
+        theme.apply_font(self._current_font_family())
+        theme.load_fonts()
+        self.form.setStyleSheet(theme.render(SETTINGS_QSS_TEMPLATE))
+
+    def _current_font_family(self):
+        combo = getattr(self, "uiFontCombo", None)
+        if combo is None:
+            return None
+        text = combo.currentText().strip()
+        return None if text == "시스템 기본" else text
 
     def _load(self):
         lm = self.manager.section("lmstudio")
@@ -112,6 +142,11 @@ class SettingsWindow:
         self.form.widthSpin.setValue(int(g.get("width", 768)))
         self.form.heightSpin.setValue(int(g.get("height", 768)))
         self.form.autoSaveCheck.setChecked(bool(g.get("auto_save", True)))
+        stored = g.get("ui_font_family")
+        if stored:
+            idx = self.uiFontCombo.findText(str(stored))
+            if idx >= 0:
+                self.uiFontCombo.setCurrentIndex(idx)
 
         self.form.imageModelSamplerCombo.addItems([
             "euler_ancestral", "euler", "dpmpp_2m", "dpmpp_2m_sde", "ddim", "uni_pc"
@@ -136,6 +171,7 @@ class SettingsWindow:
             },
             "general": {
                 "project_path": self.form.projectPathEdit.text().strip() or "projects",
+                "ui_font_family": self._current_font_family(),
                 "width": self.form.widthSpin.value(),
                 "height": self.form.heightSpin.value(),
                 "auto_save": self.form.autoSaveCheck.isChecked(),
@@ -323,6 +359,12 @@ class SettingsWindow:
         for section, section_values in values.items():
             self.manager.data.setdefault(section, {}).update(section_values)
         self.image_models.save()
+        self.manager.save()
+        theme.apply_font(self._current_font_family())
+        theme.load_fonts()
+        main = getattr(self, "parent_widget", None)
+        if main is not None and hasattr(main, "reload_theme"):
+            main.reload_theme()
         self.form.accept()
 
     def exec(self):

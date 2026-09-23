@@ -1,19 +1,17 @@
-# -*- coding: utf-8 -*-
+﻿# -*- coding: utf-8 -*-
 """디자인 토큰 단일 소스.
 
-색상·폰트·라디우스 값을 이 모듈에서만 정의하고, 각 화면은 $TOKEN 형태의
-QSS 템플릿을 `render()`로 치환해 사용한다. 색을 바꾸려면 여기만 고치면 된다.
+색상·폰트·라디우스 값을 이 모듈에서만 정의하고, 각 화면은 $FONT_STACK 형태의
+QSS 템플릿을 render()로 치환해 사용한다. 색을 바꾸려면 여기만 고치면 된다.
 
 - 악센트는 코랄 한 가지이며, 상태색은 성공/경고/오류 각 1종만 쓴다.
 - 배경은 순검정이 아니라 붉은 기가 도는 웜 그레이 계열이다.
+- UI 폰트는 사용자가 설정에서 선택하며(apply_font), 기본값은 Malgun Gothic이다.
 """
-from pathlib import Path
 from string import Template
 
-from PySide6.QtGui import QColor, QFontDatabase
+from PySide6.QtGui import QColor, QFont, QFontDatabase
 from PySide6.QtWidgets import QApplication, QGraphicsDropShadowEffect
-
-FONT_DIR = Path(__file__).resolve().parent.parent / "assets" / "fonts"
 
 # --- 표면 (웜 그레이 스케일) ---
 BG = "#100e0d"
@@ -70,43 +68,52 @@ RADIUS_SM = "8px"
 RADIUS_MD = "12px"
 RADIUS_LG = "16px"
 
-FONT_NAME = "Pretendard"
-FALLBACK_FONT_NAME = "Malgun Gothic"
-MONO_STACK = "'Consolas', 'Cascadia Mono', 'Malgun Gothic', monospace"
+# --- 폰트 ---
+DEFAULT_FONT_FAMILY = "Malgun Gothic"
+FALLBACK_FONT_STACK = "`'Malgun Gothic`', `'Noto Sans KR`', sans-serif"
+MONO_STACK = "`'Consolas`', `'Cascadia Mono`', `'Malgun Gothic`', monospace"
 
+_FONT_FAMILY = None
 _FONT_STACK = None
 
 
-def load_fonts() -> str:
-    """번들된 Pretendard를 등록하고 본문에 사용할 family 이름을 돌려준다.
+def apply_font(family):
+    """UI 폰트 가족을 설정한다. None이면 시스템 기본 폰트를 사용한다.
 
-    QApplication이 없거나 폰트 파일이 없으면 시스템 폰트로 폴백한다.
+    app.py 시작 시와 설정 Apply 시 호출한다.
     """
+    global _FONT_FAMILY, _FONT_STACK
+    _FONT_FAMILY = family
+    _FONT_STACK = None  # 다음 load_fonts() 호출에서 재계산
+    if QApplication.instance() is not None:
+        if family is None:
+            QApplication.setFont(QFont())
+        else:
+            QApplication.setFont(QFont(family))
+
+
+def load_fonts():
+    """apply_font()로 설정된 UI 폰트를 바탕으로 QSS용 폰트 스택을 계산해 반환한다."""
     global _FONT_STACK
     if _FONT_STACK is not None:
-        return FONT_NAME if FONT_NAME in _FONT_STACK else FALLBACK_FONT_NAME
-
-    families = []
-    if QApplication.instance() is not None and FONT_DIR.exists():
-        for path in sorted(FONT_DIR.glob("Pretendard-*.otf")):
-            font_id = QFontDatabase.addApplicationFont(str(path))
-            if font_id != -1:
-                families.extend(QFontDatabase.applicationFontFamilies(font_id))
-
-    if FONT_NAME in families:
-        _FONT_STACK = f"'{FONT_NAME}', '{FALLBACK_FONT_NAME}', sans-serif"
+        return _FONT_STACK
+    if QApplication.instance() is None:
+        _FONT_STACK = FALLBACK_FONT_STACK
+        return _FONT_STACK
+    if _FONT_FAMILY is not None:
+        _FONT_STACK = f"`'{_FONT_FAMILY}`', {FALLBACK_FONT_STACK}"
     else:
-        _FONT_STACK = f"'{FALLBACK_FONT_NAME}', 'Noto Sans KR', sans-serif"
-    return FONT_NAME if FONT_NAME in families else FALLBACK_FONT_NAME
+        _FONT_STACK = FALLBACK_FONT_STACK
+    return _FONT_STACK
 
 
-def font_stack() -> str:
+def font_stack():
     load_fonts()
     return _FONT_STACK
 
 
-def tokens() -> dict:
-    """$TOKEN 치환에 쓸 토큰 사전을 만든다."""
+def tokens():
+    """$FONT_STACK 치환에 쓸 토큰 사전을 만든다."""
     data = {
         name: value
         for name, value in globals().items()
@@ -116,9 +123,37 @@ def tokens() -> dict:
     return data
 
 
-def render(template: str) -> str:
-    """$TOKEN 형태의 QSS 템플릿을 실제 값으로 치환한다."""
+def render(template):
+    """$토큰 형태의 QSS 템플릿을 실제 값으로 치환한다."""
     return Template(template).substitute(tokens())
+
+
+def _system_font_families():
+    """시스템에서 사용할 수 있는 UI 폰트 가족 목록을 반환한다."""
+    if QApplication.instance() is None:
+        return []
+    all_families = QFontDatabase.families()
+    korean_keywords = (
+        "고딕", "돋움", "굴림", "바탕", "명조", "체",
+        "Gothic", "Dotum", "Gulim", "Batang", "Myeongjo", "Mincho",
+        "Malgun", "맑은", "Apple SD", "Noto Sans", "Noto Serif", "Nanum", "나눔",
+        "CJK", "Source Han", "본고딕", "본명조", "RIDIBatang", "리디"
+    )
+    preferred_head = (
+        "Malgun Gothic", "맑은 고딕", "Noto Sans KR", "Noto Sans CJK KR",
+        "Apple SD Gothic Neo", "나눔고딕", "NanumGothic", "본고딕", "Source Han Sans",
+    )
+    seen, matched, rest = set(), [], []
+    for f in all_families:
+        if f in seen:
+            continue
+        seen.add(f)
+        if any(k in f for k in korean_keywords):
+            matched.append(f)
+        else:
+            rest.append(f)
+    head = [f for f in preferred_head if f in matched] + [f for f in sorted(matched) if f not in preferred_head]
+    return head + sorted(rest)
 
 
 def apply_shadow(widget, blur=26, offset_y=6, alpha=90, color=SHADOW):
