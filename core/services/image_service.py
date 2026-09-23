@@ -42,8 +42,12 @@ class ImageService:
         self.detector = detector or BubbleDetector()
 
     def generate_panel(self, panel, output_dir, cancel_check=None, style_prompt=""):
+        prompt = str(getattr(panel, "image_prompt", "") or "")
+        revision_prompt = str(getattr(panel, "revision_prompt", "") or "").strip()
+        if revision_prompt:
+            prompt = f"{prompt}. Additional requested change: {revision_prompt}"
         workflow = self.workflow.prepare(
-            panel.image_prompt, panel.seed, self.width, self.height,
+            prompt, panel.seed, self.width, self.height,
             dialogue=getattr(panel, "dialogue", ""),
             style_prompt=style_prompt,
         )

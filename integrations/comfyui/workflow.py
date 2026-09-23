@@ -21,7 +21,9 @@ class WorkflowAdapter:
     DEFAULT_NEGATIVE_TAGS = [
         "text", "letters", "watermark",
         "multiple panels", "split screen", "grid layout", "comic strip",
-        "manga page", "panel divider", "2x2 grid", "multiple views", "split frame"
+        "manga page", "panel divider", "2x2 grid", "multiple views", "split frame",
+        "blank background", "empty background", "plain white background", "pure white background",
+        "isolated on white", "white void background"
     ]
 
     def __init__(self, path, base_dir=None, profile=None, font_path=None, font_size=None, stage2_path=None):

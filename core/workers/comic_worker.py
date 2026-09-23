@@ -3,6 +3,7 @@ from PySide6.QtCore import QThread, Signal
 
 class ComicWorker(QThread):
     progress = Signal(str, int, int)
+    planned = Signal(object)
     panel_completed = Signal(int, str)
     finished_comic = Signal(object)
     failed = Signal(str)
@@ -14,6 +15,7 @@ class ComicWorker(QThread):
         self.idea = idea
         self.style = style
         self.cancel_requested = False
+        self.comic = None
 
     def cancel(self):
         self.cancel_requested = True
@@ -27,6 +29,8 @@ class ComicWorker(QThread):
             self.progress.emit("아이디어 분석 및 4컷 스토리 생성", 0, 4)
             self.service.begin_run()
             comic = self.service.plan(self.idea, self.style, cancel_check=lambda: self.cancel_requested)
+            self.comic = comic
+            self.planned.emit(comic)
             if self.cancel_requested:
                 self.cancelled.emit(); return
 
@@ -34,7 +38,9 @@ class ComicWorker(QThread):
                 if self.cancel_requested:
                     self.cancelled.emit(); return
                 self.progress.emit(f"{i + 1}컷 이미지 생성 중", i, 4)
-                path = self.service.generate_panel(comic, panel, cancel_check=lambda: self.cancel_requested, style_prompt=self.style)
+                # ComicService가 확정한 Master Seed / Character Prompt / Style Prompt를
+                # 모든 패널에 공유한다. style은 패널마다 새로 계산하지 않는다.
+                path = self.service.generate_panel(comic, panel, cancel_check=lambda: self.cancel_requested)
                 self.panel_completed.emit(i + 1, path or panel.image_path)
                 self.progress.emit(f"{i + 1}컷 이미지 완료", i + 1, 4)
 

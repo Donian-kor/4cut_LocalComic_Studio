@@ -1,126 +1,194 @@
-# 4Cut Local Comic Studio - Z-Anime Model Manager Edition
+# 4Cut Local Comic Studio
 
-아이디어 하나를 입력하면 LM Studio가 4컷 스토리/대사/이미지 프롬프트를 만들고, 선택한 ComfyUI 이미지 모델이 4장의 이미지를 생성한 뒤 최종 2x2 만화로 합성합니다.
+## 현재 버전
 
-## 이번 버전의 핵심
+**v1.0**
 
-- 기존 설정 메뉴의 동작은 유지
-- **이미지 모델 관리자** 추가
-- Z-Anime Base AIO FP8 프로필을 기본 등록
-- Z-Anime 전용 API Workflow 추가
-- 모델마다 Workflow / 모델 파일 / 해상도 / Steps / CFG / Sampler / Scheduler / Negative Prompt를 별도로 보관
-- 생성 시 선택한 모델 프로필의 값을 Workflow에 자동 주입
-- `4cut_default.json` 기존 Workflow는 삭제하거나 변경하지 않음
-- 사용자 모델 추가/삭제/편집 가능
-- 모델 선택을 바꾸면 다음 생성부터 선택 모델과 해당 Workflow가 사용됨
+4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다.
 
-## 이미지 모델 설정
+## 핵심 기능
 
-`설정 → 이미지 모델`에서 관리합니다.
+- 채팅형 UI와 세션 히스토리
+- 분위기/그림체 선택
+- LM Studio 기반 4컷 스토리/대사/이미지 프롬프트 생성
+- ComfyUI 기반 컷 이미지 생성
+- 이미지 + 대사 합성 후 1~4컷 순차 표시
+- 생성 카드 테두리 펄스/글로우 애니메이션
+- 생성 취소
+- 전체 4컷 다시 만들기
+- 개별 컷 다시 만들기 / 개별 컷 수정
+- 개별 컷 변경 후 최종 4컷 자동 재합성
+- 생성 중 세션 삭제/이름 변경 차단
+- 세션 JSON 저장/복원
+- 프로그램 버전 표기 `v1.0` 기준 관리
 
-### 기본 등록 모델
+## UI 기준
+
+- 하단 Composer는 기본 최대 2줄 높이를 유지하고 입력량이 늘어나면 내부 세로 스크롤을 사용합니다.
+- 메인 우측 상단에는 중복 설정 버튼을 두지 않고 사이드바의 설정 버튼만 사용합니다.
+- AI 작업 상태 라벨은 일반 상태보다 크게 표시하며 생성 중에는 작업 상태, 생성 완료 후에는 녹색 `● 생성 완료` 상태로 표시합니다.
+- 스토리/컷 생성 정보와 결과는 채팅 메시지 흐름에 맞춰 표시합니다.
+
+## 생성 일관성 정책
+
+한 만화가 시작되면 다음 생성 컨텍스트를 1회 확정하고 1~4컷에 공유합니다.
 
 ```text
-Z-Anime Base AIO FP8
-model_file:
-z-anime-base-aio-fp8.safetensors
-
-workflow:
-workflows/z_anime_base_aio_fp8.json
+ComicGenerationContext
+├─ master_seed
+├─ character_prompt
+├─ style_prompt
+├─ model
+├─ width / height
+├─ steps
+├─ cfg
+├─ sampler
+├─ scheduler
+└─ negative_prompt
 ```
 
-현재 프로필은 Z-Anime Base 계열의 공식 Workflow 구성에 맞춘 AIO 체크포인트 방식입니다. AIO 모델은 `CheckpointLoaderSimple`에서 MODEL / CLIP / VAE를 한 번에 받아 Positive/Negative CLIPTextEncode → KSampler → VAEDecode → SaveImage 흐름으로 사용합니다.
+캐릭터 외형 프롬프트와 스타일 프롬프트는 하드코딩하지 않습니다. 사용자가 선택한 분위기/그림체와 LM Studio가 만든 해당 만화의 캐릭터 정보를 바탕으로 생성 시 한 번 확정하고 모든 컷에서 재사용합니다.
 
-기본 프로필의 초기 생성값은 768x768 / 28 steps / CFG 4.0 / euler_ancestral / beta입니다. 실제 생성 품질과 속도는 설치된 ComfyUI 버전, VRAM, 모델 상태에 따라 달라질 수 있습니다.
+일반 생성에서는 1개의 Master Seed를 모든 컷에 공유합니다. 개별 컷 재생성에서는 전체 만화의 생성 설정과 공통 프롬프트를 유지하면서 재생성 대상 컷만 새 revision seed를 사용합니다.
 
-## 사용자 모델 추가
+## 배경 유지 정책
 
-`설정 → 이미지 모델 → + 추가`에서 모델을 추가합니다.
+각 컷의 배경은 LM Studio가 만든 해당 컷의 장면/이미지 프롬프트를 기준으로 유지합니다. 배경을 자세하게 묘사할 필요는 없지만, 장면을 확인할 수 있는 환경 정보가 프롬프트에 남아 있어야 하며 임의로 빈 배경이나 순백색 배경으로 대체하지 않습니다.
 
-입력해야 하는 값:
+단, 스토리에서 흰색 벽/흰색 공간/눈밭 등 흰색 배경을 명시적으로 요구하는 경우에는 그 내용을 유지합니다.
 
-- 모델 이름
-- ComfyUI에서 로드할 모델 파일명
-- API 형식 Workflow JSON
+## 생성 흐름
+
+```text
+사용자 아이디어
+  ↓
+LM Studio 스토리 계획
+  ↓
+Character Prompt / Style Prompt / Master Seed 확정
+  ↓
+1컷 생성 → 대사 합성 → 1컷 표시
+  ↓
+2컷 생성 → 대사 합성 → 2컷 표시
+  ↓
+3컷 생성 → 대사 합성 → 3컷 표시
+  ↓
+4컷 생성 → 대사 합성 → 4컷 표시
+  ↓
+최종 2×2 합성
+```
+
+## 개별 컷 재생성
+
+완성된 각 컷에는 다음 액션을 제공합니다.
+
+```text
+↻ 이 컷 다시 만들기
+✎ 이 컷 수정
+```
+
+개별 재생성은 전체 스토리 생성이나 다른 컷의 이미지 생성은 다시 실행하지 않습니다. 기존 Comic 계획의 장면/캐릭터/스타일/모델 설정을 재사용하고 선택된 컷만 새 revision seed로 생성합니다.
+
+재생성 완료 후 최종 4컷 합성은 자동으로 다시 실행합니다. 결과가 마음에 들지 않으면 같은 컷을 다시 재생성할 수 있습니다.
+
+## 생성 중 세션 정책
+
+세션 상태가 `generating`이면:
+
+- 사이드바 삭제 버튼 비활성화
+- 이름 변경 비활성화
+- 삭제 로직에서도 생성 중 세션 삭제 거부
+
+생성 완료/실패/취소 상태가 되면 다시 삭제할 수 있습니다.
+
+## 모델 관리
+
+`설정 → 이미지 모델`에서 모델 프로필을 관리합니다. 모델 프로필에는 다음 정보가 포함됩니다.
+
+- 모델 ID / 이름
+- ComfyUI 모델 파일
+- Workflow JSON
 - 해상도
-- Steps
-- CFG
-- Sampler
-- Scheduler
+- Steps / CFG
+- Sampler / Scheduler
 - Negative Prompt
 
-모델 파일은 ComfyUI가 실제로 인식하는 체크포인트/모델 파일명을 입력하세요. Workflow는 해당 모델 구조에 맞는 **ComfyUI API Prompt JSON**이어야 합니다.
+패널 재생성은 해당 세션이 처음 생성될 때 사용했던 생성 설정을 우선 유지합니다.
 
-## 모델과 Workflow의 관계
+## 프로그램 정보
 
-4Cut Local은 모델 파일만 교체하지 않습니다.
+- 프로그램명: **4cut Local Comic Studio**
+- 현재 버전: **v1.0**
+- UI 프레임워크: PySide6
+- 스토리/대사: LM Studio Local Server
+- 이미지 생성: ComfyUI API
+- 저장 위치: `projects/`
+- 세션 인덱스: `projects/.sessions/sessions.json`
+
+## 파일 구조 주요 항목
 
 ```text
-이미지 모델 선택
-      ↓
-ImageModelProfile
-      ├─ model_file
-      ├─ workflow
-      ├─ width / height
-      ├─ steps / cfg
-      ├─ sampler / scheduler
-      └─ negative_prompt
-      ↓
-WorkflowAdapter
-      ↓
-ComfyUI /prompt
-      ↓
-패널 이미지
+app.py
+app/version.py
+app/main_controller.py
+ui/main/main_window.py
+ui/chat/chat_widgets.py
+core/models/comic.py
+core/models/chat.py
+core/services/story_service.py
+core/services/comic_service.py
+core/services/image_service.py
+core/services/session_manager.py
+core/workers/comic_worker.py
+core/workers/panel_regeneration_worker.py
+integrations/lmstudio/client.py
+integrations/comfyui/client.py
+integrations/comfyui/workflow.py
+workflows/
+projects/
+디자인.md
 ```
 
-따라서 모델별로 다른 노드 구조를 사용할 수 있도록 Workflow를 프로필에 묶어두었습니다.
+## 세션 저장
 
-## ComfyUI
-
-ComfyUI 설정은 기존처럼:
-
-- Host: `127.0.0.1`
-- Port: `8188`
-
-을 사용합니다.
-
-`설정 → AI 서버 → ComfyUI 섹션 → 연결 테스트`로 서버 연결을 확인할 수 있습니다.
-
-기존 `comfyui.workflow` 설정값은 호환성을 위해 남아 있지만, 이미지 모델 관리가 등록된 경우 실제 생성에는 **선택된 이미지 모델 프로필의 Workflow**가 사용됩니다.
-
-## LM Studio
-
-LM Studio에서 Local Server를 실행한 후 설정 메뉴에서:
-
-- Host: `127.0.0.1`
-- Port: `1234`
-- API Path: `/v1`
-- Model: LM Studio에 실제 로드한 모델명
-
-을 입력합니다.
+중앙 인덱스는 `projects/.sessions/sessions.json`을 사용합니다. 완료된 프로젝트 폴더에도 `session.json`이 기록됩니다. 세션에는 대화 메시지와 함께 개별 컷 재생성에 필요한 Comic 계획, Character Prompt, Style Prompt, Master Seed, 생성 설정, 컷별 결과 경로를 저장합니다.
 
 ## 실행
 
-Windows에서는 기존 프로젝트의 실행 방식대로 실행하세요.
-
 ```text
 python -m venv .venv
-.venv\\Scripts\\activate
+.venv\Scripts\activate
 pip install -r requirements.txt
 python app.py
 ```
 
-## Qt Designer
+LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사용할 수 있습니다.
 
-UI 원본은 `.ui` 파일입니다.
+## 버전 규칙 및 이력
 
-```text
-ui/main/main_window.ui
-ui/idea/idea_section.ui
-ui/generation/generation_section.ui
-ui/preview/preview_section.ui
-ui/result/result_section.ui
-ui/settings/settings_window.ui
-```
+프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
 
-이번 버전에서는 `AI 서버` 탭 하나에서 LM Studio와 ComfyUI 설정을 위아래 섹션으로 관리합니다. 메인 화면의 AI 서버 상태는 실제 연결 확인 결과를 반영하며, 연결되지 않은 상태에서 `준비됨`으로 표시하지 않습니다.
+### v1.0
+- 최종 기준본 재정립
+- 채팅형 UI / 세션 / 순차 컷 생성 / 개별 컷 재생성 기능 통합
+- Master Seed / Character Prompt / Style Prompt 기반 컷 간 일관성 유지
+- 생성 중 세션 삭제/이름 변경 차단
+- Composer 2줄 고정 + 내부 스크롤
+- 메인 헤더 중복 설정 버튼 제거
+- AI 작업 상태 표시 개선 및 생성 완료 녹색 상태
+- 스토리 장면의 배경 유지 규칙 강화
+
+### v0.2
+- 채팅형 UI 전환 단계
+- 컷별 순차 생성 및 생성 카드 애니메이션
+- 개별 컷 재생성/수정과 최종 4컷 자동 재합성
+- 세션 저장/복원 구조
+- 만화 단위 생성 컨텍스트 공유
+
+### v0.1
+- 기본 4컷 스토리/이미지/대사 생성 파이프라인
+- LM Studio 및 ComfyUI 연동
+- 프로젝트 파일 저장 구조
+
+## 디자인 문서
+
+`디자인.md`에는 UI/UX 설계와 동작 기준만 기록합니다. 버전 정보와 프로젝트 전체 상태는 이 README를 기준으로 합니다.

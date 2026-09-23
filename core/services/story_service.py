@@ -61,6 +61,7 @@ Every image_prompt must describe ONE SINGLE STATIC SCENE only (one subject, one 
 Do NOT describe sequential actions ("first X then Y"), multi-angle shots, split frames, or storyboard layouts in image_prompt.
 Keep the story short, coherent, humorous or emotionally clear, and visually drawable.
 Repeat the same character appearance consistently in every image_prompt.
+Every image_prompt MUST explicitly preserve a visible background/environment appropriate to that panel scene. Do not omit the environment, replace it with an empty backdrop, or use a blank/pure-white background unless the scene explicitly requires it. Background detail may be simple; it only needs to clearly establish the scene/location.
 CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entirely in Korean (한국어). Do not use English or any other language for dialogue or speaker. The "image_prompt" may use English for visual clarity.
 '''
         user = f"User idea: {idea.strip()}\nRequested style: {style.strip() or 'auto'}"
@@ -72,6 +73,11 @@ CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entir
             raise ValueError("LM Studio가 완전한 4컷 만화 JSON을 생성하지 못했습니다. 모델의 JSON 출력 설정을 확인해 주세요.")
 
         character = data["character"]
+        # 한 만화 전체에서만 유지되는 Master Seed를 한 번만 만든다.
+        # 이후 1~4컷 Panel에는 동일 seed를 넣어 컷 간 stochastic variation을 줄인다.
+        master_seed = random.randint(0, 2**32 - 1)
+        requested_style = clean_panel_text(style)
+
         comic = Comic(
             idea=idea.strip(),
             title=str(data.get("title") or "4컷 만화"),
@@ -81,6 +87,8 @@ CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entir
                 appearance=str(character.get("appearance") or ""),
                 personality=str(character.get("personality") or ""),
             ),
+            master_seed=master_seed,
+            style_prompt=requested_style or clean_panel_text(str(data.get("style") or "comic")),
         )
         for i, p in enumerate(data["panels"]):
             comic.panels.append(Panel(
@@ -89,14 +97,20 @@ CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entir
                 str(p.get("image_prompt") or ""),
                 str(p.get("dialogue") or ""),
                 str(p.get("speaker") or ""),
-                seed=random.randint(0, 2**32 - 1),
+                seed=master_seed,
             ))
 
-        char = clean_panel_text(comic.character.prompt_description())
-        style_text = clean_panel_text(comic.style)
+        # Character Prompt / Style Prompt는 이 만화 생성 시 1회만 확정하고
+        # 아래 모든 패널에서 같은 문자열을 그대로 재사용한다.
+        char = clean_panel_text(comic.character.visual_prompt())
+        style_text = clean_panel_text(comic.style_prompt)
+        comic.character_prompt = char
         for p in comic.panels:
             p.image_prompt = (
                 f"{char}. Scene: {clean_panel_text(p.image_prompt)}. Style: {style_text}. "
+                "Preserve and visibly render the background/environment described by this scene. "
+                "Do not replace the scene background with a blank or pure-white backdrop unless the scene explicitly calls for white. "
+                "Background detail can be simple and secondary to the characters. "
                 "Single frame illustration, solo main subject, single camera angle, "
                 "no split screen, no grid layout, no multiple panels, consistent character design, clear composition."
             )
