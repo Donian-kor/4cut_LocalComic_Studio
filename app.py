@@ -8,6 +8,7 @@ from integrations.comfyui.workflow import WorkflowAdapter
 from settings.model_manager import ImageModelManager
 from core.services.comic_service import ComicService
 from ui.main.main_window import MainWindow
+from ui import theme
 from app.main_controller import MainController
 from app.version import APP_NAME, APP_VERSION
 
@@ -35,6 +36,7 @@ def main():
     app.setApplicationName(APP_NAME)
     app.setApplicationDisplayName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
+    theme.load_fonts()
     settings = SettingsManager()
     window = MainWindow(settings, LMStudioClient, ComfyUIClient)
     controller = MainController(window, lambda model_id=None: build_service(settings, model_id))

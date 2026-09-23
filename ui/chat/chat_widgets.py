@@ -15,6 +15,8 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
+from ui import theme
+
 
 class AspectPixmapLabel(QLabel):
     def __init__(self, parent=None):
@@ -126,6 +128,7 @@ class GenerationCard(QFrame):
         super().__init__(parent)
         self.setObjectName("generationCard")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        theme.apply_shadow(self, blur=14, offset_y=4, alpha=70)
 
         self._pulse = 0.15
         self._pulse_animation = QPropertyAnimation(self, b"pulse", self)
@@ -209,7 +212,7 @@ class GenerationCard(QFrame):
             return
         p = QPainter(self)
         p.setRenderHint(QPainter.RenderHint.Antialiasing)
-        base = QColor("#6366f1")
+        base = QColor(theme.ACCENT)
         glow_alpha = int(35 + 115 * self._pulse)
         for width, alpha_mul in ((6, 0.22), (3, 0.55), (1.5, 1.0)):
             color = QColor(base)
@@ -308,6 +311,7 @@ class StoryPlanCard(QFrame):
         super().__init__(parent)
         self.setObjectName("storyPlanCard")
         self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        theme.apply_shadow(self, blur=14, offset_y=4, alpha=70)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(16, 14, 16, 14)
         layout.setSpacing(10)
@@ -379,6 +383,7 @@ class PanelResultCard(QFrame):
     def __init__(self, index, path, dialogue="", status="", parent=None):
         super().__init__(parent)
         self.setObjectName("panelResultCard")
+        theme.apply_shadow(self, blur=16, offset_y=5, alpha=80)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 14, 14, 14)
         layout.setSpacing(8)
@@ -441,6 +446,7 @@ class ResultCard(QFrame):
         super().__init__(parent)
         self.comic = comic
         self.setObjectName("resultCard")
+        theme.apply_shadow(self, blur=18, offset_y=6, alpha=90)
         layout = QVBoxLayout(self)
         layout.setContentsMargins(14, 14, 14, 14)
         layout.setSpacing(10)

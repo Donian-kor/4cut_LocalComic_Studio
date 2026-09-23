@@ -4,6 +4,7 @@ from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QDialog, QFileDialog, QListWidgetItem
 from settings.model_manager import ImageModelManager
 from core.models.image_model import ImageModelProfile
+from ui import theme
 
 
 class ConnectionWorker(QThread):
@@ -19,6 +20,38 @@ class ConnectionWorker(QThread):
             self.done.emit(True, "연결 성공", payload)
         except Exception as e:
             self.done.emit(False, str(e), None)
+
+
+SETTINGS_QSS_TEMPLATE = """
+    * { font-family: $FONT_STACK; }
+    QDialog, QWidget { background: $BG; color: $TEXT; }
+    QTabWidget::pane { border: 1px solid $BORDER; background: $SURFACE; border-radius: $RADIUS_SM; }
+    QTabBar::tab { background: $SURFACE_RAISED; color: $TEXT_DIM; padding: 10px 18px; border: 1px solid $BORDER; border-bottom: none; }
+    QTabBar::tab:hover { color: $TEXT; background: $SURFACE_HOVER; }
+    QTabBar::tab:selected { background: $ACCENT_SOFT; color: $TEXT; border-color: $ACCENT_SOFT_BORDER; }
+    QGroupBox { background: $SURFACE; border: 1px solid $BORDER; border-radius: 10px; margin-top: 12px; padding-top: 12px; }
+    QGroupBox::title { color: $TEXT_MUTED; padding: 0 8px; }
+    QLabel { color: $TEXT_MUTED; }
+    QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QListWidget { background: $SURFACE_INPUT; color: $TEXT; border: 1px solid $BORDER_STRONG; border-radius: 7px; padding: 7px; }
+    QLineEdit:hover, QSpinBox:hover, QDoubleSpinBox:hover, QComboBox:hover, QPlainTextEdit:hover, QListWidget:hover { border-color: $BORDER_HOVER; }
+    QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus { border-color: $ACCENT; }
+    QListWidget::item { padding: 8px 6px; border-radius: 6px; color: $TEXT_MUTED; }
+    QListWidget::item:hover { background: $SURFACE_RAISED; color: $TEXT; }
+    QListWidget::item:selected { background: $ACCENT_SOFT; color: $TEXT; }
+    QPushButton { background: $SURFACE_RAISED; color: $TEXT; border: 1px solid $BORDER_STRONG; border-radius: $RADIUS_SM; padding: 8px 14px; font-weight: 600; }
+    QPushButton:hover { background: $SURFACE_HOVER; border-color: $BORDER_HOVER; }
+    QPushButton:pressed { background: $SURFACE_INPUT; border-color: $BORDER_STRONG; }
+    QPushButton:disabled { color: $TEXT_FAINT; background: $BG; border-color: $BORDER; }
+    QPushButton#applyButton { background: $ACCENT; color: $ACCENT_INK; border: none; font-weight: 800; }
+    QPushButton#applyButton:hover { background: $ACCENT_HOVER; }
+    QPushButton#applyButton:pressed { background: $ACCENT_PRESSED; }
+    QCheckBox { color: $TEXT_MUTED; }
+    QScrollBar:vertical { background: transparent; width: 10px; margin: 3px 2px; }
+    QScrollBar::handle:vertical { background: $BORDER_STRONG; min-height: 30px; border-radius: 4px; }
+    QScrollBar::handle:vertical:hover { background: $BORDER_HOVER; }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; background: transparent; }
+    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+"""
 
 
 class SettingsWindow:
@@ -38,23 +71,7 @@ class SettingsWindow:
         if self.form is None or not isinstance(self.form, QDialog):
             raise RuntimeError(f"settings_window.ui를 QDialog로 로드할 수 없습니다: {ui_path}")
 
-        self.form.setStyleSheet("""
-            QDialog, QWidget { background: #0b0d13; color: #f5f7fb; }
-            QTabWidget::pane { border: 1px solid #252a38; background: #10131c; border-radius: 8px; }
-            QTabBar::tab { background: #131720; color: #8f97a9; padding: 10px 18px; border: 1px solid #252a38; border-bottom: none; }
-            QTabBar::tab:selected { background: #1a1f2c; color: #ffffff; }
-            QGroupBox { background: #10131c; border: 1px solid #252a38; border-radius: 10px; margin-top: 12px; padding-top: 12px; }
-            QGroupBox::title { color: #dce1ec; padding: 0 8px; }
-            QLabel { color: #aeb6c6; }
-            QLineEdit, QSpinBox, QDoubleSpinBox, QComboBox, QPlainTextEdit, QListWidget { background: #131720; color: #f5f7fb; border: 1px solid #303748; border-radius: 7px; padding: 7px; }
-            QLineEdit:focus, QSpinBox:focus, QDoubleSpinBox:focus, QComboBox:focus, QPlainTextEdit:focus { border-color: #6366f1; }
-            QListWidget::item:selected { background: #2c3260; color: #ffffff; }
-            QPushButton { background: #1a1f2c; color: #e8ebf2; border: 1px solid #303748; border-radius: 8px; padding: 8px 14px; }
-            QPushButton:hover { background: #22283a; border-color: #59627a; }
-            QPushButton:disabled { color: #646b7a; background: #141720; }
-            QPushButton#applyButton { background: #6366f1; color: #ffffff; border: none; font-weight: 700; }
-            QPushButton#applyButton:hover { background: #7477f5; }
-        """)
+        self.form.setStyleSheet(theme.render(SETTINGS_QSS_TEMPLATE))
 
         self._load()
         self.form.applyButton.clicked.connect(self.apply)

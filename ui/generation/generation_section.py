@@ -4,6 +4,8 @@ from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QWidget, QVBoxLayout
 from PySide6.QtGui import QPixmap
 
+from ui import theme
+
 
 class GenerationSection(QWidget):
     cancelRequested = Signal()
@@ -39,43 +41,43 @@ class GenerationSection(QWidget):
     def _apply_base_styles(self):
         # 다크 테마 기본 카드 스타일시트 적용
         for card, img, txt in self.slots:
-            card.setStyleSheet("""
+            card.setStyleSheet(theme.render("""
                 QFrame {
-                    background-color: #131720;
-                    border: 1px solid #252a38;
+                    background-color: $SURFACE_RAISED;
+                    border: 1px solid $BORDER;
                     border-radius: 10px;
                 }
-            """)
-            img.setStyleSheet("background: transparent; color: #646b7a; font-size: 24px;")
-            txt.setStyleSheet("background: transparent; color: #8f97a9; font-size: 12px; font-weight: 500;")
+            """))
+            img.setStyleSheet(theme.render("background: transparent; color: $TEXT_FAINT; font-size: 24px;"))
+            txt.setStyleSheet(theme.render("background: transparent; color: $TEXT_DIM; font-size: 12px; font-weight: 500;"))
 
     def reset_ui(self):
         """생성 시작 시 모든 UI와 타이머, 슬롯 카드를 대기 상태로 초기화한다."""
         self.elapsed_seconds = 0
         self.form.timerLabel.setText("⏱️ 진행 시간 00:00")
-        self.form.timerLabel.setStyleSheet("color: #6366f1; font-weight: bold; font-size: 14px;")
+        self.form.timerLabel.setStyleSheet(theme.render("color: $ACCENT_TEXT; font-weight: bold; font-size: 14px; font-family: $MONO_STACK;"))
         self.form.titleLabel.setText("AI가 4컷 만화를 만들고 있어요")
-        self.form.titleLabel.setStyleSheet("color: #ffffff; font-size: 18px; font-weight: bold;")
+        self.form.titleLabel.setStyleSheet(theme.render("color: $TEXT; font-size: 18px; font-weight: bold;"))
         self.form.statusLabel.setText("생성을 준비하는 중...")
-        self.form.statusLabel.setStyleSheet("color: #dce1ec; font-size: 14px;")
+        self.form.statusLabel.setStyleSheet(theme.render("color: $TEXT_MUTED; font-size: 14px;"))
         self.form.progressBar.setMaximum(4)
         self.form.progressBar.setValue(0)
         self.form.stepLabel.setText("① 스토리 구상  ➜  ② 컷별 생성  ➜  ③ 대사 합성  ➜  ④ 4컷 완성")
-        self.form.stepLabel.setStyleSheet("color: #8f97a9; font-size: 12px;")
+        self.form.stepLabel.setStyleSheet(theme.render("color: $TEXT_DIM; font-size: 12px;"))
 
         for idx, (card, img, txt) in enumerate(self.slots, start=1):
-            card.setStyleSheet("""
+            card.setStyleSheet(theme.render("""
                 QFrame {
-                    background-color: #131720;
-                    border: 1px solid #252a38;
+                    background-color: $SURFACE_RAISED;
+                    border: 1px solid $BORDER;
                     border-radius: 10px;
                 }
-            """)
+            """))
             img.clear()
             img.setText("⏳")
-            img.setStyleSheet("background: transparent; color: #646b7a; font-size: 24px;")
+            img.setStyleSheet(theme.render("background: transparent; color: $TEXT_FAINT; font-size: 24px;"))
             txt.setText(f"{idx}컷 대기 중")
-            txt.setStyleSheet("background: transparent; color: #8f97a9; font-size: 12px;")
+            txt.setStyleSheet(theme.render("background: transparent; color: $TEXT_DIM; font-size: 12px;"))
 
     def start_timer(self):
         self.elapsed_seconds = 0
@@ -117,50 +119,50 @@ class GenerationSection(QWidget):
         """현재 생성 중인 컷 카드를 강조 표시한다."""
         if 1 <= panel_index <= 4:
             card, img, txt = self.slots[panel_index - 1]
-            card.setStyleSheet("""
+            card.setStyleSheet(theme.render("""
                 QFrame {
-                    background-color: #1a1f2c;
-                    border: 2px solid #6366f1;
+                    background-color: $SURFACE_HOVER;
+                    border: 2px solid $ACCENT;
                     border-radius: 10px;
                 }
-            """)
+            """))
             txt.setText(f"🔄 {panel_index}컷 생성 중...")
-            txt.setStyleSheet("background: transparent; color: #a5b4fc; font-size: 12px; font-weight: bold;")
+            txt.setStyleSheet(theme.render("background: transparent; color: $ACCENT_SOFT_TEXT; font-size: 12px; font-weight: bold;"))
 
     def set_panel_thumbnail(self, panel_index, image_path):
         """완료된 컷의 썸네일을 해당 슬롯 카드에 즉시 노출한다."""
         if not (1 <= panel_index <= 4):
             return
         card, img, txt = self.slots[panel_index - 1]
-        card.setStyleSheet("""
+        card.setStyleSheet(theme.render("""
             QFrame {
-                background-color: #101827;
-                border: 2px solid #10b981;
+                background-color: $SUCCESS_SOFT;
+                border: 2px solid $SUCCESS;
                 border-radius: 10px;
             }
-        """)
+        """))
         if image_path and Path(image_path).exists():
             pixmap = QPixmap(image_path)
             if not pixmap.isNull():
                 scaled = pixmap.scaled(90, 90, Qt.AspectRatioMode.KeepAspectRatio, Qt.TransformationMode.SmoothTransformation)
                 img.setPixmap(scaled)
         txt.setText(f"✓ {panel_index}컷 완료")
-        txt.setStyleSheet("background: transparent; color: #34d399; font-size: 12px; font-weight: bold;")
+        txt.setStyleSheet(theme.render("background: transparent; color: $SUCCESS_TEXT; font-size: 12px; font-weight: bold;"))
 
     def set_failed(self, message):
         """생성 실패 시 타이머를 멈추고 붉은색 오류 테마와 실패 메시지를 노출한다."""
         self.stop_timer()
         self.form.titleLabel.setText("⚠️ 생성 중 오류가 발생했습니다")
-        self.form.titleLabel.setStyleSheet("color: #f87171; font-size: 18px; font-weight: bold;")
+        self.form.titleLabel.setStyleSheet(theme.render("color: $DANGER_TEXT; font-size: 18px; font-weight: bold;"))
         self.form.statusLabel.setText(f"오류 내용: {message}\n(설정에서 LM Studio 및 ComfyUI 연결을 확인해 주세요)")
-        self.form.statusLabel.setStyleSheet("color: #fca5a5; font-size: 13px; padding: 4px;")
+        self.form.statusLabel.setStyleSheet(theme.render("color: $DANGER_TEXT; font-size: 13px; padding: 4px;"))
         self.form.stepLabel.setText("❌ 생성이 중단되었습니다. 설정 확인 후 다시 시도해 주세요.")
-        self.form.stepLabel.setStyleSheet("color: #ef4444; font-size: 12px;")
+        self.form.stepLabel.setStyleSheet(theme.render("color: $DANGER; font-size: 12px;"))
 
     def set_cancelled(self):
         """생성 취소 시 상태 변경"""
         self.stop_timer()
         self.form.titleLabel.setText("생성이 취소되었습니다")
-        self.form.titleLabel.setStyleSheet("color: #fbbf24; font-size: 18px; font-weight: bold;")
+        self.form.titleLabel.setStyleSheet(theme.render("color: $WARNING; font-size: 18px; font-weight: bold;"))
         self.form.statusLabel.setText("사용자 요청으로 생성을 중단했습니다.")
-        self.form.statusLabel.setStyleSheet("color: #fef08a; font-size: 13px;")
+        self.form.statusLabel.setStyleSheet(theme.render("color: $WARNING_TEXT; font-size: 13px;"))
