@@ -8,12 +8,16 @@ from core.services.bubble_detector import BubbleDetector
 _FONT_CACHE = {}
 
 
-def _get_font(size):
-    """테스트에서 monkeypatch해도 항상 이 모듈 기준으로 폰트를 얻는다."""
+def _get_font(size, font_path=None):
+    """테스트에서 monkeypatch해도 항상 이 모듈 기준으로 폰트를 얻는다.
+
+    (폰트 경로, 크기)를 키로 사용해 설정 변경 시 새 폰트를 다시 로딩한다.
+    """
     size = int(size)
-    if size not in _FONT_CACHE:
-        _FONT_CACHE[size] = find_font(size)
-    return _FONT_CACHE[size]
+    key = (str(font_path or ""), size)
+    if key not in _FONT_CACHE:
+        _FONT_CACHE[key] = find_font(size, font_path)
+    return _FONT_CACHE[key]
 
 
 def _wrap_cjk(text, max_width, font):
@@ -40,6 +44,8 @@ class ImageService:
         self.width = width
         self.height = height
         self.detector = detector or BubbleDetector()
+        # 설정된 폰트 경로를 대사 폰트 피팅에도 동일하게 사용한다.
+        self.font_path = str(getattr(workflow_adapter, "font_path", "") or "")
 
     def generate_panel(self, panel, output_dir, cancel_check=None, style_prompt=""):
         prompt = str(getattr(panel, "image_prompt", "") or "")
@@ -127,7 +133,7 @@ class ImageService:
 
         while low <= high:
             mid = (low + high) // 2
-            font = _get_font(mid)
+            font = _get_font(mid, self.font_path)
             lines = _wrap_cjk(dialogue, safe_w, font)
 
             # 전체 텍스트 블록의 가로/세로 바운딩 박스 계산

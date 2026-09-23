@@ -412,6 +412,14 @@ class MainWindow(QMainWindow):
             self.open_session(self.session_manager.sessions[0].id)
         self.refresh_server_status()
 
+    def closeEvent(self, event):
+        # 종료 시 대기 중인 디바운스 세션 저장을 즉시 커밋한다.
+        try:
+            self.session_manager.flush()
+        except Exception:
+            pass
+        super().closeEvent(event)
+
     def _build_header(self):
         header = QFrame()
         header.setObjectName("headerFrame")
@@ -559,7 +567,12 @@ class MainWindow(QMainWindow):
                 row = ChatMessageRow("ai")
                 index = int(message.metadata.get("panel_index", 0) or 0)
                 path = str(message.metadata.get("path", "") or "")
-                card = PanelResultCard(index, path, dialogue=str(message.metadata.get("dialogue", "") or ""))
+                card = PanelResultCard(
+                    index,
+                    path,
+                    dialogue=str(message.metadata.get("dialogue", "") or ""),
+                    status=str(message.metadata.get("dialogue_status", "") or ""),
+                )
                 card.regenerateRequested.connect(self.panelRegenerateRequested.emit)
                 card.revisionRequested.connect(self.panelRevisionRequested.emit)
                 row.bubble.layout.addWidget(card)
@@ -660,6 +673,61 @@ class MainWindow(QMainWindow):
             return None, None
         return entry
 
+    @staticmethod
+    def _panel_result_text(index, status):
+        """패널 결과 메시지 문구를 대사 합성 상태에 맞게 결정한다."""
+        status = str(status or "")
+        if status == "composited":
+            return f"{index}컷 이미지와 대사 합성이 완료되었습니다."
+        if status == "failed":
+            return f"{index}컷 이미지가 완료되었지만 대사 합성에 실패했습니다. 최종 합성에서 대체 처리됩니다."
+        if status == "skipped":
+            return f"{index}컷 이미지가 완료되었습니다. (2단계 합성 미설정 — 최종 합성에서 대사를 그립니다)"
+        if status == "fallback":
+            return f"{index}컷 이미지와 대사(대체 합성)가 완료되었습니다."
+        if status == "none":
+            return f"{index}컷 이미지가 완료되었습니다."
+        # 구버전 세션(상태 없음) 호환 문구
+        return f"{index}컷 이미지와 대사 합성이 완료되었습니다."
+
+    def restore_panel_result_message(self, message_id, panel_index, session_id=None):
+        """재생성 실패/취소 시 덮어쓴 컷 메시지를 마지막 커밋본 결과로 복원한다.
+
+        panel_paths/comic_data는 실패·취소 시점까지 보존되므로 그 값으로
+        재구성하며, 세션 상태(실패/취소)는 호출한 fail/cancel 쪽이 관리한다.
+        """
+        session = self.session_manager.get(session_id) if session_id else self.current_session
+        if not session:
+            return
+        item = next((m for m in session.messages if m.id == message_id), None)
+        if item is None:
+            return
+        index = int(panel_index or 0)
+        path = ""
+        if 1 <= index <= len(session.panel_paths):
+            path = str(session.panel_paths[index - 1] or "")
+        dialogue = ""
+        status = ""
+        panels = (session.comic_data or {}).get("panels") or []
+        if 1 <= index <= len(panels):
+            panel = panels[index - 1]
+            dialogue = str(panel.get("dialogue") or "")
+            status = str(panel.get("dialogue_status") or "")
+            path = path or str(panel.get("image_path") or "")
+        item.kind = "panel_result"
+        item.text = self._panel_result_text(index, status)
+        item.metadata = {
+            "panel_index": index,
+            "path": path,
+            "dialogue": dialogue,
+            "dialogue_status": status,
+        }
+        session.touch()
+        self.session_manager.update(session)
+        if self.current_session and self.current_session.id == session.id:
+            # 실패/취소 카드를 유지한 채 복원된 컷 결과를 다시 그린다.
+            self._render_session(session)
+
     def begin_panel_generation(self, message_id, index, message):
         row, card = self._generation_entry(message_id)
         if card:
@@ -709,7 +777,7 @@ class MainWindow(QMainWindow):
                 session.touch()
                 self.session_manager.update(session)
 
-    def complete_panel_generation(self, message_id, index, path, dialogue="", session_id=None):
+    def complete_panel_generation(self, message_id, index, path, dialogue="", dialogue_status="", session_id=None):
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if session:
             while len(session.panel_paths) < index:
@@ -718,11 +786,12 @@ class MainWindow(QMainWindow):
             item = next((m for m in session.messages if m.id == message_id), None)
             if item:
                 item.kind = "panel_result"
-                item.text = f"{index}컷 이미지와 대사 합성이 완료되었습니다."
+                item.text = self._panel_result_text(index, dialogue_status)
                 item.metadata = {
                     "panel_index": index,
                     "path": path or "",
                     "dialogue": dialogue or "",
+                    "dialogue_status": str(dialogue_status or ""),
                 }
             session.touch()
             self.session_manager.update(session)
@@ -733,7 +802,7 @@ class MainWindow(QMainWindow):
                     self.chat.remove_widget(row)
                     self._generation_widgets.pop(message_id, None)
                     result_row = ChatMessageRow("ai")
-                    result_card = PanelResultCard(index, path, dialogue=dialogue)
+                    result_card = PanelResultCard(index, path, dialogue=dialogue, status=dialogue_status)
                     result_card.regenerateRequested.connect(self.panelRegenerateRequested.emit)
                     result_card.revisionRequested.connect(self.panelRevisionRequested.emit)
                     result_row.bubble.layout.addWidget(result_card)
@@ -803,6 +872,35 @@ class MainWindow(QMainWindow):
         session.style_prompt = str(getattr(comic, "style_prompt", session.style_prompt) or "")
         session.generation_config = dict(getattr(comic, "generation_config", session.generation_config) or {})
         session.comic_data = comic.to_dict() if hasattr(comic, "to_dict") else dict(session.comic_data)
+
+        # 재생성 시작 시 generation으로 바뀌었던 원래 컷 메시지를
+        # 합성 성공본의 panel_result로 한 번에 전환한다(단일 커밋).
+        panels = getattr(comic, "panels", [])
+        idx = int(panel_index or 0)
+        new_path, dialogue, status = "", "", ""
+        if 1 <= idx <= len(panels):
+            panel = panels[idx - 1]
+            new_path = str(getattr(panel, "image_path", "") or "")
+            dialogue = str(getattr(panel, "dialogue", "") or "")
+            status = str(getattr(panel, "dialogue_status", "") or "")
+        panel_msg = next(
+            (
+                m for m in session.messages
+                if m.kind == "generation"
+                and m.metadata.get("phase") == "panel_revision"
+                and int(m.metadata.get("panel_index", 0) or 0) == idx
+            ),
+            None,
+        )
+        if panel_msg is not None:
+            panel_msg.kind = "panel_result"
+            panel_msg.text = self._panel_result_text(idx, status)
+            panel_msg.metadata = {
+                "panel_index": idx,
+                "path": new_path,
+                "dialogue": dialogue,
+                "dialogue_status": status,
+            }
         session.status = "completed"
         session.error_message = ""
         session.touch()
@@ -810,6 +908,17 @@ class MainWindow(QMainWindow):
         self._generating_session_id = None
         self.composer.set_busy(False)
         self._update_final_result_widget(session, comic)
+        # 원래 컷 메시지의 진행 카드를 새 결과 카드로 교체한다.
+        if panel_msg is not None and self.current_session and self.current_session.id == session.id:
+            entry = self._generation_widgets.pop(panel_msg.id, None)
+            if entry:
+                self.chat.remove_widget(entry[0])
+            result_row = ChatMessageRow("ai")
+            result_card = PanelResultCard(idx, new_path, dialogue=dialogue, status=status)
+            result_card.regenerateRequested.connect(self.panelRegenerateRequested.emit)
+            result_card.revisionRequested.connect(self.panelRevisionRequested.emit)
+            result_row.bubble.layout.addWidget(result_card)
+            self.chat.append(result_row)
         self._refresh_sidebar()
         self._set_status_label("● 생성 완료", "done")
         self.statusBar().showMessage(f"{panel_index}컷 재생성과 최종 합성이 완료되었습니다.", 4000)

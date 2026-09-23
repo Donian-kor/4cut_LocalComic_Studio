@@ -1,0 +1,23 @@
+name: 품질 검사
+
+on:
+  push:
+  pull_request:
+
+jobs:
+  test:
+    strategy:
+      matrix:
+        # PySide6 휠 제공 버전 기준. 프로젝트 대상: Python 3.11~3.13
+        python-version: ['3.11', '3.13']
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: 'pip'
+      - run: python -m pip install --upgrade pip
+      - run: pip install -r requirements.txt -r requirements-dev.txt
+      - run: python -m compileall -q app.py app core compose integrations settings ui tests
+      - run: python -m pytest tests/ -q

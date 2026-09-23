@@ -66,12 +66,13 @@ class BubbleDetector:
         if not img_path.exists():
             return []
 
-        # ComfyUI Python 환경에서 1회성 초고속 YOLO 추론 실행
+        # ComfyUI Python 환경에서 1회성 초고속 YOLO 추론 실행.
+        # 인자는 -c 뒤 argv로 전달해 경로의 따옴표/특수문자 이슈를 피한다.
         script = (
             "import sys, json\n"
             "from ultralytics import YOLO\n"
-            f"model = YOLO(r'{self.model_path}')\n"
-            f"results = model(r'{img_path}', conf={conf}, verbose=False)\n"
+            "model = YOLO(sys.argv[1])\n"
+            "results = model(sys.argv[2], conf=float(sys.argv[3]), verbose=False)\n"
             "boxes = []\n"
             "for r in results:\n"
             "    for box in r.boxes.data.tolist():\n"
@@ -83,7 +84,7 @@ class BubbleDetector:
 
         try:
             res = subprocess.run(
-                [self.python_exe, "-c", script],
+                [self.python_exe, "-c", script, str(self.model_path), str(img_path), str(float(conf))],
                 capture_output=True,
                 text=True,
                 timeout=15,

@@ -17,7 +17,13 @@ class ComicService:
         self.width = int(getattr(image_model, "width", general.get("width", 768)))
         self.height = int(getattr(image_model, "height", general.get("height", 768)))
         self.image = ImageService(comfy_client, workflow_adapter, self.width, self.height)
-        self.compose_service = ComposeService()
+        comfy_settings = settings.get("comfyui", {})
+        # 최종 합성(Pillow 대체 합성)도 설정된 폰트/크기를 사용한다.
+        bubble_font_size = int(general.get("bubble_font_size", 28) or 28)
+        self.compose_service = ComposeService(
+            font_size=bubble_font_size,
+            font_path=str(comfy_settings.get("font_path", "") or ""),
+        )
         self.font_name = self._resolve_font_name(workflow_adapter)
         self.project_path = Path(general.get("project_path", "projects"))
         if not self.project_path.is_absolute() and base_dir:
@@ -37,8 +43,10 @@ class ComicService:
         font_path = getattr(workflow_adapter, "font_path", "") or ""
         return Path(font_path).name if font_path else "malgun.ttf"
 
-    def plan(self, idea, style="", cancel_check=None):
-        comic = self.story.create_comic(idea, style, cancel_check=cancel_check)
+    def plan(self, idea, style="", cancel_check=None, character_prompt=None):
+        comic = self.story.create_comic(
+            idea, style, cancel_check=cancel_check, character_prompt=character_prompt
+        )
         # 실제 생성에 사용하는 모델/샘플러 설정을 이번 만화의 생성 컨텍스트에
         # 스냅샷으로 남긴다. service는 Worker 한 번의 실행 동안 동일 profile을 사용한다.
         profile = self.image_model
@@ -80,21 +88,39 @@ class ComicService:
             cancel_check=cancel_check,
             style_prompt=fixed_style_prompt,
         )
-        # 2단계: 말풍선 감지 기반 대사 합성. 2단계 workflow가 없으면 생략한다.
-        if getattr(self.workflow, "stage2_path", None):
-            try:
-                self.image.apply_dialogue(
-                    panel,
-                    font_name=self.font_name,
-                    cancel_check=cancel_check,
-                )
-            except InterruptedError:
-                raise
-            except FileNotFoundError:
-                pass
-            except Exception as e:
-                print(f"[ComicService] 패널 {panel.index} 2단계 대사 합성 중 예외 발생: {e}")
+        # 2단계: 말풍선 감지 기반 대사 합성. 결과 상태를 패널에 기록한다.
+        self._apply_stage2(panel, cancel_check=cancel_check)
         return panel.image_path or path
+
+    def _apply_stage2(self, panel, cancel_check=None):
+        """2단계 대사 합성을 시도하고 panel.dialogue_status에 결과를 기록한다.
+
+        composited: 2단계 합성 성공 / skipped: 2단계 workflow 미설정·파일 없음 /
+        failed: 합성 실패(최종 합성에서 Pillow 대체) / none: 대사 없음.
+        """
+        has_dialogue = bool(str(getattr(panel, "dialogue", "") or "").strip())
+        if not has_dialogue:
+            panel.dialogue_status = "none"
+            return
+        if not getattr(self.workflow, "stage2_path", None):
+            panel.dialogue_status = "skipped"
+            return
+        try:
+            self.image.apply_dialogue(
+                panel,
+                font_name=self.font_name,
+                cancel_check=cancel_check,
+            )
+            panel.dialogue_status = (
+                "composited" if getattr(panel, "dialogue_composited", False) else "failed"
+            )
+        except InterruptedError:
+            raise
+        except FileNotFoundError:
+            panel.dialogue_status = "skipped"
+        except Exception as e:
+            print(f"[ComicService] 패널 {panel.index} 2단계 대사 합성 실패: {e}")
+            panel.dialogue_status = "failed"
 
     def compose(self, comic):
         folder = self._run_folder or self.begin_run()
@@ -132,17 +158,7 @@ class ComicService:
         path = self.image.generate_panel(
             panel, revision_dir, cancel_check=cancel_check, style_prompt=fixed_style_prompt
         )
-        if getattr(self.workflow, "stage2_path", None):
-            try:
-                self.image.apply_dialogue(
-                    panel, font_name=self.font_name, cancel_check=cancel_check
-                )
-            except InterruptedError:
-                raise
-            except FileNotFoundError:
-                pass
-            except Exception as e:
-                print(f"[ComicService] 패널 {panel.index} 재생성 대사 합성 중 예외 발생: {e}")
+        self._apply_stage2(panel, cancel_check=cancel_check)
         return panel.image_path or path
 
     def cancel_image_generation(self):

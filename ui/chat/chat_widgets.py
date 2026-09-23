@@ -307,7 +307,16 @@ class PanelResultCard(QFrame):
     regenerateRequested = Signal(int)
     revisionRequested = Signal(int, str)
 
-    def __init__(self, index, path, dialogue="", parent=None):
+    # 대사 합성 상태별 배지 문구 (빈 값은 구버전 세션 호환)
+    _STATUS_BADGES = {
+        "composited": "✓ 이미지 + 대사 합성 완료",
+        "fallback": "✓ 이미지 완료 · 대사 대체 합성",
+        "failed": "⚠ 이미지 완료 · 대사 합성 실패",
+        "skipped": "✓ 이미지 완료 · 2단계 미설정",
+        "none": "✓ 이미지 완료",
+    }
+
+    def __init__(self, index, path, dialogue="", status="", parent=None):
         super().__init__(parent)
         self.setObjectName("panelResultCard")
         layout = QVBoxLayout(self)
@@ -319,7 +328,7 @@ class PanelResultCard(QFrame):
         title.setObjectName("panelResultTitle")
         header.addWidget(title)
         header.addStretch(1)
-        badge = QLabel("✓ 이미지 + 대사 완료")
+        badge = QLabel(self._STATUS_BADGES.get(str(status or ""), "✓ 이미지 + 대사 완료"))
         badge.setObjectName("panelDoneBadge")
         header.addWidget(badge)
         layout.addLayout(header)
@@ -422,8 +431,11 @@ class ChatScrollArea(QScrollArea):
         self.setWidget(self.content)
 
     def append(self, widget):
+        # 위젯 추가 전의 하단 근접 상태를 확인한다(레이아웃 갱신 후에는 max가 이미 바뀜).
+        near_bottom = self.is_near_bottom()
         self.content_layout.insertWidget(self.content_layout.count() - 1, widget)
-        self._maybe_scroll_to_bottom()
+        if near_bottom:
+            self._maybe_scroll_to_bottom()
 
     def clear_messages(self):
         while self.content_layout.count() > 1:

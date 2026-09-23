@@ -20,15 +20,34 @@ def find_font_path(explicit=None):
     return ""
 
 
-def find_font(size):
-    candidates = [
+# (폰트 경로, 크기)를 키로 캐시한다. 설정의 폰트 경로/크기가 바뀌면
+# 새 키로 재로딩되므로 이전 설정의 폰트가 재사용되지 않는다.
+_FONT_CACHE = {}
+
+
+def find_font(size, font_path=None):
+    """설정된 폰트 경로를 우선 사용하고, 없으면 시스템 기본 후보에서 찾는다."""
+    key = (str(font_path or "").replace("\\", "/"), int(size))
+    cached = _FONT_CACHE.get(key)
+    if cached is not None:
+        return cached
+    font = _load_font(int(size), font_path)
+    _FONT_CACHE[key] = font
+    return font
+
+
+def _load_font(size, font_path):
+    candidates = []
+    if font_path:
+        candidates.append(str(font_path))
+    candidates += [
         os.environ.get("WINDIR", "C:/Windows") + "/Fonts/malgun.ttf",
         os.environ.get("WINDIR", "C:/Windows") + "/Fonts/malgunbd.ttf",
         "/usr/share/fonts/opentype/noto/NotoSansCJK-Regular.ttc",
         "/usr/share/fonts/truetype/noto/NotoSansCJK-Regular.ttc",
     ]
     for path in candidates:
-        if Path(path).exists():
+        if path and Path(path).exists():
             try:
                 return ImageFont.truetype(path, size)
             except OSError:

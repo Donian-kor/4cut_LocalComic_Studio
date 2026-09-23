@@ -1,3 +1,4 @@
-PySide6>=6.6
-requests>=2.31
-Pillow>=10.0
+# 런타임 의존성 (상한 포함 — 호환성 깨질 주요 업데이트 방지)
+PySide6>=6.6,<7
+requests>=2.31,<3
+Pillow>=10.0,<13

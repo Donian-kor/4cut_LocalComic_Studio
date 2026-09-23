@@ -34,12 +34,17 @@ class WorkflowAdapter:
         self.profile = profile
         self.font_path = font_path
         self.font_size = font_size
+        # 조립(assembly) 시점에 stage2 파일 존재를 검증해 없으면 None으로 정규화한다.
+        # 준비 단계(prepare_stage2)에서 FileNotFoundError가 발생하지 않도록 한다.
         self.stage2_path = None
         if stage2_path:
             s = Path(stage2_path)
             if not s.is_absolute() and base_dir:
                 s = Path(base_dir) / s
-            self.stage2_path = s
+            if s.exists():
+                self.stage2_path = s
+            else:
+                print(f"[WorkflowAdapter] 2단계 workflow 파일 없음 — 대사 합성(stage2) 비활성: {s}")
 
     def load(self):
         if not self.path.exists():
@@ -63,13 +68,40 @@ class WorkflowAdapter:
         positive_id, negative_id = self._select_prompt_nodes(wf, text_nodes)
         wf[positive_id].setdefault("inputs", {})["text"] = full_prompt
         if negative_id:
+            inputs = wf[negative_id].setdefault("inputs", {})
+            # 워크플로우가 원래 가진 negative 텍스트를 버리지 않고
+            # 프로필·기본 태그를 병합한다. 덮어쓰기는 값이 있을 때만 수행한다.
+            merged = [t.strip() for t in str(inputs.get("text", "") or "").split(",") if t.strip()]
+            seen = {t.lower() for t in merged}
             base_neg = str(getattr(profile, "negative_prompt", "") or "")
-            parts = [p.strip() for p in base_neg.split(",") if p.strip()]
-            existing_lower = [p.lower() for p in parts]
+            for token in [t.strip() for t in base_neg.split(",") if t.strip()]:
+                if token.lower() not in seen:
+                    merged.append(token)
+                    seen.add(token.lower())
+            # 배경 관련 negative는 장면 프롬프트가 흰/빈 배경을 명시적으로
+            # 요구할 때 생략해 사용자 요청과 충돌하지 않도록 한다.
+            lower_prompt = full_prompt.lower()
+            wants_open_background = any(
+                key in lower_prompt
+                for key in (
+                    "white background", "pure white", "plain white",
+                    "blank background", "empty background", "white void",
+                )
+            )
+            background_tags = {
+                "blank background", "empty background", "plain white background",
+                "pure white background", "isolated on white", "white void background",
+            }
             for extra in self.DEFAULT_NEGATIVE_TAGS:
-                if extra.lower() not in existing_lower:
-                    parts.append(extra)
-            wf[negative_id].setdefault("inputs", {})["text"] = ", ".join(parts)
+                if extra.lower() in seen:
+                    continue
+                if wants_open_background and extra.lower() in background_tags:
+                    continue
+                merged.append(extra)
+                seen.add(extra.lower())
+            joined = ", ".join(merged)
+            if joined:
+                inputs["text"] = joined
 
         # 말풍선 위치/크기 제약을 positive 프롬프트에 추가한다.
         current_positive = str(wf[positive_id].setdefault("inputs", {}).get("text", "") or "")

@@ -12,8 +12,9 @@ class ComposeService:
     대사가 말풍선을 벗어나지 않는다.
     """
 
-    def __init__(self, font_size=28):
-        self.font_size = font_size
+    def __init__(self, font_size=28, font_path=""):
+        self.font_size = int(font_size)
+        self.font_path = str(font_path or "")
 
     def compose(self, comic, output_path):
         for p in comic.panels:
@@ -28,13 +29,16 @@ class ComposeService:
                     print(f"[ComposeService] 패널 {p.index}: 2단계 합성이 되지 않아 Pillow로 대체 합성합니다.")
                     draw = ImageDraw.Draw(panel)
                     w, h = panel.size
-                    font = find_font(int(self.font_size))
+                    font = find_font(int(self.font_size), self.font_path)
                     draw_dialogue(
                         draw,
                         (18, 18, w - 18, int(h * 0.24)),
                         p.dialogue,
                         font,
                     )
+                    p.dialogue_status = "fallback"
+                elif not p.dialogue:
+                    p.dialogue_status = "none"
                 with_images.append(panel)
         canvas = make_2x2(with_images)
         Path(output_path).parent.mkdir(parents=True, exist_ok=True)

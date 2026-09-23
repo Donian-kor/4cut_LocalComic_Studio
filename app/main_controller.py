@@ -1,4 +1,3 @@
-import re
 from pathlib import Path
 
 from PySide6.QtCore import QObject
@@ -37,6 +36,8 @@ class MainController(QObject):
         self._operation = ""
         self._active_panel_index = None
         self._active_panel_revision = ""
+        # 재생성 시작 시 교체된 원래 panel_result 메시지 ID(실패/취소 시 복원용)
+        self._active_panel_message_id = None
 
         main_window.generationRequested.connect(self.handle_composer_message)
         main_window.cancelRequested.connect(self.cancel_generation)
@@ -72,7 +73,8 @@ class MainController(QObject):
         else:
             self.start_generation(text, style_prompt, mood, art_style)
 
-    def start_generation(self, idea, style_prompt, mood, art_style, display_text=None, update_title=True, add_user=True):
+    def start_generation(self, idea, style_prompt, mood, art_style, display_text=None, update_title=True, add_user=True,
+                         service=None, character_prompt=None):
         if self.active_worker and self.active_worker.isRunning():
             return
         idea = idea.strip()
@@ -98,7 +100,11 @@ class MainController(QObject):
             return
 
         try:
-            self.service = self.service_factory()
+            # 전체 다시 만들기 등에서 저장된 서비스(모델 스냅샷)가 전달되면 그것을 쓴다.
+            if service is not None:
+                self.service = service
+            else:
+                self.service = self.service_factory()
         except Exception as e:
             self.window.add_ai_text(f"생성 설정을 준비하지 못했습니다.\n\n{e}")
             return
@@ -111,11 +117,13 @@ class MainController(QObject):
         self.window.mark_generating(session.id)
         self.active_message_id = self.window.add_generation_message(session, initial="스토리 구성 중…", phase="story")
 
-        worker = ComicWorker(self.service, idea, style_prompt)
+        worker = ComicWorker(self.service, idea, style_prompt, character_prompt=character_prompt or "")
         self.active_worker = worker
         worker.progress.connect(self._on_progress)
         worker.planned.connect(self._on_planned)
+        worker.panel_started.connect(self._on_panel_started)
         worker.panel_completed.connect(self._on_panel_completed)
+        worker.compose_started.connect(self._on_compose_started)
         worker.finished_comic.connect(self._on_finished)
         worker.failed.connect(self._on_failed)
         worker.cancelled.connect(self._on_cancelled)
@@ -130,13 +138,11 @@ class MainController(QObject):
         session.character_prompt = str(getattr(comic, "character_prompt", "") or "")
         session.style_prompt = str(getattr(comic, "style_prompt", "") or "")
         session.generation_config = dict(getattr(comic, "generation_config", {}) or {})
+        # 계획 확정 시점에 컷 데이터를 먼저 커밋해 재시작 후에도
+        # 완료된 컷들을 복구하고 재생성할 수 있게 한다.
+        session.comic_data = comic.to_dict()
         session.touch()
         self.window.session_manager.update(session)
-
-    @staticmethod
-    def _panel_index_from_progress(message):
-        match = re.search(r"([1-4])컷\s+이미지\s+생성\s+중", str(message))
-        return int(match.group(1)) if match else None
 
     def _target_session(self):
         if not self.active_session_id:
@@ -144,48 +150,51 @@ class MainController(QObject):
         return self.window.session_manager.get(self.active_session_id)
 
     def _on_progress(self, message, current, total):
-        panel_index = self._panel_index_from_progress(message)
-        if panel_index:
-            session = self._target_session()
-            if session is None:
-                return
-            if self.active_message_id is None:
-                self.active_message_id = self.window.add_generation_message(
-                    session,
-                    initial=message,
-                    phase="panel",
-                    panel_index=panel_index,
-                )
-            else:
-                self.window.begin_panel_generation(self.active_message_id, panel_index, message)
-            return
-
-        if "4컷 합성 중" in str(message):
-            session = self._target_session()
-            if session is None:
-                return
-            if self.active_message_id is None:
-                self.active_message_id = self.window.add_generation_message(
-                    session,
-                    initial=message,
-                    phase="compose",
-                )
-            else:
-                self.window.begin_final_composition(self.active_message_id, message)
-            return
-
+        # progress는 표시용 문구 전용이다. 단계 전환은 panel_started/compose_started 신호가 담당한다.
         if self.active_message_id:
             self.window.update_generation(self.active_message_id, message, current, total, self.active_session_id)
 
-    def _on_panel_completed(self, index, path):
+    def _on_panel_started(self, index):
+        session = self._target_session()
+        if session is None:
+            return
+        message = f"{index}컷 이미지 생성 중"
+        if self.active_message_id is None:
+            self.active_message_id = self.window.add_generation_message(
+                session,
+                initial=message,
+                phase="panel",
+                panel_index=index,
+            )
+        else:
+            self.window.begin_panel_generation(self.active_message_id, index, message)
+
+    def _on_compose_started(self):
+        session = self._target_session()
+        if session is None:
+            return
+        message = "4컷 합성 중"
+        if self.active_message_id is None:
+            self.active_message_id = self.window.add_generation_message(
+                session,
+                initial=message,
+                phase="compose",
+            )
+        else:
+            self.window.begin_final_composition(self.active_message_id, message)
+
+    def _on_panel_completed(self, index, path, dialogue_status=""):
         message_id = self.active_message_id
         if not message_id:
             return
 
         dialogue = ""
-        if self.active_worker is not None:
-            comic = getattr(self.active_worker, "comic", None)
-            panels = getattr(comic, "panels", []) if comic else []
+        session = self._target_session()
+        comic = getattr(self.active_worker, "comic", None) if self.active_worker else None
+        if comic is not None and session is not None:
+            # 패널 데이터와 카드 갱신을 한 번의 저장으로 커밋한다.
+            session.comic_data = comic.to_dict()
+            panels = getattr(comic, "panels", [])
             if 1 <= index <= len(panels):
                 dialogue = str(getattr(panels[index - 1], "dialogue", "") or "")
 
@@ -194,6 +203,7 @@ class MainController(QObject):
             index,
             path,
             dialogue=dialogue,
+            dialogue_status=dialogue_status,
             session_id=self.active_session_id,
         )
         self.active_message_id = None
@@ -284,7 +294,10 @@ class MainController(QObject):
         self._operation = "panel_regen"
         self._active_panel_index = int(panel_index)
         self._active_panel_revision = display_revision
-        worker.panel_completed.connect(self._on_panel_regen_completed)
+        # 실패/취소 시 이전(마지막 커밋본) 결과 메시지로 복원하기 위해 보관한다.
+        self._active_panel_message_id = message_id
+        worker.panel_started.connect(self._on_panel_regen_started)
+        worker.panel_generated.connect(self._on_panel_regen_generated)
         worker.compose_started.connect(self._on_panel_regen_compose_started)
         worker.finished_comic.connect(self._on_panel_regen_finished)
         worker.failed.connect(self._on_panel_regen_failed)
@@ -292,25 +305,57 @@ class MainController(QObject):
         worker.finished.connect(self._release_worker)
         worker.start()
 
-    def _on_panel_regen_completed(self, index, path):
-        # UI 메시지를 먼저 완성 카드로 바꾼 뒤 최종 합성 카드를 별도로 추가한다.
-        session = self._target_session()
-        if not session:
+    def _on_panel_regen_started(self, index):
+        # 세션 커밋 없이 UI 진행 문구만 갱신한다.
+        if not self.active_message_id or not self._target_session():
             return
-        comic = getattr(self.active_worker, "comic", None)
-        dialogue = ""
-        if comic and 1 <= index <= len(comic.panels):
-            dialogue = comic.panels[index - 1].dialogue
-        self.window.complete_panel_generation(
-            self.active_message_id, index, path, dialogue=dialogue, session_id=self.active_session_id
+        self.window.update_generation(
+            self.active_message_id,
+            f"{index}컷 이미지를 다시 생성하는 중…",
+            max(0, index - 1),
+            4,
+            session_id=self.active_session_id,
+        )
+
+    def _on_panel_regen_generated(self, index, path):
+        # 중간 결과는 표시 전용이다. 카드/패널 데이터의 세션 반영은
+        # 최종 합성 성공 시점(finished_comic)에 한 번만 커밋된다.
+        if not self.active_message_id or not self._target_session():
+            return
+        self.window.update_generation(
+            self.active_message_id,
+            f"{index}컷 이미지 생성 완료 · 4컷 합성 준비 중…",
+            max(0, index - 1),
+            4,
+            session_id=self.active_session_id,
         )
 
     def _on_panel_regen_compose_started(self):
         session = self._target_session()
         if not session:
             return
-        # 새 합성 카드 ID로 교체한다. 기존 컷 결과는 그대로 채팅에 남는다.
+        # 새 합성 카드 ID로 교체한다. 기존 컷 결과 메시지는 그대로 채팅에 남는다.
+        # (성공 시 finish_panel_regeneration이 원래 컷 메시지를 갱신한다.)
         self.active_message_id = self.window.add_panel_compose_message(session)
+
+    def _restore_committed_panel_message(self):
+        """재생성 실패/취소 시 덮어쓴 컷 메시지를 마지막 커밋본 결과로 복원한다.
+
+        합성 카드가 만들어지기 전에 실패한 경우(active_message_id가 원본과 동일)
+        는 실패/취소 카드가 그대로 남으므로 복원하지 않는다.
+        """
+        if not self._active_panel_message_id or not self._active_panel_index:
+            return
+        if self.active_message_id == self._active_panel_message_id:
+            return
+        session = self._target_session()
+        if session is None:
+            return
+        self.window.restore_panel_result_message(
+            self._active_panel_message_id,
+            self._active_panel_index,
+            session_id=self.active_session_id,
+        )
 
     def _on_panel_regen_finished(self, comic):
         message_id = self.active_message_id
@@ -327,24 +372,29 @@ class MainController(QObject):
         self._operation = ""
         self._active_panel_index = None
         self._active_panel_revision = ""
+        self._active_panel_message_id = None
 
     def _on_panel_regen_failed(self, message):
         message_id = self.active_message_id
         self.window.fail_generation(message_id, message, session_id=self.active_session_id)
+        self._restore_committed_panel_message()
         self.active_message_id = None
         self.active_session_id = None
         self._operation = ""
         self._active_panel_index = None
         self._active_panel_revision = ""
+        self._active_panel_message_id = None
 
     def _on_panel_regen_cancelled(self):
         message_id = self.active_message_id
         self.window.cancel_generation_ui(message_id, session_id=self.active_session_id)
+        self._restore_committed_panel_message()
         self.active_message_id = None
         self.active_session_id = None
         self._operation = ""
         self._active_panel_index = None
         self._active_panel_revision = ""
+        self._active_panel_message_id = None
 
     def cancel_generation(self):
         if self.active_worker and self.active_worker.isRunning():
@@ -366,21 +416,37 @@ class MainController(QObject):
         session = self.window.current_session
         if not session or session.status == "generating":
             return
-        if not self.last_idea and session:
-            self.last_idea = session.idea
+        idea = self.last_idea or session.idea
+        if not idea:
+            return
+        if not self.last_idea:
             self.last_mood = session.mood
             self.last_art_style = session.art_style
-            self.last_style_prompt = self._style_from_labels(self.last_mood, self.last_art_style)
-        if self.last_idea:
-            self._is_revising = False
-            self.start_generation(
-                self.last_idea,
-                self.last_style_prompt,
-                self.last_mood,
-                self.last_art_style,
-                add_user=False,
-                update_title=False,
-            )
+        # 저장된 생성 설정 스냅샷(스타일/캐릭터/모델)을 우선 재사용한다.
+        # 사용자가 모델·스타일을 새로 선택한 경우에만 새 설정이 적용된다.
+        style_prompt = (
+            str(session.style_prompt or "")
+            or self.last_style_prompt
+            or self._style_from_labels(session.mood, session.art_style)
+        )
+        character_prompt = str(session.character_prompt or "")
+        service = None
+        if session.generation_config:
+            try:
+                service = self._service_for_session(session)
+            except Exception:
+                service = None
+        self._is_revising = False
+        self.start_generation(
+            idea,
+            style_prompt,
+            session.mood or self.last_mood,
+            session.art_style or self.last_art_style,
+            add_user=False,
+            update_title=False,
+            service=service,
+            character_prompt=character_prompt or None,
+        )
 
     def revise(self, revision, style_prompt=None, mood=None, art_style=None):
         revision = revision.strip()

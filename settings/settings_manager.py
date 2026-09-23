@@ -1,4 +1,6 @@
 import json
+import shutil
+import time
 from pathlib import Path
 
 DEFAULTS = {
@@ -29,8 +31,18 @@ class SettingsManager:
         if not self.path.exists():
             return {}
         try:
-            return json.loads(self.path.read_text(encoding="utf-8"))
-        except Exception:
+            data = json.loads(self.path.read_text(encoding="utf-8"))
+            if not isinstance(data, dict):
+                raise ValueError("설정 JSON 최상위가 객체가 아닙니다.")
+            return data
+        except Exception as exc:
+            # 손상된 설정 원본을 격리해 복구하고, 빈 설정으로 즉시 덮어쓰지 않는다.
+            try:
+                backup = self.path.with_name(f"{self.path.name}.corrupt-{int(time.time())}")
+                shutil.copy2(self.path, backup)
+                print(f"[SettingsManager] 설정 파일 손상({exc}) → 원본 격리: {backup}")
+            except OSError:
+                pass
             return {}
 
     def _normalize(self):
@@ -41,9 +53,12 @@ class SettingsManager:
 
     def save(self):
         self._normalize()
-        self.path.write_text(
+        # 임시파일에 먼저 쓰고 원자적으로 교체해 중간 종료 시 파일 손상을 막는다.
+        tmp = self.path.with_name(f"{self.path.name}.tmp")
+        tmp.write_text(
             json.dumps(self.data, ensure_ascii=False, indent=2), encoding="utf-8"
         )
+        tmp.replace(self.path)
 
     def section(self, name):
         return self.data.setdefault(name, {})

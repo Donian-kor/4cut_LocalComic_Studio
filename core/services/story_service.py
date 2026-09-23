@@ -39,7 +39,7 @@ class StoryService:
     def __init__(self, llm_client):
         self.llm = llm_client
 
-    def create_comic(self, idea, style="", cancel_check=None):
+    def create_comic(self, idea, style="", cancel_check=None, character_prompt=None):
         if not idea.strip():
             raise ValueError("아이디어를 입력해 주세요.")
         system = '''
@@ -102,7 +102,12 @@ CRITICAL: Every "dialogue" value and every "speaker" value MUST be written entir
 
         # Character Prompt / Style Prompt는 이 만화 생성 시 1회만 확정하고
         # 아래 모든 패널에서 같은 문자열을 그대로 재사용한다.
-        char = clean_panel_text(comic.character.visual_prompt())
+        # 전체 다시 만들기처럼 이전 세션의 캐릭터 프롬프트가 전달되면
+        # 동일한 캐릭터 외형을 유지하기 위해 그것을 우선한다.
+        if str(character_prompt or "").strip():
+            char = clean_panel_text(character_prompt)
+        else:
+            char = clean_panel_text(comic.character.visual_prompt())
         style_text = clean_panel_text(comic.style_prompt)
         comic.character_prompt = char
         for p in comic.panels:

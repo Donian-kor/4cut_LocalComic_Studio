@@ -1,0 +1,2 @@
+# 개발/테스트 의존성 (CI: quality.yml, ci.yml에서 사용)
+pytest>=8,<10

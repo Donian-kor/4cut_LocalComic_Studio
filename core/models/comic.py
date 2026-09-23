@@ -28,6 +28,8 @@ class Panel:
     dialogue_composited: bool = False
     revision_prompt: str = ""
     revision_count: int = 0
+    # 2단계 대사 합성 상태: composited | fallback | failed | skipped | none | ""
+    dialogue_status: str = ""
 
     def to_dict(self):
         return {
@@ -41,6 +43,7 @@ class Panel:
             "dialogue_composited": bool(self.dialogue_composited),
             "revision_prompt": self.revision_prompt,
             "revision_count": int(self.revision_count or 0),
+            "dialogue_status": str(self.dialogue_status or ""),
         }
 
     @classmethod
@@ -56,6 +59,7 @@ class Panel:
             dialogue_composited=bool(raw.get("dialogue_composited", False)),
             revision_prompt=str(raw.get("revision_prompt") or ""),
             revision_count=int(raw.get("revision_count") or 0),
+            dialogue_status=str(raw.get("dialogue_status") or ""),
         )
 
 @dataclass
