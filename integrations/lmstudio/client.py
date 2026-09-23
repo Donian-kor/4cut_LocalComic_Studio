@@ -164,12 +164,15 @@ class LMStudioClient:
         """
         buffer = ""
         raw_lines = []
-        lines = r.iter_lines(chunk_size=8192, decode_unicode=True)
+        # decode_unicode=False 로 바이트 그대로 받아 UTF-8로 명시 디코딩한다.
+        # (requests는 text/event-stream 응답의 charset 을 모르면 ISO-8859-1 로
+        #  디코딩해 한글이 mojibake 로 깨진다. 반드시 UTF-8 로 직접 디코딩할 것.)
+        lines = r.iter_lines(chunk_size=8192, decode_unicode=False)
         while True:
             if cancel_check and cancel_check():
                 raise InterruptedError("LM Studio 요청이 취소되었습니다.")
             try:
-                line = next(lines)
+                raw = next(lines)
             except StopIteration:
                 break
             except Exception as exc:
@@ -178,8 +181,10 @@ class LMStudioClient:
                     continue
                 r.close()
                 raise
-            if isinstance(line, bytes):
-                line = line.decode("utf-8", errors="replace")
+            if isinstance(raw, bytes):
+                line = raw.decode("utf-8", errors="replace")
+            else:
+                line = str(raw)
             raw_lines.append(line)
             line = line.strip()
             if not line or not line.startswith("data:"):

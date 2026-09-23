@@ -17,9 +17,9 @@
     "width": 512,
     "height": 512,
     "auto_save": true,
-    "style_prompt": "",
+    "style_prompt": "clean anime cel shading, crisp lineart, flat colors, expressive comedic timing, consistent character design",
     "bubble_font_size": 28,
-    "art_style_prompt": "Japanese manga illustration style, distinctive manga character design, clean bold linework, expressive eyes and facial expressions, dynamic character poses, traditional manga shading, screentone texture, detailed black and white or limited-color artwork"
+    "art_style_prompt": "super deformed chibi illustration style, cute characters with large heads and small bodies, rounded shapes, clean bold outlines, bright cheerful colors, simple shading, highly expressive cute facial expressions"
   },
   "image_model": "z_anime_base_aio_fp8",
   "image_models": [
