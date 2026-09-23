@@ -143,6 +143,12 @@ class MainController(QObject):
         session.comic_data = comic.to_dict()
         session.touch()
         self.window.session_manager.update(session)
+        # 스토리 카드는 계획 요약으로 전환해 세션에 유지한다.
+        # 이후 컷별 진행은 새 generation 카드로 분리한다.
+        self.window.complete_story_plan(
+            self.active_message_id, comic, session_id=self.active_session_id
+        )
+        self.active_message_id = None
 
     def _target_session(self):
         if not self.active_session_id:

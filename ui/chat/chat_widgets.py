@@ -301,6 +301,66 @@ class GenerationCard(QFrame):
         self.step.setText("사용자 요청으로 생성을 중단했습니다.")
 
 
+class StoryPlanCard(QFrame):
+    """원본 JSON을 노출하지 않는, 세션에 남는 4컷 스토리 요약 카드."""
+
+    def __init__(self, summary, parent=None):
+        super().__init__(parent)
+        self.setObjectName("storyPlanCard")
+        self.setAttribute(Qt.WidgetAttribute.WA_StyledBackground, True)
+        layout = QVBoxLayout(self)
+        layout.setContentsMargins(16, 14, 16, 14)
+        layout.setSpacing(10)
+
+        title = QLabel(str(summary.get("title") or "4컷 스토리 계획"))
+        title.setObjectName("storyPlanTitle")
+        title.setWordWrap(True)
+        layout.addWidget(title)
+
+        style = " · ".join(
+            value for value in (
+                str(summary.get("mood") or "").strip(),
+                str(summary.get("art_style") or summary.get("style") or "").strip(),
+            ) if value
+        )
+        if style:
+            meta = QLabel(style)
+            meta.setObjectName("mutedText")
+            meta.setWordWrap(True)
+            layout.addWidget(meta)
+
+        character = dict(summary.get("character") or {})
+        character_bits = [
+            str(character.get("name") or "").strip(),
+            str(character.get("appearance") or "").strip(),
+            str(character.get("personality") or "").strip(),
+        ]
+        character_text = " · ".join(bit for bit in character_bits if bit)
+        if character_text:
+            layout.addWidget(self._section("등장인물", character_text))
+
+        panels = summary.get("panels") or []
+        for index, panel in enumerate(panels, start=1):
+            panel = dict(panel or {})
+            scene = str(panel.get("scene") or "").strip()
+            dialogue = str(panel.get("dialogue") or "").strip()
+            speaker = str(panel.get("speaker") or "").strip()
+            details = scene
+            if dialogue:
+                speech = f"{speaker}: {dialogue}" if speaker else dialogue
+                details = f"{details}\n대사 · {speech}" if details else f"대사 · {speech}"
+            if details:
+                layout.addWidget(self._section(f"{index}컷", details))
+
+    @staticmethod
+    def _section(label, text):
+        section = QLabel(f"<b>{label}</b>\n{text}")
+        section.setObjectName("storyPlanSection")
+        section.setWordWrap(True)
+        section.setTextInteractionFlags(Qt.TextInteractionFlag.TextSelectableByMouse)
+        return section
+
+
 class PanelResultCard(QFrame):
     """대사 합성까지 끝난 단일 컷과 개별 재생성/수정 액션을 표시한다."""
 
@@ -419,6 +479,17 @@ class ResultCard(QFrame):
 
 
 class ChatScrollArea(QScrollArea):
+    """채팅 스크롤 영역.
+
+    하단 고정(stick-to-bottom) 상태머신으로 동작한다.
+    - 하단 근처에 있는 동안 콘텐츠 높이가 변하면(카드 추가/제거, 이미지
+      재렌더, 텍스트 재줄바꿈) 하단을 계속 따라간다.
+    - 사용자가 위로 스크롤해 하단을 벗어나면 자동 스크롤을 멈추고 현재
+      위치를 유지한다. 다시 하단 근처로 돌아오면 자동 스크롤을 재개한다.
+    """
+
+    NEAR_BOTTOM_THRESHOLD = 40
+
     def __init__(self, parent=None):
         super().__init__(parent)
         self.setWidgetResizable(True)
@@ -430,12 +501,16 @@ class ChatScrollArea(QScrollArea):
         self.content_layout.addStretch(1)
         self.setWidget(self.content)
 
+        self._stick_to_bottom = True
+        self._programmatic_scroll = False
+        self._snap_pending = False
+        bar = self.verticalScrollBar()
+        bar.rangeChanged.connect(self._on_range_changed)
+        bar.valueChanged.connect(self._on_value_changed)
+
     def append(self, widget):
-        # 위젯 추가 전의 하단 근접 상태를 확인한다(레이아웃 갱신 후에는 max가 이미 바뀜).
-        near_bottom = self.is_near_bottom()
         self.content_layout.insertWidget(self.content_layout.count() - 1, widget)
-        if near_bottom:
-            self._maybe_scroll_to_bottom()
+        self._schedule_snap()
 
     def clear_messages(self):
         while self.content_layout.count() > 1:
@@ -450,10 +525,39 @@ class ChatScrollArea(QScrollArea):
         self.content_layout.removeWidget(widget)
         widget.setParent(None)
         widget.deleteLater()
+        # 제거로 높이가 줄면 Qt가 value를 강제 클램프한다. 하단 고정
+        # 상태라면 레이아웃 확정 후 다시 하단으로 맞춰 점프를 없앤다.
+        self._schedule_snap()
 
     def is_near_bottom(self):
         bar = self.verticalScrollBar()
-        return bar.value() >= bar.maximum() - 40
+        return bar.value() >= bar.maximum() - self.NEAR_BOTTOM_THRESHOLD
 
-    def _maybe_scroll_to_bottom(self):
-        QTimer.singleShot(0, lambda: self.verticalScrollBar().setValue(self.verticalScrollBar().maximum()))
+    def _on_range_changed(self, _start, _end):
+        # 카드 추가/제거, 이미지 재렌더 등 콘텐츠 높이가 변할 때마다
+        # 하단 고정 상태면 하단으로 다시 맞춘다. append 한 번에 거는
+        # 일회성 스크롤이 놓치던 레이아웃 확정 시점 차이를 없앤다.
+        self._schedule_snap()
+
+    def _on_value_changed(self, _value):
+        if self._programmatic_scroll:
+            return
+        # 사용자 직접 스크롤: 하단 근처면 따라가기를 유지, 벗어나면 중단.
+        self._stick_to_bottom = self.is_near_bottom()
+
+    def _schedule_snap(self):
+        if self._snap_pending:
+            return
+        self._snap_pending = True
+        QTimer.singleShot(0, self._snap_to_bottom)
+
+    def _snap_to_bottom(self):
+        self._snap_pending = False
+        if not self._stick_to_bottom:
+            return
+        bar = self.verticalScrollBar()
+        self._programmatic_scroll = True
+        try:
+            bar.setValue(bar.maximum())
+        finally:
+            self._programmatic_scroll = False

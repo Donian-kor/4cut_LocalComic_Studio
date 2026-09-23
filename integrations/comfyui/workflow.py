@@ -12,10 +12,11 @@ class WorkflowAdapter:
     2단계 워크플로우 파일이 없거나 대사가 비어 있으면 1단계 결과만 반환한다.
     """
 
-    # 1단계 positive 프롬프트에 추가할 말풍선 위치/크기 제약 (가중치 강화).
+    # Z-Image는 괄호 가중치 문법을 일반 텍스트로 처리하므로 자연어로 말풍선을 지시한다.
     BUBBLE_PROMPT = (
-        "(large empty white speech bubble at top center:1.2), "
-        "solid clean white fill inside speech bubble, clean outlines"
+        "large empty white speech bubble at the top center with a completely blank interior, "
+        "no text, letters, numbers, symbols, or writing, "
+        "solid clean white fill inside the speech bubble, clean outlines"
     )
 
     DEFAULT_NEGATIVE_TAGS = [

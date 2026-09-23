@@ -24,7 +24,7 @@ from PySide6.QtWidgets import (
 from settings.settings_window import SettingsWindow
 from core.models.chat import ChatMessageData, ChatSession
 from core.services.session_manager import SessionManager
-from ui.chat.chat_widgets import ChatMessageRow, GenerationCard, PanelResultCard, ResultCard, ChatScrollArea
+from ui.chat.chat_widgets import ChatMessageRow, GenerationCard, StoryPlanCard, PanelResultCard, ResultCard, ChatScrollArea
 from ui.idea.idea_section import IdeaSection
 from app.version import APP_NAME, APP_VERSION
 
@@ -320,6 +320,9 @@ class MainWindow(QMainWindow):
     QFrame#chatBubbleUser { background: #242946; border: 1px solid #363d67; border-radius: 14px; }
     QLabel#mutedText { color: #8a92a3; }
     QFrame#generationCard { background: #121620; border: 1px solid transparent; border-radius: 12px; }
+    QFrame#storyPlanCard { background: #121820; border: 1px solid #2b3140; border-radius: 12px; }
+    QLabel#storyPlanTitle { color: #f2f4ff; font-size: 18px; font-weight: 800; }
+    QLabel#storyPlanSection { color: #c6ccda; background: #151a24; border: 1px solid #2b3140; border-radius: 8px; padding: 8px 10px; }
     QLabel#generationStatus { color: #e4e8f1; font-size: 14px; font-weight: 700; }
     QLabel#generationTimer { color: #818cf8; font-size: 12px; font-weight: 700; }
     QLabel#generationPanelBadge { color: #c7cbff; background: #1a1d35; border: 1px solid #343962; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: 800; }
@@ -563,6 +566,12 @@ class MainWindow(QMainWindow):
                         card.set_story_mode()
                 has_visible = True
 
+            elif message.kind == "story_plan":
+                row = ChatMessageRow("ai")
+                row.bubble.layout.addWidget(StoryPlanCard(dict(message.metadata or {})))
+                self.chat.append(row)
+                has_visible = True
+
             elif message.kind == "panel_result":
                 row = ChatMessageRow("ai")
                 index = int(message.metadata.get("panel_index", 0) or 0)
@@ -666,6 +675,55 @@ class MainWindow(QMainWindow):
             card.set_story_mode()
         self.composer.set_busy(True)
         return data.id
+
+    @staticmethod
+    def _story_summary(comic, session):
+        """UI 카드에 필요한 계획만 저장한다. image_prompt와 원본 JSON은 포함하지 않는다."""
+        character = getattr(comic, "character", None)
+        return {
+            "title": str(getattr(comic, "title", "") or "4컷 스토리 계획"),
+            "mood": str(getattr(session, "mood", "") or ""),
+            "art_style": str(getattr(session, "art_style", "") or ""),
+            "style": str(getattr(comic, "style", "") or ""),
+            "character": {
+                "name": str(getattr(character, "name", "") or ""),
+                "appearance": str(getattr(character, "appearance", "") or ""),
+                "personality": str(getattr(character, "personality", "") or ""),
+            },
+            "panels": [
+                {
+                    "scene": str(getattr(panel, "scene", "") or ""),
+                    "dialogue": str(getattr(panel, "dialogue", "") or ""),
+                    "speaker": str(getattr(panel, "speaker", "") or ""),
+                }
+                for panel in getattr(comic, "panels", [])
+            ],
+        }
+
+    def complete_story_plan(self, message_id, comic, session_id=None):
+        """진행용 스토리 카드를 영구적인 요약 카드로 전환한다."""
+        session = self.session_manager.get(session_id) if session_id else self.current_session
+        if not session or not message_id:
+            return
+        item = next((message for message in session.messages if message.id == message_id), None)
+        if item is None:
+            return
+        item.kind = "story_plan"
+        item.text = "스토리 계획"
+        item.metadata = self._story_summary(comic, session)
+        session.touch()
+        self.session_manager.update(session)
+
+        if self.current_session and self.current_session.id == session.id:
+            row, card = self._generation_entry(message_id)
+            if card:
+                card.stop()
+            if row:
+                self.chat.remove_widget(row)
+            self._generation_widgets.pop(message_id, None)
+            plan_row = ChatMessageRow("ai")
+            plan_row.bubble.layout.addWidget(StoryPlanCard(item.metadata))
+            self.chat.append(plan_row)
 
     def _generation_entry(self, message_id):
         entry = self._generation_widgets.get(message_id)
