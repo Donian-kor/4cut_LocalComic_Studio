@@ -40,6 +40,7 @@ class Composer(QFrame):
         self.mood.addItems(list(IdeaSection.STYLE_PRESETS.keys()))
         self.art.addItems(list(IdeaSection.ART_STYLE_PRESETS.keys()))
         self.send.setIconSize(QSize(20, 20))
+        self.send.clicked.connect(self._submit)
         self.set_busy(False)
         self.setEnabled(True)
 
