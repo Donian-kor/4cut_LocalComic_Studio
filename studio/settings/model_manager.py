@@ -1,5 +1,5 @@
 import re
-from core.models.image_model import ImageModelProfile
+from studio.models.image_model import ImageModelProfile
 
 
 DEFAULT_IMAGE_MODELS = [
@@ -7,7 +7,7 @@ DEFAULT_IMAGE_MODELS = [
         id="z_anime_base_aio_fp8",
         name="Z-Anime Base AIO FP8",
         model_file="z-anime-base-aio-fp8.safetensors",
-        workflow="workflows/z_anime_base_aio_fp8.json",
+        workflow="resources/z_anime_base_aio_fp8.json",
         width=512,
         height=512,
         steps=28,

@@ -2,7 +2,7 @@
 """make_2x2는 서로 다른 비율의 컷도 왜곡 없이 letterbox로 배치한다."""
 from PIL import Image
 
-from compose.layout import make_2x2
+from studio.services.layout import make_2x2
 
 
 def test_make_2x2_preserves_aspect_ratio_with_letterbox():

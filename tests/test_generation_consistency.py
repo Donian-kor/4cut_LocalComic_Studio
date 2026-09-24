@@ -3,8 +3,8 @@
 
 from types import SimpleNamespace
 
-from core.services.story_service import StoryService
-from integrations.comfyui.workflow import WorkflowAdapter
+from studio.services.story_service import StoryService
+from studio.integrations.workflow import WorkflowAdapter
 
 
 class FakeLLM:

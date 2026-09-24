@@ -6,7 +6,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
 from PySide6.QtWidgets import QApplication, QLabel
 
-from ui.chat.chat_widgets import StoryPlanCard
+from studio.ui.chat_widgets import StoryPlanCard
 
 
 def test_story_plan_card_displays_readable_summary_without_image_prompt():

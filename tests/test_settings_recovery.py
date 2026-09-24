@@ -2,7 +2,7 @@
 """손상된 설정 파일 격리와 원자적 저장을 검증한다."""
 import json
 
-from settings.settings_manager import SettingsManager
+from studio.settings.settings_manager import SettingsManager
 
 
 def test_corrupt_config_is_quarantined_not_overwritten(tmp_path):

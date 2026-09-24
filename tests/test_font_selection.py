@@ -7,9 +7,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from settings.settings_manager import SettingsManager
-from settings.settings_window import SettingsWindow
-from ui import theme
+from studio.settings.settings_manager import SettingsManager
+from studio.settings.settings_window import SettingsWindow
+from studio.ui import theme
 
 
 @pytest.fixture(scope="session")

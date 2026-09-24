@@ -3,8 +3,8 @@
 
 from PySide6.QtWidgets import QLabel
 
-from core.models.chat import ChatMessageData
-from ui.chat.chat_widgets import (
+from studio.models.chat import ChatMessageData
+from studio.ui.chat_widgets import (
     ChatMessageRow,
     ChatScrollArea,
     GenerationCard,
@@ -12,7 +12,7 @@ from ui.chat.chat_widgets import (
     ResultCard,
     StoryPlanCard,
 )
-from ui.main.components.empty_state import EmptyState
+from studio.ui.empty_state import EmptyState
 
 
 class ChatViewManager:

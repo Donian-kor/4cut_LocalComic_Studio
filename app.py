@@ -1,16 +1,16 @@
 ﻿import sys
 from pathlib import Path
 from PySide6.QtWidgets import QApplication
-from settings.settings_manager import SettingsManager
-from integrations.lmstudio.client import LMStudioClient
-from integrations.comfyui.client import ComfyUIClient
-from integrations.comfyui.workflow import WorkflowAdapter
-from settings.model_manager import ImageModelManager
-from core.services.comic_service import ComicService
-from ui.main.main_window import MainWindow
-from ui import theme
-from app.main_controller import MainController
-from app.version import APP_NAME, APP_VERSION
+from studio.settings.settings_manager import SettingsManager
+from studio.integrations.lmstudio import LMStudioClient
+from studio.integrations.comfyui import ComfyUIClient
+from studio.integrations.workflow import WorkflowAdapter
+from studio.settings.model_manager import ImageModelManager
+from studio.services.comic_service import ComicService
+from studio.ui.main_window import MainWindow
+from studio.ui import theme
+from studio.main_controller import MainController
+from studio.version import APP_NAME, APP_VERSION
 
 
 def build_service(settings, model_id=None):

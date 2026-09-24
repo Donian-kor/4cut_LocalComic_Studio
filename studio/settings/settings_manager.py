@@ -10,7 +10,7 @@ logger = logging.getLogger(__name__)
 
 DEFAULTS = {
     "lmstudio": {"host": "127.0.0.1", "port": 1234, "api_path": "/v1", "model": ""},
-    "comfyui": {"host": "127.0.0.1", "port": 8188, "workflow": "workflows/4cut_default.json", "font_path": ""},
+    "comfyui": {"host": "127.0.0.1", "port": 8188, "workflow": "resources/4cut_default.json", "font_path": ""},
     "general": {
         "project_path": "projects",
         "width": 512,
@@ -24,14 +24,51 @@ DEFAULTS = {
 
 class SettingsManager:
     def __init__(self, path=None):
-        base = Path(__file__).resolve().parent.parent
+        # settings/settings_manager.py → studio/ → 프로젝트 루트 (3단계 상위)
+        base = Path(__file__).resolve().parents[2]
         self.base_dir = base
-        self.path = Path(path) if path else base / "config" / "config.json"
+        self.path = Path(path) if path else base / "resources" / "config.json"
         if not self.path.is_absolute():
             self.path = base / self.path
         self.path.parent.mkdir(parents=True, exist_ok=True)
+        self._migrate_legacy_config()
         self.data = self._load()
         self._normalize()
+
+    def _migrate_legacy_config(self):
+        """기존 구조의 config/config.json을 resources/config.json으로 1회성 이관한다.
+
+        - 이관 시 workflow 경로의 "workflows/" 접두사를 "resources/"로 바꾼다.
+        - 이관이 끝나면 원본은 config.json.migrated로 남겨 되돌릴 수 있게 한다.
+        """
+        legacy = self.base_dir / "config" / "config.json"
+        if self.path.exists() or not legacy.is_file():
+            return
+        try:
+            raw = legacy.read_text(encoding="utf-8")
+            data = json.loads(raw)
+            if not isinstance(data, dict):
+                raise ValueError("설정 JSON 최상위가 객체가 아닙니다.")
+            for section in data.values():
+                if isinstance(section, dict):
+                    for key, value in list(section.items()):
+                        if isinstance(value, str) and value.startswith("workflows/"):
+                            section[key] = "resources/" + value[len("workflows/"):]
+                elif isinstance(section, list):
+                    for entry in section:
+                        if isinstance(entry, dict):
+                            for key, value in list(entry.items()):
+                                if isinstance(value, str) and value.startswith("workflows/"):
+                                    entry[key] = "resources/" + value[len("workflows/"):]
+            self.path.write_text(
+                json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8"
+            )
+            legacy.replace(legacy.with_name("config.json.migrated"))
+            logger.info(
+                "기존 설정(config/config.json)을 resources/config.json으로 이관했습니다."
+            )
+        except Exception as exc:
+            logger.warning("기존 설정 이관 실패(원본 유지): %s", exc)
 
     def _load(self):
         if not self.path.exists():

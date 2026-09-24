@@ -4,7 +4,7 @@
 
 **v1.2**
 
-4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다. UI는 단일 테마 토큰(ui/theme.py) 기반의 웜 그레이 + 코랄 악센트 디자인이며, UI 폰트는 설정에서 고를 수 있습니다(기본값 Malgun Gothic).
+4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다. UI는 단일 테마 토큰(studio/ui/theme.py) 기반의 웜 그레이 + 코랄 악센트 디자인이며, UI 폰트는 설정에서 고를 수 있습니다(기본값 Malgun Gothic).
 
 ## 핵심 기능
 
@@ -20,17 +20,17 @@
 - 개별 컷 변경 후 최종 4컷 자동 재합성
 - 생성 중 세션 삭제/이름 변경 차단
 - 세션 JSON 저장/복원
-- 단일 테마 토큰(ui/theme.py) 기반 UI(웜 그레이 + 코랄 악센트, 상태색 각 1종, 카드 그림자, 커스텀 스크롤바)
+- 단일 테마 토큰(studio/ui/theme.py) 기반 UI(웜 그레이 + 코랄 악센트, 상태색 각 1종, 카드 그림자, 커스텀 스크롤바)
 - 설정 - 일반 탭에서 UI 폰트 선택
-- 전송 버튼 연필 아이콘(assets/icons/send_pen.svg)
+- 전송 버튼 연필 아이콘(resources/send_pen.svg)
 - 프로그램 버전 표기 `v1.2` 기준 관리
 
 ## UI 기준
 
-- 테마는 ui/theme.py의 단일 토큰(색상-폰트-라디우스-그림자)에서 관리한다. 배경은 웜 그레이 계열, 악센트는 코랄 단일(#e87e60), 상태색은 성공-경고-오류 각 1종만 쓴다.
+- 테마는 studio/ui/theme.py의 단일 토큰(색상-폰트-라디우스-그림자)에서 관리한다. 배경은 웜 그레이 계열, 악센트는 코랄 단일(#e87e60), 상태색은 성공-경고-오류 각 1종만 쓴다.
 - 사용자 말풍선은 #33221c, AI 말풍선은 #171412를 쓴다. 카드에는 배경 톤에 맞춘 웜 틴트 그림자를 쓴다.
 - UI 폰트는 설정 - 일반 탭의 UI 폰트 콤보에서 고른다. 기본값은 Malgun Gothic이다.
-- 전송 버튼은 연필 아이콘(assets/icons/send_pen.svg) 버튼이며, 생성 중에는 ... 표시로 바뀐다.
+- 전송 버튼은 연필 아이콘(resources/send_pen.svg) 버튼이며, 생성 중에는 ... 표시로 바뀐다.
 - 하단 Composer는 기본 최대 2줄 높이를 유지하고 입력량이 늘어나면 내부 세로 스크롤을 사용합니다.
 - 메인 우측 상단에는 중복 설정 버튼을 두지 않고 사이드바의 설정 버튼만 사용합니다.
 - AI 작업 상태 라벨은 일반 상태보다 크게 표시하며 생성 중에는 작업 상태, 생성 완료 후에는 녹색 `● 생성 완료` 상태로 표시합니다.
@@ -124,7 +124,7 @@ Character Prompt / Style Prompt / Master Seed 확정
 ## 프로그램 정보
 
 - 프로그램명: **4cut Local Comic Studio**
-- 테마: `ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
+- 테마: `studio/ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
 - 현재 버전: **v1.2**
 - UI 프레임워크: PySide6
 - 스토리/대사: LM Studio Local Server
@@ -136,43 +136,45 @@ Character Prompt / Style Prompt / Master Seed 확정
 
 ```text
 app.py
-app/version.py
-app/main_controller.py
-config/config.json
-ui/theme.py
-ui/main/main_window.py
-ui/main/main_window.qss
-ui/main/styles.py
-ui/main/chat_view_manager.py
-ui/main/components/composer.py + composer.ui
-ui/main/components/sidebar.py + sidebar.ui
-ui/main/components/empty_state.py + empty_state.ui
-ui/chat/chat_widgets.py
-ui/idea/idea_section.py + idea_section.ui
-ui/settings/settings_window.ui
-settings/settings_window.py
-settings/settings_manager.py
-settings/model_manager.py
-compose/bubble.py
-compose/layout.py
-core/models/comic.py
-core/models/chat.py
-core/models/image_model.py
-core/services/story_service.py
-core/services/comic_service.py
-core/services/image_service.py
-core/services/compose_service.py
-core/services/session_manager.py
-core/services/bubble_detector.py
-core/workers/comic_worker.py
-core/workers/panel_regeneration_worker.py
-core/workers/server_status_worker.py
-integrations/lmstudio/client.py
-integrations/comfyui/client.py
-integrations/comfyui/workflow.py
+studio/__init__.py
+studio/version.py
+studio/main_controller.py
+studio/models/comic.py
+studio/models/chat.py
+studio/models/image_model.py
+studio/models/generation_state.py
+studio/services/story_service.py
+studio/services/comic_service.py
+studio/services/image_service.py
+studio/services/compose_service.py
+studio/services/session_manager.py
+studio/services/bubble_detector.py
+studio/services/bubble.py
+studio/services/layout.py
+studio/workers/comic_worker.py
+studio/workers/panel_regeneration_worker.py
+studio/workers/server_status_worker.py
+studio/integrations/lmstudio.py
+studio/integrations/comfyui.py
+studio/integrations/workflow.py
+studio/settings/settings_window.py
+studio/settings/settings_manager.py
+studio/settings/model_manager.py
+studio/ui/theme.py
+studio/ui/main_window.py
+studio/ui/main_window.qss
+studio/ui/styles.py
+studio/ui/chat_view_manager.py
+studio/ui/chat_widgets.py
+studio/ui/idea_section.py + idea_section.ui
+studio/ui/composer.py + composer.ui
+studio/ui/sidebar.py + sidebar.ui
+studio/ui/empty_state.py + empty_state.ui
+studio/ui/settings_window.ui
+resources/config.json
+resources/send_pen.svg
+resources/*.json (ComfyUI workflow)
 tests/
-assets/icons/send_pen.svg
-workflows/
 projects/
 ```
 
@@ -195,9 +197,12 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 
 프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, `v1.2`처럼 소수점 단위로, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
 
-### v1.2 (UI-로직 분리)
+### v1.2 (UI-로직 분리 + 모듈 구조 통합)
+- 단일 `studio/` 패키지 + `resources/` 구조로 통합: `app/`→`studio/`, `core/`→`studio/{models,services,workers}`, `compose/`→`studio/services` 흡수, `integrations/` 평탄화(`lmstudio.py`, `comfyui.py`, `workflow.py`), `settings/`→`studio/settings`, `ui/` 중간폴더 제거→`studio/ui/` 평탄화
+- `config/`, `workflows/`, `assets/`를 `resources/`로 병합(config.json + workflow JSON + send_pen.svg), 기존 `config/config.json`은 첫 실행 시 1회성으로 `resources/config.json` 이관
+- CI compileall 대상과 README 파일 구조를 새 구조로 갱신
 - `ChatViewManager` 신규 추가: 채팅 스크롤 영역·빈 상태 위젯·생성/결과 카드 캐시를 캡슐화하고 `MainWindow`에서 직접 관리하던 `_generation_widgets`/`_result_widgets` 제거
-- 사이드바·컴포지터·빈 상태를 `ui/main/components/` 컴포넌트로 분리, QSS 템플릿을 `ui/main/styles.py` + `main_window.qss`로 분리
+- 사이드바·컴포지터·빈 상태를 UI 컴포넌트로 분리, QSS 템플릿을 `studio/ui/styles.py` + `main_window.qss`로 분리
 - 사이드바 세션 목록을 전체 재생성 대신 증분 갱신하도록 변경(스크롤 위치·선택 상태 보존)
 - 전송 버튼 `clicked` → `_submit` 시그널 연결 복구
 - 이미지 해상도 기본값 768 → 512로 코드 전반 통일, `config.json`의 `font_path` 절대경로 제거(자동 탐색 사용)
@@ -207,9 +212,9 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 - 세션 삭제 후 사이드바 즉시 갱신(`_refresh_sidebar`), 2단계 합성 `stage2_workflow` 필드 추가
 
 ### v1.1 (테마-폰트-전송 버튼)
-- 단일 테마 토큰(ui/theme.py) 기반 UI: 웜 그레이 배경, 코랄 악센트(#e87e60) 단일, 상태색 각 1종
+- 단일 테마 토큰(studio/ui/theme.py) 기반 UI: 웜 그레이 배경, 코랄 악센트(#e87e60) 단일, 상태색 각 1종
 - UI 폰트를 설정 - 일반 탭에서 선택(기본값 Malgun Gothic), 적용 버튼으로 즉시 반영
-- 전송 버튼을 연필 아이콘(assets/icons/send_pen.svg)으로 변경, 생성 중 ... 표시
+- 전송 버튼을 연필 아이콘(resources/send_pen.svg)으로 변경, 생성 중 ... 표시
 - 설정 적용 시 설정 값 저장 누락(manager.save) 수정
 - Qt Designer 기반 UI 파일(main_window.ui, settings_window_ui.py) 제거, UI 정의를 코드 기반으로 마이그레이션
 

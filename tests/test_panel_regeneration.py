@@ -1,7 +1,7 @@
 from pathlib import Path
 
-from core.models.comic import Comic, Character, Panel
-from core.services.comic_service import ComicService
+from studio.models.comic import Comic, Character, Panel
+from studio.services.comic_service import ComicService
 
 
 class FakeImageService:

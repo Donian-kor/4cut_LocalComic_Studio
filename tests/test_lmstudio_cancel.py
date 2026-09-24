@@ -12,7 +12,7 @@ from http.server import BaseHTTPRequestHandler, ThreadingHTTPServer
 
 import pytest
 
-from integrations.lmstudio.client import LMStudioClient
+from studio.integrations.lmstudio import LMStudioClient
 
 
 def _sse_delta(content_delta):

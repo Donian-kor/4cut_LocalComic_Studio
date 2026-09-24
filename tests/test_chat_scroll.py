@@ -12,7 +12,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import pytest
 from PySide6.QtWidgets import QApplication, QFrame
 
-from ui.chat.chat_widgets import ChatScrollArea
+from studio.ui.chat_widgets import ChatScrollArea
 
 
 @pytest.fixture(scope="session")

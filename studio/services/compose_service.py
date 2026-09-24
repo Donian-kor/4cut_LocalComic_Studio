@@ -1,8 +1,8 @@
 import logging
 from pathlib import Path
 from PIL import Image, ImageDraw
-from compose.layout import make_2x2
-from compose.bubble import draw_dialogue, find_font, wrap_text
+from studio.services.layout import make_2x2
+from studio.services.bubble import draw_dialogue, find_font, wrap_text
 
 logger = logging.getLogger(__name__)
 

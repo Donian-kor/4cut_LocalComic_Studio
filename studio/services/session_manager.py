@@ -6,7 +6,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
-from core.models.chat import ChatSession
+from studio.models.chat import ChatSession
 
 logger = logging.getLogger(__name__)
 

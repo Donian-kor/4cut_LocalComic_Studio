@@ -1,6 +1,6 @@
 import random
 import re
-from core.models.comic import Comic, Character, Panel
+from studio.models.comic import Comic, Character, Panel
 
 
 # ComfyUI(SD 계열) positive prompt에 들어가면 "한 이미지 안에

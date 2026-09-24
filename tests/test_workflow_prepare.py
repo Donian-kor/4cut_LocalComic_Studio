@@ -5,7 +5,7 @@ from types import SimpleNamespace
 
 import pytest
 
-from integrations.comfyui.workflow import WorkflowAdapter
+from studio.integrations.workflow import WorkflowAdapter
 
 PROFILE = SimpleNamespace(
     width=512,
@@ -56,7 +56,7 @@ def test_existing_stage2_keeps_path(tmp_path):
 
 
 def test_profile_supports_explicit_stage2_workflow():
-    from core.models.image_model import ImageModelProfile
+    from studio.models.image_model import ImageModelProfile
     profile = ImageModelProfile.from_dict({
         "id": "custom", "workflow": "models/image.json",
         "stage2_workflow": "dialogue/custom.json",

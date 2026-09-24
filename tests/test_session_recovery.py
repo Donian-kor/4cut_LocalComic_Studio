@@ -3,8 +3,8 @@
 import json
 from pathlib import Path
 
-from core.models.chat import ChatSession
-from core.services.session_manager import SessionManager
+from studio.models.chat import ChatSession
+from studio.services.session_manager import SessionManager
 
 
 class FakeSettings:

@@ -5,14 +5,15 @@ from PySide6.QtGui import QIcon
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QFrame, QVBoxLayout
 
-from ui.idea.idea_section import IdeaSection
+from studio.ui.idea_section import IdeaSection
 
 
 class Composer(QFrame):
     submitted = Signal(str, str, str, str)
 
     def _icon_path(self):
-        return Path(__file__).resolve().parent.parent.parent.parent / "assets" / "icons" / "send_pen.svg"
+        # studio/ui/composer.py → studio/ → 프로젝트 루트 (2단계 상위)
+        return Path(__file__).resolve().parents[2] / "resources" / "send_pen.svg"
 
     def __init__(self, settings_manager, parent=None):
         super().__init__(parent)

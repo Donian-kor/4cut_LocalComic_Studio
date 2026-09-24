@@ -11,7 +11,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtCore import Qt
 from PySide6.QtWidgets import QApplication
 
-from ui.main.components.sidebar import Sidebar
+from studio.ui.sidebar import Sidebar
 
 
 def test_rename_keeps_trailing_punctuation_and_strips_status_suffix():

@@ -2,9 +2,9 @@ from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QLabel, QListWidgetItem, QLineEdit, QFormLayout, QHBoxLayout, QPushButton
-from settings.model_manager import ImageModelManager
-from core.models.image_model import ImageModelProfile
-from ui import theme
+from studio.settings.model_manager import ImageModelManager
+from studio.models.image_model import ImageModelProfile
+from studio.ui import theme
 
 
 class ConnectionWorker(QThread):
@@ -67,7 +67,7 @@ class SettingsWindow:
         self.parent_widget = parent
 
         loader = QUiLoader()
-        ui_path = Path(__file__).resolve().parent.parent / "ui" / "settings" / "settings_window.ui"
+        ui_path = Path(__file__).resolve().parent.parent / "ui" / "settings_window.ui"
         self.form = loader.load(str(ui_path), parent)
         if self.form is None or not isinstance(self.form, QDialog):
             raise RuntimeError(f"settings_window.ui를 QDialog로 로드할 수 없습니다: {ui_path}")
@@ -129,7 +129,7 @@ class SettingsWindow:
         lm = self.manager.section("lmstudio")
         cf = self.manager.section("comfyui")
         g = self.manager.section("general")
-        from compose.bubble import find_font_path
+        from studio.services.bubble import find_font_path
         if not cf.get("font_path"):
             cf["font_path"] = find_font_path("")
         self.form.lmHostEdit.setText(str(lm.get("host", "127.0.0.1")))
@@ -142,7 +142,7 @@ class SettingsWindow:
         self.form.lmStatusLabel.setText("상태: 연결 확인 필요")
         self.form.comfyHostEdit.setText(str(cf.get("host", "127.0.0.1")))
         self.form.comfyPortSpin.setValue(int(cf.get("port", 8188)))
-        self.form.comfyWorkflowEdit.setText(str(cf.get("workflow", "workflows/4cut_default.json")))
+        self.form.comfyWorkflowEdit.setText(str(cf.get("workflow", "resources/4cut_default.json")))
         self.form.comfyStatusLabel.setText("상태: 연결 확인 필요")
         self.form.projectPathEdit.setText(str(g.get("project_path", "projects")))
         self.form.widthSpin.setValue(int(g.get("width", 512)))

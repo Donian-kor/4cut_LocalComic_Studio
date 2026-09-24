@@ -14,16 +14,16 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from settings.settings_window import SettingsWindow
-from core.models.chat import ChatMessageData, ChatSession
-from core.services.session_manager import SessionManager
-from ui import theme
-from ui.main.chat_view_manager import ChatViewManager
-from ui.main.components.composer import Composer
-from ui.main.components.sidebar import Sidebar
-from ui.main.styles import MAIN_WINDOW_QSS_TEMPLATE
-from core.workers.server_status_worker import ServerStatusWorker
-from app.version import APP_NAME, APP_VERSION
+from studio.settings.settings_window import SettingsWindow
+from studio.models.chat import ChatMessageData, ChatSession
+from studio.services.session_manager import SessionManager
+from studio.ui import theme
+from studio.ui.chat_view_manager import ChatViewManager
+from studio.ui.composer import Composer
+from studio.ui.sidebar import Sidebar
+from studio.ui.styles import MAIN_WINDOW_QSS_TEMPLATE
+from studio.workers.server_status_worker import ServerStatusWorker
+from studio.version import APP_NAME, APP_VERSION
 
 
 

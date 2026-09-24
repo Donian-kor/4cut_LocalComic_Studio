@@ -2,9 +2,9 @@ import logging
 from pathlib import Path
 from datetime import datetime
 import random
-from core.services.story_service import StoryService
-from core.services.image_service import ImageService
-from core.services.compose_service import ComposeService
+from studio.services.story_service import StoryService
+from studio.services.image_service import ImageService
+from studio.services.compose_service import ComposeService
 
 logger = logging.getLogger(__name__)
 

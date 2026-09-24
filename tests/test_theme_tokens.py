@@ -10,9 +10,9 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 import pytest
 from PySide6.QtWidgets import QApplication
 
-from settings.settings_window import SETTINGS_QSS_TEMPLATE
-from ui import theme
-from ui.main.main_window import MainWindow
+from studio.settings.settings_window import SETTINGS_QSS_TEMPLATE
+from studio.ui import theme
+from studio.ui.main_window import MainWindow
 
 # 스킬 감사에서 지적한 "AI 보라" 계열 — 하나도 남아 있으면 안 된다.
 LEGACY_ACCENT_COLORS = ("#6366f1", "#818cf8", "#a5b4fc", "#c7cbff", "#4b50a2", "#242946", "#2a2f5d", "#7477f5")

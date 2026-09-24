@@ -4,10 +4,10 @@ from pathlib import Path
 from PySide6.QtCore import QObject
 from PySide6.QtWidgets import QMessageBox
 
-from core.workers.comic_worker import ComicWorker
-from core.workers.panel_regeneration_worker import PanelRegenerationWorker
-from core.models.comic import Comic
-from ui.idea.idea_section import IdeaSection
+from studio.workers.comic_worker import ComicWorker
+from studio.workers.panel_regeneration_worker import PanelRegenerationWorker
+from studio.models.comic import Comic
+from studio.ui.idea_section import IdeaSection
 
 logger = logging.getLogger(__name__)
 

@@ -2,8 +2,8 @@
 """2단계 대사 합성 상태가 Panel.dialogue_status에 정확히 기록되는지 검증한다."""
 import pytest
 
-from core.models.comic import Panel
-from core.services.comic_service import ComicService
+from studio.models.comic import Panel
+from studio.services.comic_service import ComicService
 
 
 class _Workflow:

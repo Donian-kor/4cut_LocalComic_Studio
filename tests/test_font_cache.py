@@ -3,7 +3,7 @@
 import os
 from pathlib import Path
 
-from compose.bubble import _FONT_CACHE, find_font
+from studio.services.bubble import _FONT_CACHE, find_font
 
 
 def test_find_font_caches_by_path_and_size():

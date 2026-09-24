@@ -15,7 +15,7 @@ from PySide6.QtWidgets import (
     QWidget,
 )
 
-from ui import theme
+from studio.ui import theme
 
 
 class AspectPixmapLabel(QLabel):

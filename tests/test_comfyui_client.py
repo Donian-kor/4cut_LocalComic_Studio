@@ -2,7 +2,7 @@
 """ComfyUIClient의 업로드 검증과 wait_for_image 오류/취소 분기를 검증한다."""
 import pytest
 
-from integrations.comfyui.client import ComfyUIClient
+from studio.integrations.comfyui import ComfyUIClient
 
 
 class _Resp:
@@ -40,7 +40,7 @@ def test_wait_for_image_raises_on_error_status(monkeypatch):
         "outputs": {},
     }}
     monkeypatch.setattr(
-        "integrations.comfyui.client.requests.get", lambda *a, **k: _Resp(payload)
+        "studio.integrations.comfyui.requests.get", lambda *a, **k: _Resp(payload)
     )
     with pytest.raises(RuntimeError):
         client.wait_for_image("pid")
@@ -54,7 +54,7 @@ def test_wait_for_image_raises_when_completed_false_without_messages(monkeypatch
         "outputs": {},
     }}
     monkeypatch.setattr(
-        "integrations.comfyui.client.requests.get", lambda *a, **k: _Resp(payload)
+        "studio.integrations.comfyui.requests.get", lambda *a, **k: _Resp(payload)
     )
     with pytest.raises(RuntimeError):
         client.wait_for_image("pid")
@@ -68,7 +68,7 @@ def test_wait_for_image_raises_on_completed_false_with_messages(monkeypatch):
         "outputs": {},
     }}
     monkeypatch.setattr(
-        "integrations.comfyui.client.requests.get", lambda *a, **k: _Resp(payload)
+        "studio.integrations.comfyui.requests.get", lambda *a, **k: _Resp(payload)
     )
     with pytest.raises(RuntimeError):
         client.wait_for_image("pid")
@@ -78,7 +78,7 @@ def test_cancel_triggers_interrupt_in_worker_thread(monkeypatch):
     client = ComfyUIClient({})
     posts = []
     monkeypatch.setattr(
-        "integrations.comfyui.client.requests.post",
+        "studio.integrations.comfyui.requests.post",
         lambda *a, **k: posts.append(a) or _Resp({}),
     )
     with pytest.raises(InterruptedError):
@@ -94,7 +94,7 @@ def test_no_outputs_raises_after_grace_polls(monkeypatch):
         "outputs": {},
     }}
     monkeypatch.setattr(
-        "integrations.comfyui.client.requests.get", lambda *a, **k: _Resp(payload)
+        "studio.integrations.comfyui.requests.get", lambda *a, **k: _Resp(payload)
     )
     with pytest.raises(RuntimeError):
         client.wait_for_image("pid", poll=0)

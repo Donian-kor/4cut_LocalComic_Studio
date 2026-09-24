@@ -3,8 +3,8 @@
 
 worker.cancel()은 UI 스레드에서 네트워크를 호출하지 않고 플래그만 설정해야 한다.
 """
-from core.workers.comic_worker import ComicWorker
-from core.workers.panel_regeneration_worker import PanelRegenerationWorker
+from studio.workers.comic_worker import ComicWorker
+from studio.workers.panel_regeneration_worker import PanelRegenerationWorker
 
 
 class _RecordingService:

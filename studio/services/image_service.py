@@ -3,8 +3,8 @@ from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
 
-from compose.bubble import find_font
-from core.services.bubble_detector import BubbleDetector
+from studio.services.bubble import find_font
+from studio.services.bubble_detector import BubbleDetector
 
 _FONT_CACHE = {}
 logger = logging.getLogger(__name__)

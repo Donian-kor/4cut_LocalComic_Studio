@@ -1,6 +1,6 @@
 from types import SimpleNamespace
 
-from core.services.image_service import ImageService
+from studio.services.image_service import ImageService
 
 
 def test_dialogue_auto_fit_does_not_exceed_configured_font_size():
@@ -10,7 +10,7 @@ def test_dialogue_auto_fit_does_not_exceed_configured_font_size():
 
 
 def test_fallback_font_shrinks_long_dialogue_to_fit():
-    from core.services.compose_service import ComposeService
+    from studio.services.compose_service import ComposeService
     service = ComposeService()
     font = service._fit_fallback_font("긴 대사 " * 30, 180, 70)
     assert font.size < 110

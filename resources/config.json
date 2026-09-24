@@ -8,7 +8,7 @@
   "comfyui": {
     "host": "127.0.0.1",
     "port": 8188,
-    "workflow": "workflows/4cut_default.json",
+    "workflow": "resources/4cut_default.json",
     "font_path": ""
   },
   "general": {
@@ -26,7 +26,7 @@
       "id": "z_anime_base_aio_fp8",
       "name": "Z-Anime Base AIO FP8",
       "model_file": "z-anime-base-aio-fp8.safetensors",
-      "workflow": "workflows/z_anime_base_aio_fp8.json",
+      "workflow": "resources/z_anime_base_aio_fp8.json",
       "width": 512,
       "height": 512,
       "steps": 28,

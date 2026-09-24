@@ -19,5 +19,5 @@ jobs:
           cache: 'pip'
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: python -m compileall -q app.py app core compose integrations settings ui tests
+      - run: python -m compileall -q app.py studio tests
       - run: python -m pytest tests/ -q
