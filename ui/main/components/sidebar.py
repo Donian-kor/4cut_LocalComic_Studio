@@ -131,6 +131,13 @@ class Sidebar(QFrame):
 
     def _rename_changed(self, item):
         session_id = str(item.data(Qt.ItemDataRole.UserRole))
-        title = item.text().strip().rstrip("⟳!·").strip()
+        # 상태 꼬리표(공백 2칸 + 기호)만 떼어낸다. rstrip("⟳!·")는 제목 끝의
+        # 정상 문자(!, · 등)까지 잘라내므로 문자 단위 제거를 쓰지 않는다.
+        text = item.text().strip()
+        for suffix in ("  ⟳", "  !", "  ·"):
+            if text.endswith(suffix):
+                text = text[: -len(suffix)].rstrip()
+                break
+        title = text.strip()
         if title:
             self.sessionRenamed.emit(session_id, title)
