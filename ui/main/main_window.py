@@ -1,297 +1,33 @@
-﻿from datetime import datetime
+from datetime import datetime
 from pathlib import Path
 import shutil
 
-from PySide6.QtCore import QSize, Qt, Signal, QThread
+from PySide6.QtCore import Qt, Signal
 from PySide6.QtWidgets import (
-    QComboBox,
     QFrame,
     QFileDialog,
     QHBoxLayout,
     QLabel,
-    QListWidget,
-    QListWidgetItem,
     QMainWindow,
     QMessageBox,
-    QPlainTextEdit,
-    QPushButton,
     QSplitter,
     QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
 
-from PySide6.QtGui import QColor, QIcon
-
 from settings.settings_window import SettingsWindow
 from core.models.chat import ChatMessageData, ChatSession
 from core.services.session_manager import SessionManager
 from ui.chat.chat_widgets import ChatMessageRow, GenerationCard, StoryPlanCard, PanelResultCard, ResultCard, ChatScrollArea
 from ui import theme
-from ui.idea.idea_section import IdeaSection
+from ui.main.components.composer import Composer
+from ui.main.components.empty_state import EmptyState
+from ui.main.components.sidebar import Sidebar
+from ui.main.styles import MAIN_WINDOW_QSS_TEMPLATE
+from core.workers.server_status_worker import ServerStatusWorker
 from app.version import APP_NAME, APP_VERSION
 
-
-class ServerStatusWorker(QThread):
-    checked = Signal(bool, bool, str)
-
-    def __init__(self, lm_factory, comfy_factory, settings_manager, parent=None):
-        super().__init__(parent)
-        self.lm_factory = lm_factory
-        self.comfy_factory = comfy_factory
-        self.settings_manager = settings_manager
-
-    def run(self):
-        lm_ok = False
-        comfy_ok = False
-        errors = []
-        try:
-            lm = self.lm_factory(dict(self.settings_manager.section("lmstudio")))
-            lm.test_connection(timeout=2)
-            lm_ok = True
-        except Exception as e:
-            errors.append(f"LM Studio: {e}")
-        try:
-            comfy = self.comfy_factory(dict(self.settings_manager.section("comfyui")))
-            comfy.test_connection(timeout=2)
-            comfy_ok = True
-        except Exception as e:
-            errors.append(f"ComfyUI: {e}")
-        self.checked.emit(lm_ok, comfy_ok, " / ".join(errors))
-
-
-class Sidebar(QFrame):
-    newChatRequested = Signal()
-    sessionSelected = Signal(str)
-    sessionDeleteRequested = Signal(str)
-    settingsRequested = Signal()
-    sessionRenamed = Signal(str, str)
-
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setObjectName("sidebar")
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(12, 14, 12, 12)
-        layout.setSpacing(10)
-
-        self.new_button = QPushButton("＋  새 채팅")
-        self.new_button.setObjectName("newChatButton")
-        self.new_button.clicked.connect(self.newChatRequested.emit)
-        layout.addWidget(self.new_button)
-
-        label = QLabel("대화")
-        label.setObjectName("sidebarSectionLabel")
-        layout.addWidget(label)
-
-        self.list = QListWidget()
-        self.list.setObjectName("sessionList")
-        self.list.setSelectionMode(QListWidget.SelectionMode.SingleSelection)
-        self.list.setEditTriggers(QListWidget.EditTrigger.DoubleClicked | QListWidget.EditTrigger.EditKeyPressed)
-        self.list.currentItemChanged.connect(self._selection_changed)
-        self.list.itemChanged.connect(self._rename_changed)
-        layout.addWidget(self.list, 1)
-
-        bottom = QHBoxLayout()
-        bottom.setSpacing(8)
-        self.rename_button = QPushButton("이름 변경")
-        self.rename_button.setObjectName("subtleButton")
-        self.delete_button = QPushButton("삭제")
-        self.delete_button.setObjectName("subtleDangerButton")
-        bottom.addWidget(self.rename_button)
-        bottom.addWidget(self.delete_button)
-        self.rename_button.clicked.connect(self._start_rename)
-        self.delete_button.clicked.connect(self._delete_current)
-        layout.addLayout(bottom)
-
-        self.settings_button = QPushButton("⚙  설정")
-        self.settings_button.setObjectName("settingsButton")
-        self.settings_button.clicked.connect(self.settingsRequested.emit)
-        layout.addWidget(self.settings_button)
-
-    def set_sessions(self, sessions, selected_id=None):
-        self.list.blockSignals(True)
-        self.list.clear()
-        for session in sessions:
-            item = QListWidgetItem(session.title or "새 대화")
-            item.setData(Qt.ItemDataRole.UserRole, session.id)
-            item.setData(Qt.ItemDataRole.UserRole + 1, session.status)
-            if session.status != "generating":
-                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
-            item.setToolTip(
-                f"{session.title or '새 대화'}\n생성 중인 대화는 삭제할 수 없습니다."
-                if session.status == "generating"
-                else (session.title or "새 대화")
-            )
-            self.list.addItem(item)
-            self._decorate_item(item, session.status)
-        self.list.blockSignals(False)
-        if selected_id:
-            for i in range(self.list.count()):
-                if self.list.item(i).data(Qt.ItemDataRole.UserRole) == selected_id:
-                    self.list.setCurrentRow(i)
-                    self._update_action_state(self.list.item(i))
-                    return
-        if self.list.count():
-            self.list.setCurrentRow(0)
-            self._update_action_state(self.list.item(0))
-        else:
-            self.rename_button.setEnabled(False)
-            self.delete_button.setEnabled(False)
-
-    def _update_action_state(self, item):
-        if not item:
-            self.rename_button.setEnabled(False)
-            self.delete_button.setEnabled(False)
-            return
-        status = str(item.data(Qt.ItemDataRole.UserRole + 1) or "idle")
-        generating = status == "generating"
-        self.rename_button.setEnabled(not generating)
-        self.delete_button.setEnabled(not generating)
-        self.delete_button.setToolTip("생성 중인 대화는 삭제할 수 없습니다." if generating else "현재 대화 삭제")
-        self.rename_button.setToolTip("생성 중인 대화는 이름을 변경할 수 없습니다." if generating else "대화 이름 변경")
-
-    def add_session(self, session):
-        self.set_sessions([session], session.id)
-
-    def _decorate_item(self, item, status):
-        suffix = {"generating": "  ⟳", "failed": "  !", "cancelled": "  ·"}.get(status, "")
-        if suffix and not item.text().endswith(suffix):
-            item.setText(item.text().rstrip() + suffix)
-
-    def _selection_changed(self, current, previous):
-        self._update_action_state(current)
-        if current:
-            self.sessionSelected.emit(str(current.data(Qt.ItemDataRole.UserRole)))
-
-    def _start_rename(self):
-        item = self.list.currentItem()
-        if item and str(item.data(Qt.ItemDataRole.UserRole + 1) or "") != "generating":
-            self.list.editItem(item)
-
-    def _delete_current(self):
-        item = self.list.currentItem()
-        if item and str(item.data(Qt.ItemDataRole.UserRole + 1) or "") != "generating":
-            self.sessionDeleteRequested.emit(str(item.data(Qt.ItemDataRole.UserRole)))
-
-    def _rename_changed(self, item):
-        session_id = str(item.data(Qt.ItemDataRole.UserRole))
-        title = item.text().strip().rstrip("⟳!·").strip()
-        if title:
-            self.sessionRenamed.emit(session_id, title)
-
-
-class EmptyState(QFrame):
-    def __init__(self, parent=None):
-        super().__init__(parent)
-        self.setObjectName("emptyState")
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(28, 32, 28, 32)
-        layout.setSpacing(10)
-        icon = QLabel("✦")
-        icon.setObjectName("emptyIcon")
-        icon.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        title = QLabel("무엇을 만들어볼까요?")
-        title.setObjectName("emptyTitle")
-        title.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        subtitle = QLabel("아이디어를 입력하면 스토리 → 이미지 → 대사 → 4컷 완성까지 AI가 진행합니다.")
-        subtitle.setWordWrap(True)
-        subtitle.setObjectName("emptySubtitle")
-        subtitle.setAlignment(Qt.AlignmentFlag.AlignCenter)
-        layout.addStretch(1)
-        layout.addWidget(icon)
-        layout.addWidget(title)
-        layout.addWidget(subtitle)
-        layout.addStretch(1)
-
-
-class Composer(QFrame):
-    submitted = Signal(str, str, str, str)
-
-    def __init__(self, settings_manager, parent=None):
-        super().__init__(parent)
-        self.setObjectName("composerFrame")
-        layout = QVBoxLayout(self)
-        layout.setContentsMargins(16, 12, 16, 14)
-        layout.setSpacing(8)
-
-        self.idea = QPlainTextEdit()
-        self.idea.setObjectName("composerEdit")
-        self.idea.setPlaceholderText("아이디어를 입력하세요…  예: 퇴근하려는데 상사가 갑자기 춤을 추는 회사 개그 4컷")
-        two_line_height = (self.idea.fontMetrics().lineSpacing() * 2) + 30
-        self.idea.setMinimumHeight(two_line_height)
-        self.idea.setMaximumHeight(two_line_height)
-        self.idea.setVerticalScrollBarPolicy(Qt.ScrollBarPolicy.ScrollBarAsNeeded)
-        self.idea.setTabChangesFocus(False)
-        layout.addWidget(self.idea)
-
-        bottom = QHBoxLayout()
-        bottom.setSpacing(8)
-        self.mood = QComboBox()
-        self.mood.setObjectName("composerCombo")
-        self.mood.addItems(list(IdeaSection.STYLE_PRESETS.keys()))
-        self.art = QComboBox()
-        self.art.setObjectName("composerCombo")
-        self.art.addItems(list(IdeaSection.ART_STYLE_PRESETS.keys()))
-        bottom.addWidget(QLabel("분위기"))
-        bottom.addWidget(self.mood)
-        bottom.addWidget(QLabel("그림체"))
-        bottom.addWidget(self.art)
-        bottom.addStretch(1)
-        self.send = QPushButton()
-        self.send.setObjectName("sendButton")
-        self.send.setToolTip("전송")
-        icon_path = Path(__file__).resolve().parent.parent.parent / "assets" / "icons" / "send_pen.svg"
-        if icon_path.exists():
-            self.send.setIcon(QIcon(str(icon_path)))
-            self.send.setIconSize(QSize(20, 20))
-        else:
-            self.send.setText("↑")
-        self.send.clicked.connect(self._submit)
-        bottom.addWidget(self.send)
-        layout.addLayout(bottom)
-        self.idea.installEventFilter(self)
-        self.setEnabled(True)
-
-    def eventFilter(self, obj, event):
-        if obj is self.idea and event.type() == event.Type.KeyPress:
-            from PySide6.QtCore import Qt as _Qt
-            if event.key() in (_Qt.Key.Key_Return, _Qt.Key.Key_Enter) and not (event.modifiers() & _Qt.KeyboardModifier.ShiftModifier):
-                self._submit()
-                return True
-        return super().eventFilter(obj, event)
-
-    def _submit(self):
-        text = self.idea.toPlainText().strip()
-        if not text:
-            self.idea.setFocus()
-            return
-        mood = self.mood.currentText() or "자동"
-        art = self.art.currentText() or "캐주얼 만화"
-        mood_prompt = IdeaSection.STYLE_PRESETS.get(mood, "")
-        art_prompt = IdeaSection.ART_STYLE_PRESETS.get(art, "")
-        style_prompt = ", ".join([x for x in (art_prompt, mood_prompt) if x])
-        self.submitted.emit(text, style_prompt, mood, art)
-
-    def set_busy(self, busy):
-        self.idea.setEnabled(not busy)
-        self.mood.setEnabled(not busy)
-        self.art.setEnabled(not busy)
-        self.send.setEnabled(not busy)
-        if busy:
-            self.send.setIcon(QIcon())
-            self.send.setText("…")
-        else:
-            icon_path = Path(__file__).resolve().parent.parent.parent / "assets" / "icons" / "send_pen.svg"
-            if icon_path.exists():
-                self.send.setIcon(QIcon(str(icon_path)))
-                self.send.setText("")
-            else:
-                self.send.setIcon(QIcon())
-                self.send.setText("↑")
-
-    def load_session_options(self, session):
-        self.mood.setCurrentText(session.mood or "자동")
-        self.art.setCurrentText(session.art_style or "캐주얼 만화")
 
 
 class MainWindow(QMainWindow):
@@ -303,92 +39,9 @@ class MainWindow(QMainWindow):
     panelRegenerateRequested = Signal(int)
     panelRevisionRequested = Signal(int, str)
 
-    # $TOKEN 형태의 QSS 템플릿. 실제 적용은 __init__에서 theme.render()로 한다.
-    QSS_TEMPLATE = """
-    * { font-family: $FONT_STACK; }
-    QMainWindow, QWidget { background: $BG; color: $TEXT; }
-    QFrame#headerFrame { background: $SURFACE; border-bottom: 1px solid $BORDER; }
-    QLabel#logoLabel { color: $TEXT; font-size: 20px; font-weight: 800; }
-    QLabel#saveStatusLabel { color: $TEXT_MUTED; font-size: 14px; font-weight: 800; padding: 6px 10px; background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_SM; }
-    QLabel#saveStatusLabel[state="busy"] { color: $ACCENT_SOFT_TEXT; border-color: $ACCENT_SOFT_BORDER; background: $ACCENT_SOFT; }
-    QLabel#saveStatusLabel[state="done"] { color: $SUCCESS_TEXT; border-color: $SUCCESS_BORDER; background: $SUCCESS_SOFT; }
-    QLabel#saveStatusLabel[state="error"] { color: $DANGER_TEXT; border-color: $DANGER_BORDER; background: $DANGER_SOFT; }
-    QLabel#saveStatusLabel[state="checking"] { color: $TEXT_MUTED; }
-    QLabel#saveStatusLabel[state="connected"] { color: $TEXT_MUTED; }
-    QFrame#sidebar { background: $SURFACE; border-right: 1px solid $BORDER; }
-    QLabel#sidebarSectionLabel { color: $TEXT_FAINT; font-size: 11px; font-weight: 800; padding: 3px 4px; }
-    QPushButton { background: $SURFACE_RAISED; color: $TEXT; border: 1px solid $BORDER_STRONG; border-radius: 9px; padding: 9px 13px; font-weight: 600; }
-    QPushButton:hover { background: $SURFACE_HOVER; border-color: $BORDER_HOVER; color: $TEXT; }
-    QPushButton:pressed { background: $SURFACE_INPUT; border-color: $BORDER_STRONG; }
-    QPushButton:disabled { color: $TEXT_FAINT; background: $BG; border-color: $BORDER; }
-    QPushButton#newChatButton { background: $ACCENT; border: none; color: $ACCENT_INK; font-weight: 800; }
-    QPushButton#newChatButton:hover { background: $ACCENT_HOVER; }
-    QPushButton#newChatButton:pressed { background: $ACCENT_PRESSED; }
-    QPushButton#settingsButton { border: 1px solid $BORDER; background: $SURFACE_RAISED; color: $TEXT_DIM; text-align: left; }
-    QPushButton#settingsButton:hover { color: $TEXT; border-color: $BORDER_HOVER; }
-    QPushButton#subtleButton, QPushButton#subtleDangerButton { padding: 7px 9px; font-size: 11px; }
-    QPushButton#subtleDangerButton:hover { border-color: $DANGER_BORDER; color: $DANGER_TEXT; background: $DANGER_SOFT; }
-    QListWidget#sessionList { background: transparent; border: none; outline: none; }
-    QListWidget#sessionList::item { padding: 11px 10px; margin: 1px 0; border-radius: $RADIUS_SM; color: $TEXT_MUTED; }
-    QListWidget#sessionList::item:hover { background: $SURFACE_RAISED; color: $TEXT; }
-    QListWidget#sessionList::item:selected { background: $ACCENT_SOFT; color: $TEXT; }
-    QScrollArea { background: $BG; }
-    QFrame#composerFrame { background: $SURFACE; border-top: 1px solid $BORDER; }
-    QPlainTextEdit#composerEdit { background: $SURFACE_INPUT; border: 1px solid $BORDER_STRONG; border-radius: $RADIUS_MD; color: $TEXT; padding: 12px; font-size: 14px; }
-    QPlainTextEdit#composerEdit:focus { border-color: $ACCENT; }
-    QComboBox#composerCombo { min-width: 100px; padding: 6px 9px; }
-    QPushButton#sendButton { min-width: 42px; min-height: 38px; padding: 0; background: $ACCENT; border: none; color: $ACCENT_INK; font-size: 18px; font-weight: 800; border-radius: 10px; }
-    QPushButton#sendButton:hover { background: $ACCENT_HOVER; }
-    QPushButton#sendButton:pressed { background: $ACCENT_PRESSED; }
-    QPushButton#sendButton:disabled { background: $SURFACE_INPUT; color: $TEXT_FAINT; }
-    QLabel#aiBadge, QLabel#userBadge { min-width: 44px; padding-top: 6px; color: $ACCENT_TEXT; font-size: 11px; font-weight: 800; }
-    QLabel#userBadge { color: $TEXT_FAINT; }
-    QFrame#chatBubbleAi { background: $SURFACE; border: 1px solid $BORDER; border-radius: 14px; }
-    QFrame#chatBubbleUser { background: $USER_BUBBLE; border: 1px solid $USER_BUBBLE_BORDER; border-radius: 14px; }
-    QLabel#mutedText { color: $TEXT_DIM; }
-    QFrame#generationCard { background: $SURFACE_RAISED; border: 1px solid transparent; border-radius: $RADIUS_MD; }
-    QFrame#storyPlanCard { background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_MD; }
-    QLabel#storyPlanTitle { color: $TEXT; font-size: 18px; font-weight: 800; }
-    QLabel#storyPlanSection { color: $TEXT_MUTED; background: $SURFACE_INPUT; border: 1px solid $BORDER; border-radius: $RADIUS_SM; padding: 8px 10px; }
-    QLabel#generationStatus { color: $TEXT; font-size: 14px; font-weight: 700; }
-    QLabel#generationTimer { color: $ACCENT_TEXT; font-size: 12px; font-weight: 700; font-family: $MONO_STACK; }
-    QLabel#generationPanelBadge { color: $ACCENT_SOFT_TEXT; background: $ACCENT_SOFT; border: 1px solid $ACCENT_SOFT_BORDER; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: 800; }
-    QLabel#generationPreviewTitle { color: $TEXT; font-size: 20px; font-weight: 800; }
-    QLabel#generationPreviewText { color: $TEXT_DIM; font-size: 12px; }
-    QFrame#generationPreview { background: $SURFACE; border: 1px solid $BORDER; border-radius: $RADIUS_MD; min-height: 170px; }
-    QLabel#generationStep { color: $TEXT_FAINT; font-size: 11px; }
-    QProgressBar { background: $SURFACE_INPUT; border: none; border-radius: 4px; }
-    QProgressBar::chunk { background: $ACCENT; border-radius: 4px; }
-    QFrame#panelResultCard { background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_MD; }
-    QLabel#panelResultTitle { color: $TEXT; font-size: 15px; font-weight: 800; }
-    QLabel#panelDoneBadge { color: $SUCCESS_TEXT; background: $SUCCESS_SOFT; border: 1px solid $SUCCESS_BORDER; border-radius: 999px; padding: 5px 10px; font-size: 10px; font-weight: 800; }
-    QLabel#panelResultImage { background: $BG; border: 1px solid $BORDER; border-radius: 10px; }
-    QLabel#panelDialogueText { color: $TEXT_MUTED; background: $SURFACE_INPUT; border: 1px solid $BORDER; border-radius: $RADIUS_SM; padding: 8px 10px; font-size: 12px; }
-    QPushButton#dangerButton { background: $DANGER_SOFT; border-color: $DANGER_BORDER; color: $DANGER_TEXT; }
-    QPushButton#dangerButton:hover { background: $DANGER_HOVER_BG; border-color: $DANGER; }
-    QFrame#resultCard { background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_MD; }
-    QLabel#resultTitle { font-size: 15px; font-weight: 800; color: $TEXT; }
-    QLabel#finalComicImage { background: $BG; border: 1px solid $BORDER; border-radius: 10px; }
-    QPushButton#primaryAction { background: $ACCENT_SOFT; border: 1px solid $ACCENT_SOFT_BORDER; color: $ACCENT_SOFT_TEXT; font-weight: 700; }
-    QPushButton#primaryAction:hover { background: $ACCENT_SOFT_BORDER; border-color: $ACCENT_HOVER; color: $TEXT; }
-    QPushButton#primaryAction:pressed { background: $ACCENT_PRESSED; color: $ACCENT_INK; }
-    QFrame#emptyState { background: transparent; }
-    QLabel#emptyIcon { color: $ACCENT; font-size: 40px; }
-    QLabel#emptyTitle { color: $TEXT; font-size: 22px; font-weight: 800; }
-    QLabel#emptySubtitle { color: $TEXT_DIM; font-size: 13px; }
-    QStatusBar { background: $SURFACE; color: $TEXT_FAINT; }
-    QScrollBar:vertical { background: transparent; width: 10px; margin: 3px 2px; }
-    QScrollBar::handle:vertical { background: $BORDER_STRONG; min-height: 30px; border-radius: 4px; }
-    QScrollBar::handle:vertical:hover { background: $BORDER_HOVER; }
-    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; background: transparent; }
-    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
-    QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px 3px; }
-    QScrollBar::handle:horizontal { background: $BORDER_STRONG; min-width: 30px; border-radius: 4px; }
-    QScrollBar::handle:horizontal:hover { background: $BORDER_HOVER; }
-    QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; background: transparent; }
-    QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }
-    QToolTip { background: $SURFACE_RAISED; color: $TEXT; border: 1px solid $BORDER_STRONG; padding: 6px 8px; }
-    """
+    # $TOKEN 형태의 QSS 템플릿. 실제 정의는 ui.main.styles 모듈로 분리했다.
+    # 하위 호환을 위해 클래스 속성으로 유지한다.
+    QSS_TEMPLATE = MAIN_WINDOW_QSS_TEMPLATE
 
     def __init__(self, settings_manager, lm_factory, comfy_factory, parent=None):
         super().__init__(parent)

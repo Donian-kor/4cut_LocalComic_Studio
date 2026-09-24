@@ -1,0 +1,84 @@
+    * { font-family: $FONT_STACK; }
+    QMainWindow, QWidget { background: $BG; color: $TEXT; }
+    QFrame#headerFrame { background: $SURFACE; border-bottom: 1px solid $BORDER; }
+    QLabel#logoLabel { color: $TEXT; font-size: 20px; font-weight: 800; }
+    QLabel#saveStatusLabel { color: $TEXT_MUTED; font-size: 14px; font-weight: 800; padding: 6px 10px; background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_SM; }
+    QLabel#saveStatusLabel[state="busy"] { color: $ACCENT_SOFT_TEXT; border-color: $ACCENT_SOFT_BORDER; background: $ACCENT_SOFT; }
+    QLabel#saveStatusLabel[state="done"] { color: $SUCCESS_TEXT; border-color: $SUCCESS_BORDER; background: $SUCCESS_SOFT; }
+    QLabel#saveStatusLabel[state="error"] { color: $DANGER_TEXT; border-color: $DANGER_BORDER; background: $DANGER_SOFT; }
+    QLabel#saveStatusLabel[state="checking"] { color: $TEXT_MUTED; }
+    QLabel#saveStatusLabel[state="connected"] { color: $TEXT_MUTED; }
+    QFrame#sidebar { background: $SURFACE; border-right: 1px solid $BORDER; }
+    QLabel#sidebarSectionLabel { color: $TEXT_FAINT; font-size: 11px; font-weight: 800; padding: 3px 4px; }
+    QPushButton { background: $SURFACE_RAISED; color: $TEXT; border: 1px solid $BORDER_STRONG; border-radius: 9px; padding: 9px 13px; font-weight: 600; }
+    QPushButton:hover { background: $SURFACE_HOVER; border-color: $BORDER_HOVER; color: $TEXT; }
+    QPushButton:pressed { background: $SURFACE_INPUT; border-color: $BORDER_STRONG; }
+    QPushButton:disabled { color: $TEXT_FAINT; background: $BG; border-color: $BORDER; }
+    QPushButton#newChatButton { background: $ACCENT; border: none; color: $ACCENT_INK; font-weight: 800; }
+    QPushButton#newChatButton:hover { background: $ACCENT_HOVER; }
+    QPushButton#newChatButton:pressed { background: $ACCENT_PRESSED; }
+    QPushButton#settingsButton { border: 1px solid $BORDER; background: $SURFACE_RAISED; color: $TEXT_DIM; text-align: left; }
+    QPushButton#settingsButton:hover { color: $TEXT; border-color: $BORDER_HOVER; }
+    QPushButton#subtleButton, QPushButton#subtleDangerButton { padding: 7px 9px; font-size: 11px; }
+    QPushButton#subtleDangerButton:hover { border-color: $DANGER_BORDER; color: $DANGER_TEXT; background: $DANGER_SOFT; }
+    QListWidget#sessionList { background: transparent; border: none; outline: none; }
+    QListWidget#sessionList::item { padding: 11px 10px; margin: 1px 0; border-radius: $RADIUS_SM; color: $TEXT_MUTED; }
+    QListWidget#sessionList::item:hover { background: $SURFACE_RAISED; color: $TEXT; }
+    QListWidget#sessionList::item:selected { background: $ACCENT_SOFT; color: $TEXT; }
+    QScrollArea { background: $BG; }
+    QFrame#composerFrame { background: $SURFACE; border-top: 1px solid $BORDER; }
+    QPlainTextEdit#composerEdit { background: $SURFACE_INPUT; border: 1px solid $BORDER_STRONG; border-radius: $RADIUS_MD; color: $TEXT; padding: 12px; font-size: 14px; }
+    QPlainTextEdit#composerEdit:focus { border-color: $ACCENT; }
+    QComboBox#composerCombo { min-width: 100px; padding: 6px 9px; }
+    QPushButton#sendButton { min-width: 42px; min-height: 38px; padding: 0; background: $ACCENT; border: none; color: $ACCENT_INK; font-size: 18px; font-weight: 800; border-radius: 10px; }
+    QPushButton#sendButton:hover { background: $ACCENT_HOVER; }
+    QPushButton#sendButton:pressed { background: $ACCENT_PRESSED; }
+    QPushButton#sendButton:disabled { background: $SURFACE_INPUT; color: $TEXT_FAINT; }
+    QLabel#aiBadge, QLabel#userBadge { min-width: 44px; padding-top: 6px; color: $ACCENT_TEXT; font-size: 11px; font-weight: 800; }
+    QLabel#userBadge { color: $TEXT_FAINT; }
+    QFrame#chatBubbleAi { background: $SURFACE; border: 1px solid $BORDER; border-radius: 14px; }
+    QFrame#chatBubbleUser { background: $USER_BUBBLE; border: 1px solid $USER_BUBBLE_BORDER; border-radius: 14px; }
+    QLabel#mutedText { color: $TEXT_DIM; }
+    QFrame#generationCard { background: $SURFACE_RAISED; border: 1px solid transparent; border-radius: $RADIUS_MD; }
+    QFrame#storyPlanCard { background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_MD; }
+    QLabel#storyPlanTitle { color: $TEXT; font-size: 18px; font-weight: 800; }
+    QLabel#storyPlanSection { color: $TEXT_MUTED; background: $SURFACE_INPUT; border: 1px solid $BORDER; border-radius: $RADIUS_SM; padding: 8px 10px; }
+    QLabel#generationStatus { color: $TEXT; font-size: 14px; font-weight: 700; }
+    QLabel#generationTimer { color: $ACCENT_TEXT; font-size: 12px; font-weight: 700; font-family: $MONO_STACK; }
+    QLabel#generationPanelBadge { color: $ACCENT_SOFT_TEXT; background: $ACCENT_SOFT; border: 1px solid $ACCENT_SOFT_BORDER; border-radius: 999px; padding: 5px 12px; font-size: 11px; font-weight: 800; }
+    QLabel#generationPreviewTitle { color: $TEXT; font-size: 20px; font-weight: 800; }
+    QLabel#generationPreviewText { color: $TEXT_DIM; font-size: 12px; }
+    QFrame#generationPreview { background: $SURFACE; border: 1px solid $BORDER; border-radius: $RADIUS_MD; min-height: 170px; }
+    QLabel#generationStep { color: $TEXT_FAINT; font-size: 11px; }
+    QProgressBar { background: $SURFACE_INPUT; border: none; border-radius: 4px; }
+    QProgressBar::chunk { background: $ACCENT; border-radius: 4px; }
+    QFrame#panelResultCard { background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_MD; }
+    QLabel#panelResultTitle { color: $TEXT; font-size: 15px; font-weight: 800; }
+    QLabel#panelDoneBadge { color: $SUCCESS_TEXT; background: $SUCCESS_SOFT; border: 1px solid $SUCCESS_BORDER; border-radius: 999px; padding: 5px 10px; font-size: 10px; font-weight: 800; }
+    QLabel#panelResultImage { background: $BG; border: 1px solid $BORDER; border-radius: 10px; }
+    QLabel#panelDialogueText { color: $TEXT_MUTED; background: $SURFACE_INPUT; border: 1px solid $BORDER; border-radius: $RADIUS_SM; padding: 8px 10px; font-size: 12px; }
+    QPushButton#dangerButton { background: $DANGER_SOFT; border-color: $DANGER_BORDER; color: $DANGER_TEXT; }
+    QPushButton#dangerButton:hover { background: $DANGER_HOVER_BG; border-color: $DANGER; }
+    QFrame#resultCard { background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_MD; }
+    QLabel#resultTitle { font-size: 15px; font-weight: 800; color: $TEXT; }
+    QLabel#finalComicImage { background: $BG; border: 1px solid $BORDER; border-radius: 10px; }
+    QPushButton#primaryAction { background: $ACCENT_SOFT; border: 1px solid $ACCENT_SOFT_BORDER; color: $ACCENT_SOFT_TEXT; font-weight: 700; }
+    QPushButton#primaryAction:hover { background: $ACCENT_SOFT_BORDER; border-color: $ACCENT_HOVER; color: $TEXT; }
+    QPushButton#primaryAction:pressed { background: $ACCENT_PRESSED; color: $ACCENT_INK; }
+    QFrame#emptyState { background: transparent; }
+    QLabel#emptyIcon { color: $ACCENT; font-size: 40px; }
+    QLabel#emptyTitle { color: $TEXT; font-size: 22px; font-weight: 800; }
+    QLabel#emptySubtitle { color: $TEXT_DIM; font-size: 13px; }
+    QStatusBar { background: $SURFACE; color: $TEXT_FAINT; }
+    QScrollBar:vertical { background: transparent; width: 10px; margin: 3px 2px; }
+    QScrollBar::handle:vertical { background: $BORDER_STRONG; min-height: 30px; border-radius: 4px; }
+    QScrollBar::handle:vertical:hover { background: $BORDER_HOVER; }
+    QScrollBar::add-line:vertical, QScrollBar::sub-line:vertical { height: 0; background: transparent; }
+    QScrollBar::add-page:vertical, QScrollBar::sub-page:vertical { background: transparent; }
+    QScrollBar:horizontal { background: transparent; height: 10px; margin: 2px 3px; }
+    QScrollBar::handle:horizontal { background: $BORDER_STRONG; min-width: 30px; border-radius: 4px; }
+    QScrollBar::handle:horizontal:hover { background: $BORDER_HOVER; }
+    QScrollBar::add-line:horizontal, QScrollBar::sub-line:horizontal { width: 0; background: transparent; }
+    QScrollBar::add-page:horizontal, QScrollBar::sub-page:horizontal { background: transparent; }
+    QToolTip { background: $SURFACE_RAISED; color: $TEXT; border: 1px solid $BORDER_STRONG; padding: 6px 8px; }
+    

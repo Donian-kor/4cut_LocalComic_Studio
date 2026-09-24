@@ -1,0 +1,28 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>SidebarForm</class>
+ <widget class="QWidget" name="SidebarForm">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>260</width><height>700</height></rect></property>
+  <layout class="QVBoxLayout" name="sidebarLayout">
+   <property name="spacing"><number>10</number></property>
+   <property name="leftMargin"><number>12</number></property>
+   <property name="topMargin"><number>14</number></property>
+   <property name="rightMargin"><number>12</number></property>
+   <property name="bottomMargin"><number>12</number></property>
+   <item><widget class="QPushButton" name="newChatButton"><property name="text"><string>＋  새 채팅</string></property></widget></item>
+   <item><widget class="QLabel" name="sidebarSectionLabel"><property name="text"><string>대화</string></property></widget></item>
+   <item><widget class="QListWidget" name="sessionList">
+    <property name="selectionMode"><enum>QAbstractItemView::SingleSelection</enum></property>
+    <property name="editTriggers"><set>QAbstractItemView::DoubleClicked|QAbstractItemView::EditKeyPressed</set></property>
+   </widget></item>
+   <item><layout class="QHBoxLayout" name="sessionActionsLayout">
+    <property name="spacing"><number>8</number></property>
+    <item><widget class="QPushButton" name="renameButton"><property name="text"><string>이름 변경</string></property></widget></item>
+    <item><widget class="QPushButton" name="deleteButton"><property name="text"><string>삭제</string></property></widget></item>
+   </layout></item>
+   <item><widget class="QPushButton" name="settingsButton"><property name="text"><string>⚙  설정</string></property></widget></item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>
