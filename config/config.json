@@ -27,13 +27,14 @@
       "name": "Z-Anime Base AIO FP8",
       "model_file": "z-anime-base-aio-fp8.safetensors",
       "workflow": "workflows/z_anime_base_aio_fp8.json",
-      "width": 256,
-      "height": 256,
+      "width": 512,
+      "height": 512,
       "steps": 28,
       "cfg": 4.0,
       "sampler": "euler_ancestral",
       "scheduler": "beta",
-      "negative_prompt": "low quality, blurry, deformed, bad anatomy, extra fingers, extra limbs, distorted face"
+      "negative_prompt": "low quality, blurry, deformed, bad anatomy, extra fingers, extra limbs, distorted face",
+      "stage2_workflow": ""
     }
   ]
 }

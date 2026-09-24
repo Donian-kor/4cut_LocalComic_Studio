@@ -19,10 +19,9 @@ from PySide6.QtWidgets import (
 from settings.settings_window import SettingsWindow
 from core.models.chat import ChatMessageData, ChatSession
 from core.services.session_manager import SessionManager
-from ui.chat.chat_widgets import ChatMessageRow, GenerationCard, StoryPlanCard, PanelResultCard, ResultCard, ChatScrollArea
 from ui import theme
+from ui.main.chat_view_manager import ChatViewManager
 from ui.main.components.composer import Composer
-from ui.main.components.empty_state import EmptyState
 from ui.main.components.sidebar import Sidebar
 from ui.main.styles import MAIN_WINDOW_QSS_TEMPLATE
 from core.workers.server_status_worker import ServerStatusWorker
@@ -57,8 +56,6 @@ class MainWindow(QMainWindow):
         self.current_session = None
         self._server_worker = None
         self._server_state = (False, False)
-        self._generation_widgets = {}  # message_id -> (row, card)
-        self._result_widgets = {}  # message_id -> (row, card)
         self._generating_session_id = None
 
         root = QWidget()
@@ -79,8 +76,16 @@ class MainWindow(QMainWindow):
         main_layout = QVBoxLayout(main)
         main_layout.setContentsMargins(0, 0, 0, 0)
         main_layout.setSpacing(0)
-        self.chat = ChatScrollArea()
-        self.empty = EmptyState()
+        self.chat_view = ChatViewManager(
+            on_save_comic=self.save_comic,
+            on_cancel=self._on_cancel_requested,
+            on_regenerate=self.regenerateRequested.emit,
+            on_panel_regenerate=self.panelRegenerateRequested.emit,
+            on_panel_revision=self.panelRevisionRequested.emit,
+            parent=main,
+        )
+        self.chat = self.chat_view.chat
+        self.empty = self.chat_view.empty
         self.composer = Composer(settings_manager)
         main_layout.addWidget(self.empty, 1)
         main_layout.addWidget(self.chat, 1)
@@ -200,6 +205,8 @@ class MainWindow(QMainWindow):
                 self.open_session(self.session_manager.sessions[0].id)
             else:
                 self.new_chat()
+            # open_session()은 사이드바를 다시 그리지 않으므로 삭제가 목록에 즉시 반영되도록 갱신한다.
+            self._refresh_sidebar()
         else:
             self._refresh_sidebar()
 
@@ -217,101 +224,10 @@ class MainWindow(QMainWindow):
             self._refresh_sidebar()
 
     def _render_session(self, session):
-        self.chat.clear_messages()
-        self._generation_widgets.clear()
-        self._result_widgets.clear()
-        has_visible = False
-        for message in session.messages:
-            if message.kind == "text":
-                row = ChatMessageRow(message.role)
-                row.bubble.add_text(message.text)
-                if message.mood or message.art_style:
-                    meta = QLabel(
-                        f"분위기: {message.mood or '자동'}   ·   그림체: {message.art_style or '캐주얼 만화'}"
-                    )
-                    meta.setObjectName("mutedText")
-                    row.bubble.layout.addWidget(meta)
-                self.chat.append(row)
-                has_visible = True
-
-            elif message.kind == "generation":
-                row = ChatMessageRow("ai")
-                card = GenerationCard()
-                row.bubble.layout.addWidget(card)
-                self.chat.append(row)
-                self._generation_widgets[message.id] = (row, card)
-                phase = str(message.metadata.get("phase", "story"))
-                if message.metadata.get("cancelled"):
-                    card.set_cancelled()
-                elif message.metadata.get("failed"):
-                    card.set_failed(message.text)
-                else:
-                    card.set_status(
-                        message.text or "생성 상태",
-                        int(message.metadata.get("current", 0)),
-                        4,
-                    )
-                    panel_index = int(message.metadata.get("panel_index", 0) or 0)
-                    if phase in {"panel", "panel_revision"} and panel_index:
-                        card.set_panel_active(panel_index)
-                    elif phase == "compose":
-                        card.set_compose_mode()
-                    else:
-                        card.set_story_mode()
-                has_visible = True
-
-            elif message.kind == "story_plan":
-                row = ChatMessageRow("ai")
-                row.bubble.layout.addWidget(StoryPlanCard(dict(message.metadata or {})))
-                self.chat.append(row)
-                has_visible = True
-
-            elif message.kind == "panel_result":
-                row = ChatMessageRow("ai")
-                index = int(message.metadata.get("panel_index", 0) or 0)
-                path = str(message.metadata.get("path", "") or "")
-                card = PanelResultCard(
-                    index,
-                    path,
-                    dialogue=str(message.metadata.get("dialogue", "") or ""),
-                    status=str(message.metadata.get("dialogue_status", "") or ""),
-                )
-                card.regenerateRequested.connect(self.panelRegenerateRequested.emit)
-                card.revisionRequested.connect(self.panelRevisionRequested.emit)
-                row.bubble.layout.addWidget(card)
-                self.chat.append(row)
-                has_visible = True
-
-            elif message.kind == "result":
-                comic_stub = type(
-                    "StoredComic",
-                    (),
-                    {
-                        "title": session.title,
-                        "output_path": message.metadata.get("result_path", session.result_path),
-                    },
-                )()
-                row = ChatMessageRow("ai")
-                card = ResultCard(comic_stub)
-                card.saveRequested.connect(self.save_comic)
-                card.regenerateRequested.connect(self.regenerateRequested.emit)
-                row.bubble.layout.addWidget(card)
-                self.chat.append(row)
-                self._result_widgets[message.id] = (row, card)
-                has_visible = True
-
-            elif message.kind == "error":
-                row = ChatMessageRow("ai")
-                row.bubble.add_text(message.text or "생성에 실패했습니다.")
-                self.chat.append(row)
-                has_visible = True
-
-        self.empty.setVisible(not has_visible)
-        self.chat.setVisible(has_visible)
-
+        self.chat_view.set_current_session(session)
+        self.chat_view.render_session(session)
         if session.status == "generating":
             self.composer.set_busy(True)
-
     def ensure_user_message(self, text, mood, art_style, idea_value=None, update_title=True):
         session = self.current_session
         if session is None:
@@ -325,74 +241,25 @@ class MainWindow(QMainWindow):
         if update_title:
             session.set_title_from_idea(text)
         self.session_manager.update(session)
-        row = ChatMessageRow("user")
-        row.bubble.add_text(text)
-        meta = QLabel(f"분위기: {mood}   ·   그림체: {art_style}")
-        meta.setObjectName("mutedText")
-        row.bubble.layout.addWidget(meta)
-        self.chat.append(row)
-        self.empty.setVisible(False)
-        self.chat.setVisible(True)
+        self.chat_view.append_user_message(text, mood, art_style)
         return session
 
     def add_ai_text(self, text):
-        row = ChatMessageRow("ai")
-        row.bubble.add_text(text)
-        self.chat.append(row)
+        self.chat_view.add_ai_text(text)
+
+    def _on_cancel_requested(self):
+        self.cancelRequested.emit()
 
     def add_generation_message(self, session, initial="생성을 준비하는 중…", phase="story", panel_index=0):
-        data = ChatMessageData(
-            role="ai",
-            kind="generation",
-            text=initial,
-            metadata={
-                "phase": phase,
-                "panel_index": int(panel_index or 0),
-                "current": 0,
-            },
-        )
-        session.add_message(data)
+        message_id = self.chat_view.add_generation_message(session, initial, phase, panel_index)
         self.session_manager.update(session)
-
-        row = ChatMessageRow("ai")
-        card = GenerationCard()
-        card.cancelRequested.connect(self.cancelRequested.emit)
-        row.bubble.layout.addWidget(card)
-        self.chat.append(row)
-        self._generation_widgets[data.id] = (row, card)
-        card.start()
-        if phase == "panel" and panel_index:
-            card.set_panel_active(int(panel_index))
-        elif phase == "compose":
-            card.set_compose_mode()
-        else:
-            card.set_story_mode()
         self.composer.set_busy(True)
-        return data.id
+        return message_id
+
 
     @staticmethod
     def _story_summary(comic, session):
-        """UI 카드에 필요한 계획만 저장한다. image_prompt와 원본 JSON은 포함하지 않는다."""
-        character = getattr(comic, "character", None)
-        return {
-            "title": str(getattr(comic, "title", "") or "4컷 스토리 계획"),
-            "mood": str(getattr(session, "mood", "") or ""),
-            "art_style": str(getattr(session, "art_style", "") or ""),
-            "style": str(getattr(comic, "style", "") or ""),
-            "character": {
-                "name": str(getattr(character, "name", "") or ""),
-                "appearance": str(getattr(character, "appearance", "") or ""),
-                "personality": str(getattr(character, "personality", "") or ""),
-            },
-            "panels": [
-                {
-                    "scene": str(getattr(panel, "scene", "") or ""),
-                    "dialogue": str(getattr(panel, "dialogue", "") or ""),
-                    "speaker": str(getattr(panel, "speaker", "") or ""),
-                }
-                for panel in getattr(comic, "panels", [])
-            ],
-        }
+        return ChatViewManager._story_summary(comic, session)
 
     def complete_story_plan(self, message_id, comic, session_id=None):
         """진행용 스토리 카드를 영구적인 요약 카드로 전환한다."""
@@ -402,45 +269,12 @@ class MainWindow(QMainWindow):
         item = next((message for message in session.messages if message.id == message_id), None)
         if item is None:
             return
-        item.kind = "story_plan"
-        item.text = "스토리 계획"
-        item.metadata = self._story_summary(comic, session)
-        session.touch()
+        self.chat_view.complete_story_plan(message_id, comic, session)
         self.session_manager.update(session)
-
-        if self.current_session and self.current_session.id == session.id:
-            row, card = self._generation_entry(message_id)
-            if card:
-                card.stop()
-            if row:
-                self.chat.remove_widget(row)
-            self._generation_widgets.pop(message_id, None)
-            plan_row = ChatMessageRow("ai")
-            plan_row.bubble.layout.addWidget(StoryPlanCard(item.metadata))
-            self.chat.append(plan_row)
-
-    def _generation_entry(self, message_id):
-        entry = self._generation_widgets.get(message_id)
-        if not entry:
-            return None, None
-        return entry
 
     @staticmethod
     def _panel_result_text(index, status):
-        """패널 결과 메시지 문구를 대사 합성 상태에 맞게 결정한다."""
-        status = str(status or "")
-        if status == "composited":
-            return f"{index}컷 이미지와 대사 합성이 완료되었습니다."
-        if status == "failed":
-            return f"{index}컷 이미지가 완료되었지만 대사 합성에 실패했습니다. 최종 합성에서 대체 처리됩니다."
-        if status == "skipped":
-            return f"{index}컷 이미지가 완료되었습니다. (2단계 합성 미설정 — 최종 합성에서 대사를 그립니다)"
-        if status == "fallback":
-            return f"{index}컷 이미지와 대사(대체 합성)가 완료되었습니다."
-        if status == "none":
-            return f"{index}컷 이미지가 완료되었습니다."
-        # 구버전 세션(상태 없음) 호환 문구
-        return f"{index}컷 이미지와 대사 합성이 완료되었습니다."
+        return ChatViewManager._panel_result_text(index, status)
 
     def restore_panel_result_message(self, message_id, panel_index, session_id=None):
         """재생성 실패/취소 시 덮어쓴 컷 메시지를 마지막 커밋본 결과로 복원한다.
@@ -454,37 +288,11 @@ class MainWindow(QMainWindow):
         item = next((m for m in session.messages if m.id == message_id), None)
         if item is None:
             return
-        index = int(panel_index or 0)
-        path = ""
-        if 1 <= index <= len(session.panel_paths):
-            path = str(session.panel_paths[index - 1] or "")
-        dialogue = ""
-        status = ""
-        panels = (session.comic_data or {}).get("panels") or []
-        if 1 <= index <= len(panels):
-            panel = panels[index - 1]
-            dialogue = str(panel.get("dialogue") or "")
-            status = str(panel.get("dialogue_status") or "")
-            path = path or str(panel.get("image_path") or "")
-        item.kind = "panel_result"
-        item.text = self._panel_result_text(index, status)
-        item.metadata = {
-            "panel_index": index,
-            "path": path,
-            "dialogue": dialogue,
-            "dialogue_status": status,
-        }
-        session.touch()
+        self.chat_view.restore_panel_result_message(message_id, panel_index, session)
         self.session_manager.update(session)
-        if self.current_session and self.current_session.id == session.id:
-            # 실패/취소 카드를 유지한 채 복원된 컷 결과를 다시 그린다.
-            self._render_session(session)
 
     def begin_panel_generation(self, message_id, index, message):
-        row, card = self._generation_entry(message_id)
-        if card:
-            card.set_status(message, max(0, index - 1), 4)
-            card.set_panel_active(index)
+        self.chat_view.begin_panel_generation(message_id, message, index)
         session = self.session_manager.get(self._generating_session_id) if self._generating_session_id else self.current_session
         if session:
             item = next((m for m in session.messages if m.id == message_id), None)
@@ -495,10 +303,7 @@ class MainWindow(QMainWindow):
                 self.session_manager.update(session)
 
     def begin_final_composition(self, message_id, message):
-        row, card = self._generation_entry(message_id)
-        if card:
-            card.set_status(message, 4, 4)
-            card.set_compose_mode()
+        self.chat_view.begin_final_composition(message_id, message)
         session = self.session_manager.get(self._generating_session_id) if self._generating_session_id else self.current_session
         if session:
             item = next((m for m in session.messages if m.id == message_id), None)
@@ -517,9 +322,7 @@ class MainWindow(QMainWindow):
         )
 
     def update_generation(self, message_id, message, current, total, session_id=None):
-        row, card = self._generation_entry(message_id)
-        if card:
-            card.set_status(message, current, total)
+        self.chat_view.update_generation(message_id, message, current, total)
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if session:
             item = next((m for m in session.messages if m.id == message_id), None)
@@ -532,67 +335,24 @@ class MainWindow(QMainWindow):
     def complete_panel_generation(self, message_id, index, path, dialogue="", dialogue_status="", session_id=None):
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if session:
-            while len(session.panel_paths) < index:
-                session.panel_paths.append("")
-            session.panel_paths[index - 1] = path or ""
-            item = next((m for m in session.messages if m.id == message_id), None)
-            if item:
-                item.kind = "panel_result"
-                item.text = self._panel_result_text(index, dialogue_status)
-                item.metadata = {
-                    "panel_index": index,
-                    "path": path or "",
-                    "dialogue": dialogue or "",
-                    "dialogue_status": str(dialogue_status or ""),
-                }
-            session.touch()
+            self.chat_view.complete_panel_generation(
+                message_id, index, path, dialogue=dialogue, dialogue_status=dialogue_status, session=session
+            )
             self.session_manager.update(session)
-
-            if self.current_session and self.current_session.id == session.id:
-                row, card = self._generation_entry(message_id)
-                if row:
-                    self.chat.remove_widget(row)
-                    self._generation_widgets.pop(message_id, None)
-                    result_row = ChatMessageRow("ai")
-                    result_card = PanelResultCard(index, path, dialogue=dialogue, status=dialogue_status)
-                    result_card.regenerateRequested.connect(self.panelRegenerateRequested.emit)
-                    result_card.revisionRequested.connect(self.panelRevisionRequested.emit)
-                    result_row.bubble.layout.addWidget(result_card)
-                    self.chat.append(result_row)
 
     def begin_panel_regeneration(self, panel_index, revision="", session_id=None):
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if not session:
             return None
-        target = None
-        for message in reversed(session.messages):
-            if message.kind == "panel_result" and int(message.metadata.get("panel_index", 0) or 0) == int(panel_index):
-                target = message
-                break
-        if target is None:
+        message_id = self.chat_view.begin_panel_regeneration(panel_index, revision, session=session)
+        if message_id is None:
             return None
-        target.kind = "generation"
-        target.text = f"{panel_index}컷을 다시 생성하고 있습니다…"
-        target.metadata = {
-            "phase": "panel_revision",
-            "panel_index": int(panel_index),
-            "current": max(0, int(panel_index) - 1),
-            "revision": revision or "",
-        }
-        session.status = "generating"
-        session.error_message = ""
-        session.touch()
         self.session_manager.update(session)
         self._generating_session_id = session.id
-        if self.current_session and self.current_session.id == session.id:
-            self._render_session(session)
-            row, card = self._generation_widgets.get(target.id, (None, None))
-            if card:
-                card.set_panel_active(int(panel_index))
         self.composer.set_busy(True)
         self._set_status_label("● AI 작업 중", "busy")
         self._refresh_sidebar()
-        return target.id
+        return message_id
 
     def add_panel_compose_message(self, session):
         return self.add_generation_message(
@@ -605,155 +365,21 @@ class MainWindow(QMainWindow):
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if not session:
             return
-
-        # 최종 합성용 임시 generation 메시지는 완료되면 제거한다.
-        row, card = self._generation_entry(message_id)
-        if card:
-            card.stop()
-        if row and self.current_session and self.current_session.id == session.id:
-            self.chat.remove_widget(row)
-        self._generation_widgets.pop(message_id, None)
-        session.messages = [m for m in session.messages if m.id != message_id]
-
-        session.panel_paths = [
-            p.image_path for p in getattr(comic, "panels", []) if getattr(p, "image_path", "")
-        ]
-        session.result_path = str(getattr(comic, "output_path", "") or session.result_path)
-        session.master_seed = int(getattr(comic, "master_seed", session.master_seed) or 0)
-        session.character_prompt = str(getattr(comic, "character_prompt", session.character_prompt) or "")
-        session.style_prompt = str(getattr(comic, "style_prompt", session.style_prompt) or "")
-        session.generation_config = dict(getattr(comic, "generation_config", session.generation_config) or {})
-        session.comic_data = comic.to_dict() if hasattr(comic, "to_dict") else dict(session.comic_data)
-
-        # 재생성 시작 시 generation으로 바뀌었던 원래 컷 메시지를
-        # 합성 성공본의 panel_result로 한 번에 전환한다(단일 커밋).
-        panels = getattr(comic, "panels", [])
-        idx = int(panel_index or 0)
-        new_path, dialogue, status = "", "", ""
-        if 1 <= idx <= len(panels):
-            panel = panels[idx - 1]
-            new_path = str(getattr(panel, "image_path", "") or "")
-            dialogue = str(getattr(panel, "dialogue", "") or "")
-            status = str(getattr(panel, "dialogue_status", "") or "")
-        panel_msg = next(
-            (
-                m for m in session.messages
-                if m.kind == "generation"
-                and m.metadata.get("phase") == "panel_revision"
-                and int(m.metadata.get("panel_index", 0) or 0) == idx
-            ),
-            None,
-        )
-        if panel_msg is not None:
-            panel_msg.kind = "panel_result"
-            panel_msg.text = self._panel_result_text(idx, status)
-            panel_msg.metadata = {
-                "panel_index": idx,
-                "path": new_path,
-                "dialogue": dialogue,
-                "dialogue_status": status,
-            }
-        session.status = "completed"
-        session.error_message = ""
-        session.touch()
+        self.chat_view.finish_panel_regeneration(message_id, panel_index, comic, session=session)
         self.session_manager.update(session)
         self._generating_session_id = None
         self.composer.set_busy(False)
-        self._update_final_result_widget(session, comic)
-        # 원래 컷 메시지의 진행 카드를 새 결과 카드로 교체한다.
-        if panel_msg is not None and self.current_session and self.current_session.id == session.id:
-            entry = self._generation_widgets.pop(panel_msg.id, None)
-            if entry:
-                self.chat.remove_widget(entry[0])
-            result_row = ChatMessageRow("ai")
-            result_card = PanelResultCard(idx, new_path, dialogue=dialogue, status=status)
-            result_card.regenerateRequested.connect(self.panelRegenerateRequested.emit)
-            result_card.revisionRequested.connect(self.panelRevisionRequested.emit)
-            result_row.bubble.layout.addWidget(result_card)
-            self.chat.append(result_row)
         self._refresh_sidebar()
         self._set_status_label("● 생성 완료", "done")
         self.statusBar().showMessage(f"{panel_index}컷 재생성과 최종 합성이 완료되었습니다.", 4000)
-
-    def _update_final_result_widget(self, session, comic):
-        result_message = None
-        for message in reversed(session.messages):
-            if message.kind == "result":
-                result_message = message
-                break
-        if result_message is None:
-            result_message = ChatMessageData(
-                role="ai", kind="result", text="완성",
-                metadata={"result_path": getattr(comic, "output_path", "") or ""},
-            )
-            session.add_message(result_message)
-        else:
-            result_message.metadata["result_path"] = getattr(comic, "output_path", "") or ""
-            result_message.text = "완성"
-        session.result_path = getattr(comic, "output_path", "") or session.result_path
-        session.comic_data = comic.to_dict() if hasattr(comic, "to_dict") else session.comic_data
-        session.touch()
-        self.session_manager.update(session)
-        if self.current_session and self.current_session.id == session.id:
-            entry = self._result_widgets.get(result_message.id)
-            if entry:
-                row, card = entry
-                card.update_result(comic)
-            else:
-                row = ChatMessageRow("ai")
-                result_card = ResultCard(comic)
-                result_card.saveRequested.connect(self.save_comic)
-                result_card.regenerateRequested.connect(self.regenerateRequested.emit)
-                row.bubble.layout.addWidget(result_card)
-                self.chat.append(row)
-                self._result_widgets[result_message.id] = (row, result_card)
 
     def finish_generation(self, message_id, comic, session_id=None):
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if not session:
             return
-        if message_id:
-            row, card = self._generation_entry(message_id)
-            if card:
-                card.stop()
-            if row and self.current_session and self.current_session.id == session.id:
-                self.chat.remove_widget(row)
-            self._generation_widgets.pop(message_id, None)
-
-        session.status = "completed"
-        session.result_path = comic.output_path or ""
-        session.master_seed = int(getattr(comic, "master_seed", session.master_seed) or 0)
-        session.character_prompt = str(getattr(comic, "character_prompt", session.character_prompt) or "")
-        session.style_prompt = str(getattr(comic, "style_prompt", session.style_prompt) or "")
-        session.generation_config = dict(getattr(comic, "generation_config", session.generation_config) or {})
-        session.comic_data = comic.to_dict() if hasattr(comic, "to_dict") else session.comic_data
-        session.panel_paths = [
-            p.image_path for p in getattr(comic, "panels", []) if getattr(p, "image_path", "")
-        ]
-        # 진행 메시지가 아직 남아 있는 경우(구버전/예외 경로) 최종 상태로 남긴다.
-        item = next((m for m in session.messages if m.id == message_id), None)
-        if item and item.kind == "generation":
-            item.text = "4컷 생성이 완료되었습니다."
-            item.metadata["phase"] = "compose"
-            item.metadata["current"] = 4
-        result = ChatMessageData(
-            role="ai",
-            kind="result",
-            text="완성",
-            metadata={"result_path": session.result_path},
-        )
-        session.add_message(result)
+        self.chat_view.finish_generation(message_id, comic, session=session)
         self.session_manager.update(session)
-
-        if self.current_session and self.current_session.id == session.id:
-            row = ChatMessageRow("ai")
-            result_card = ResultCard(comic)
-            result_card.saveRequested.connect(self.save_comic)
-            result_card.regenerateRequested.connect(self.regenerateRequested.emit)
-            row.bubble.layout.addWidget(result_card)
-            self.chat.append(row)
         self.composer.set_busy(False)
-        self._generation_widgets.clear()
         self._generating_session_id = None
         self._refresh_sidebar()
         self._set_status_label("● 생성 완료", "done")
@@ -763,17 +389,7 @@ class MainWindow(QMainWindow):
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if not session:
             return
-        if self.current_session and self.current_session.id == session.id:
-            row, card = self._generation_entry(message_id)
-            if card:
-                card.set_failed(message)
-        session.status = "failed"
-        session.error_message = message
-        item = next((m for m in session.messages if m.id == message_id), None)
-        if item:
-            item.text = message
-            item.metadata["failed"] = True
-        session.touch()
+        self.chat_view.fail_generation(message_id, message, session=session)
         self.session_manager.update(session)
         self.composer.set_busy(False)
         self._generating_session_id = None
@@ -784,16 +400,7 @@ class MainWindow(QMainWindow):
         session = self.session_manager.get(session_id) if session_id else self.current_session
         if not session:
             return
-        if self.current_session and self.current_session.id == session.id:
-            row, card = self._generation_entry(message_id)
-            if card:
-                card.set_cancelled()
-        session.status = "cancelled"
-        item = next((m for m in session.messages if m.id == message_id), None)
-        if item:
-            item.text = "생성이 취소되었습니다."
-            item.metadata["cancelled"] = True
-        session.touch()
+        self.chat_view.cancel_generation_ui(message_id, session=session)
         self.session_manager.update(session)
         self.composer.set_busy(False)
         self._generating_session_id = None
