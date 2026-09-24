@@ -2,7 +2,7 @@ from pathlib import Path
 
 from PySide6.QtCore import Qt, Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QFrame, QListWidget, QListWidgetItem, QVBoxLayout
+from PySide6.QtWidgets import QFrame, QListWidgetItem, QVBoxLayout
 
 
 class Sidebar(QFrame):

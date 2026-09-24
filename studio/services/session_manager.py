@@ -184,7 +184,7 @@ class SessionManager:
             self._save_timer = None
         try:
             self.save()
-        except Exception as exc:
+        except Exception:
             logger.exception("세션 저장 실패")
 
     def flush(self):

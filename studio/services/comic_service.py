@@ -119,7 +119,7 @@ class ComicService:
             raise
         except FileNotFoundError:
             panel.dialogue_status = "skipped"
-        except Exception as e:
+        except Exception:
             logger.exception("패널 %s 2단계 대사 합성 실패", panel.index)
             panel.dialogue_status = "failed"
 

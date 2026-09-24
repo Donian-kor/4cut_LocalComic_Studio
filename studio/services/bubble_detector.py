@@ -98,7 +98,7 @@ class BubbleDetector:
             lines = [line.strip() for line in output.splitlines() if line.strip()]
             if lines:
                 return json.loads(lines[-1])
-        except Exception as e:
+        except Exception:
             logger.exception("YOLO 추론 중 오류 발생")
         return []
 

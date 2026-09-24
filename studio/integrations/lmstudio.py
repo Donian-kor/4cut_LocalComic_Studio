@@ -7,7 +7,7 @@ import requests
 try:  # urllib3는 requests 의 필수 의존이므로 항상 존재한다.
     import urllib3.exceptions as _urllib3_exc
 except Exception:  # pragma: no cover - 방어적
-    _urllib3_exc = None
+    _urllib3_exc = None  # type: ignore[assignment]
 
 
 class _ResponseFormatUnsupported(RuntimeError):

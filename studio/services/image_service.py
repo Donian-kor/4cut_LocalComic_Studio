@@ -1,7 +1,7 @@
 import logging
 from pathlib import Path
 
-from PIL import Image, ImageDraw, ImageFont
+from PIL import Image, ImageDraw
 
 from studio.services.bubble import find_font
 from studio.services.bubble_detector import BubbleDetector
@@ -143,10 +143,10 @@ class ImageService:
 
             # 전체 텍스트 블록의 가로/세로 바운딩 박스 계산
             line_widths = []
-            for l in lines:
-                if not l:
+            for line in lines:
+                if not line:
                     continue
-                bbox = dummy.textbbox((0, 0), l, font=font)
+                bbox = dummy.textbbox((0, 0), line, font=font)
                 line_widths.append(bbox[2] - bbox[0])
 
             max_line_w = max(line_widths) if line_widths else 0

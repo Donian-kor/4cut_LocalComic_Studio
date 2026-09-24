@@ -1,5 +1,7 @@
 import os
 from pathlib import Path
+from typing import Any
+
 from PIL import Image, ImageDraw, ImageFont
 
 
@@ -22,7 +24,7 @@ def find_font_path(explicit=None):
 
 # (폰트 경로, 크기)를 키로 캐시한다. 설정의 폰트 경로/크기가 바뀌면
 # 새 키로 재로딩되므로 이전 설정의 폰트가 재사용되지 않는다.
-_FONT_CACHE = {}
+_FONT_CACHE: dict[tuple[str, int], Any] = {}
 
 
 def find_font(size, font_path=None):

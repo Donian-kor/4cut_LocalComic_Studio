@@ -45,11 +45,13 @@ class ComicWorker(QThread):
             self.comic = comic
             self.planned.emit(comic)
             if self.cancel_requested:
-                self.cancelled.emit(); return
+                self.cancelled.emit()
+                return
 
             for i, panel in enumerate(comic.panels):
                 if self.cancel_requested:
-                    self.cancelled.emit(); return
+                    self.cancelled.emit()
+                    return
                 self.panel_started.emit(i + 1)
                 self.progress.emit(f"{i + 1}컷 이미지 생성 중", i, 4)
                 # ComicService가 확정한 Master Seed / Character Prompt / Style Prompt를
@@ -60,12 +62,14 @@ class ComicWorker(QThread):
                 self.progress.emit(f"{i + 1}컷 생성 완료", i + 1, 4)
 
             if self.cancel_requested:
-                self.cancelled.emit(); return
+                self.cancelled.emit()
+                return
             self.compose_started.emit()
             self.progress.emit("4컷 합성 중", 4, 4)
             self.service.compose(comic)
             if self.cancel_requested:
-                self.cancelled.emit(); return
+                self.cancelled.emit()
+                return
             self.finished_comic.emit(comic)
         except InterruptedError:
             self.cancelled.emit()
