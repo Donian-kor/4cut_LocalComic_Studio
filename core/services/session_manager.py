@@ -1,4 +1,5 @@
 import copy
+import logging
 import json
 import shutil
 import threading
@@ -6,6 +7,8 @@ import time
 import uuid
 from pathlib import Path
 from core.models.chat import ChatSession
+
+logger = logging.getLogger(__name__)
 
 
 # 직렬화 시 상대경로로 변환/복원할 수 있는 문자열 키들
@@ -89,7 +92,7 @@ class SessionManager:
                     restored = self._transform_paths(copy.deepcopy(record), self._to_absolute)
                     session = ChatSession.from_dict(restored)
                 except Exception as exc:
-                    print(f"[SessionManager] 손상된 세션 기록 #{index} 복구 실패: {exc}")
+                    logger.warning("손상된 세션 기록 #%s 복구 실패: %s", index, exc)
                     corrupt_records.append({"index": index, "error": str(exc), "record": record})
                     continue
                 self.sessions.append(session)
@@ -113,7 +116,7 @@ class SessionManager:
             self.session_dir.mkdir(parents=True, exist_ok=True)
             backup = self.session_dir / f"sessions.corrupt-{int(time.time())}.json"
             shutil.copy2(self.session_file, backup)
-            print(f"[SessionManager] 세션 파일 손상({error}) → 원본 격리: {backup}")
+            logger.warning("세션 파일 손상(%s) → 원본 격리: %s", error, backup)
         except OSError:
             pass
 
@@ -182,7 +185,7 @@ class SessionManager:
         try:
             self.save()
         except Exception as exc:
-            print(f"[SessionManager] 세션 저장 실패: {exc}")
+            logger.exception("세션 저장 실패")
 
     def flush(self):
         """앱 종료 직전 대기 중인 디바운스 저장을 즉시 수행한다."""

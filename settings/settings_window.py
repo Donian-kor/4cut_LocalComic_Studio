@@ -1,7 +1,7 @@
 ﻿from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QLabel, QListWidgetItem
+from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QLabel, QListWidgetItem, QLineEdit, QFormLayout, QHBoxLayout, QPushButton
 from settings.model_manager import ImageModelManager
 from core.models.image_model import ImageModelProfile
 from ui import theme
@@ -75,6 +75,13 @@ class SettingsWindow:
         self.form.setStyleSheet(theme.render(SETTINGS_QSS_TEMPLATE))
 
         self._setup_font_combo()
+        self.stage2WorkflowEdit = QLineEdit(self.form)
+        self.stage2WorkflowEdit.setPlaceholderText("비우면 이미지 Workflow 이름에서 자동 추정")
+        stage2_layout = QHBoxLayout()
+        stage2_layout.addWidget(self.stage2WorkflowEdit)
+        self.stage2BrowseButton = QPushButton("찾아보기", self.form)
+        stage2_layout.addWidget(self.stage2BrowseButton)
+        self.form.findChild(QFormLayout, "imageModelForm").addRow("대사 합성 Workflow", stage2_layout)
 
         self._load()
         self.form.applyButton.clicked.connect(self.apply)
@@ -89,6 +96,7 @@ class SettingsWindow:
         self.form.saveImageModelButton.clicked.connect(self.save_image_model)
         self.form.browseImageModelButton.clicked.connect(self.browse_image_model)
         self.form.browseImageModelWorkflowButton.clicked.connect(self.browse_image_model_workflow)
+        self.stage2BrowseButton.clicked.connect(self.browse_stage2_workflow)
 
     def _setup_font_combo(self):
         label = QLabel("UI 폰트", self.form)
@@ -124,8 +132,6 @@ class SettingsWindow:
         from compose.bubble import find_font_path
         if not cf.get("font_path"):
             cf["font_path"] = find_font_path("")
-        if not cf.get("font_size"):
-            cf["font_size"] = 32
         self.form.lmHostEdit.setText(str(lm.get("host", "127.0.0.1")))
         self.form.lmPortSpin.setValue(int(lm.get("port", 1234)))
         self.form.lmApiEdit.setText(str(lm.get("api_path", "/v1")))
@@ -263,6 +269,7 @@ class SettingsWindow:
             self.form.imageModelNameEdit.setText(profile.name)
             self.form.imageModelFileEdit.setText(profile.model_file)
             self.form.imageModelWorkflowEdit.setText(profile.workflow)
+            self.stage2WorkflowEdit.setText(profile.stage2_workflow)
             self.form.imageModelWidthSpin.setValue(profile.width)
             self.form.imageModelHeightSpin.setValue(profile.height)
             self.form.imageModelStepsSpin.setValue(profile.steps)
@@ -282,6 +289,7 @@ class SettingsWindow:
             name=self.form.imageModelNameEdit.text().strip() or "Custom Model",
             model_file=self.form.imageModelFileEdit.text().strip(),
             workflow=self.form.imageModelWorkflowEdit.text().strip(),
+            stage2_workflow=self.stage2WorkflowEdit.text().strip(),
             width=self.form.imageModelWidthSpin.value(),
             height=self.form.imageModelHeightSpin.value(),
             steps=self.form.imageModelStepsSpin.value(),
@@ -344,6 +352,11 @@ class SettingsWindow:
         path, _ = QFileDialog.getOpenFileName(self.form, "이미지 모델 Workflow 선택", "", "JSON (*.json)")
         if path:
             self.form.imageModelWorkflowEdit.setText(path)
+
+    def browse_stage2_workflow(self):
+        path, _ = QFileDialog.getOpenFileName(self.form, "대사 합성 Workflow 선택", "", "JSON (*.json)")
+        if path:
+            self.stage2WorkflowEdit.setText(path)
 
     def apply(self):
         if self.worker is not None and self.worker.isRunning():

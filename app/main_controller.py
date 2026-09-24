@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from PySide6.QtCore import QObject
@@ -7,6 +8,8 @@ from core.workers.comic_worker import ComicWorker
 from core.workers.panel_regeneration_worker import PanelRegenerationWorker
 from core.models.comic import Comic
 from ui.idea.idea_section import IdeaSection
+
+logger = logging.getLogger(__name__)
 
 
 class MainController(QObject):
@@ -51,9 +54,14 @@ class MainController(QObject):
             return
         try:
             self.service = self.service_factory()
-        except Exception as e:
+        except Exception:
             self.service = None
-            QMessageBox.warning(self.window, "설정 확인 필요", f"AI 생성 설정을 준비하지 못했습니다.\n\n{e}")
+            logger.exception("AI 생성 설정을 준비하지 못했습니다.")
+            QMessageBox.warning(
+                self.window,
+                "설정 확인 필요",
+                "AI 생성 설정을 준비하지 못했습니다. 설정을 확인한 뒤 다시 시도해 주세요.",
+            )
 
     def _server_ready(self):
         return all(getattr(self.window, "_server_state", (False, False)))
@@ -283,8 +291,13 @@ class MainController(QObject):
             service = self._service_for_session(session)
             if session.result_path:
                 service.set_run_folder(Path(session.result_path).parent)
-        except Exception as e:
-            QMessageBox.warning(self.window, "생성 설정 확인 필요", f"기존 생성 설정을 준비하지 못했습니다.\n\n{e}")
+        except Exception:
+            logger.exception("기존 생성 설정을 준비하지 못했습니다.")
+            QMessageBox.warning(
+                self.window,
+                "생성 설정 확인 필요",
+                "기존 생성 설정을 준비하지 못했습니다. 설정을 확인한 뒤 다시 시도해 주세요.",
+            )
             return
 
         display_revision = str(revision or "").strip()

@@ -55,6 +55,15 @@ def test_existing_stage2_keeps_path(tmp_path):
     assert adapter.stage2_path == stage2
 
 
+def test_profile_supports_explicit_stage2_workflow():
+    from core.models.image_model import ImageModelProfile
+    profile = ImageModelProfile.from_dict({
+        "id": "custom", "workflow": "models/image.json",
+        "stage2_workflow": "dialogue/custom.json",
+    })
+    assert profile.stage2_workflow == "dialogue/custom.json"
+
+
 def test_negative_merges_workflow_text_and_profile(tmp_path):
     adapter = WorkflowAdapter(
         _make_workflow(tmp_path, negative_text="workflow custom neg"), profile=PROFILE

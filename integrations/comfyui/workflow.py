@@ -1,6 +1,9 @@
 import copy
+import logging
 import json
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class WorkflowAdapter:
@@ -45,7 +48,7 @@ class WorkflowAdapter:
             if s.exists():
                 self.stage2_path = s
             else:
-                print(f"[WorkflowAdapter] 2단계 workflow 파일 없음 — 대사 합성(stage2) 비활성: {s}")
+                logger.warning("2단계 workflow 파일 없음 — 대사 합성(stage2) 비활성: %s", s)
 
     def load(self):
         if not self.path.exists():

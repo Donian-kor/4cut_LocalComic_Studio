@@ -1,11 +1,15 @@
-﻿import json
+import json
+import logging
 import shutil
 import time
 from pathlib import Path
+from typing import Any
+
+logger = logging.getLogger(__name__)
 
 DEFAULTS = {
     "lmstudio": {"host": "127.0.0.1", "port": 1234, "api_path": "/v1", "model": ""},
-    "comfyui": {"host": "127.0.0.1", "port": 8188, "workflow": "workflows/4cut_default.json", "font_path": "", "font_size": 32},
+    "comfyui": {"host": "127.0.0.1", "port": 8188, "workflow": "workflows/4cut_default.json", "font_path": ""},
     "general": {
         "project_path": "projects",
         "width": 768,
@@ -41,7 +45,7 @@ class SettingsManager:
             try:
                 backup = self.path.with_name(f"{self.path.name}.corrupt-{int(time.time())}")
                 shutil.copy2(self.path, backup)
-                print(f"[SettingsManager] 설정 파일 손상({exc}) → 원본 격리: {backup}")
+                logger.warning("설정 파일 손상(%s) → 원본 격리: %s", exc, backup)
             except OSError:
                 pass
             return {}
@@ -61,9 +65,9 @@ class SettingsManager:
         )
         tmp.replace(self.path)
 
-    def section(self, name):
+    def section(self, name: str) -> dict[str, Any]:
         return self.data.setdefault(name, {})
 
-    def resolve_path(self, value):
+    def resolve_path(self, value: str | Path) -> Path:
         path = Path(value)
         return path if path.is_absolute() else self.base_dir / path

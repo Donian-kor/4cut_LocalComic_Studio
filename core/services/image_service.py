@@ -1,3 +1,4 @@
+import logging
 from pathlib import Path
 
 from PIL import Image, ImageDraw, ImageFont
@@ -6,6 +7,7 @@ from compose.bubble import find_font
 from core.services.bubble_detector import BubbleDetector
 
 _FONT_CACHE = {}
+logger = logging.getLogger(__name__)
 
 
 def _get_font(size, font_path=None):
@@ -112,7 +114,10 @@ class ImageService:
         dialogued_path.write_bytes(data)
         panel.image_path = str(dialogued_path)
         panel.dialogue_composited = True
-        print(f"[ImageService] 패널 {panel.index} 대사 합성 완료 (폰트 {final_font_size}px, 오프셋: {offset_x},{offset_y}) -> {dialogued_path.name}")
+        logger.info(
+            "패널 %s 대사 합성 완료 (폰트 %spx, 오프셋: %s,%s) -> %s",
+            panel.index, final_font_size, offset_x, offset_y, dialogued_path.name,
+        )
         return panel.image_path
 
     def _fit_dialogue_text(self, dialogue, target_width=None, target_height=None):

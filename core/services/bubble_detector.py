@@ -1,7 +1,10 @@
 import json
+import logging
 import os
 import subprocess
 from pathlib import Path
+
+logger = logging.getLogger(__name__)
 
 
 class BubbleDetector:
@@ -59,7 +62,7 @@ class BubbleDetector:
             실패하거나 검출 결과가 없으면 빈 리스트 [] 반환.
         """
         if not self.is_available():
-            print("[BubbleDetector] ComfyUI Python 또는 YOLO 모델 경로를 찾을 수 없습니다.")
+            logger.warning("ComfyUI Python 또는 YOLO 모델 경로를 찾을 수 없습니다.")
             return []
 
         img_path = Path(image_path).resolve()
@@ -96,7 +99,7 @@ class BubbleDetector:
             if lines:
                 return json.loads(lines[-1])
         except Exception as e:
-            print(f"[BubbleDetector] YOLO 추론 중 오류 발생: {e}")
+            logger.exception("YOLO 추론 중 오류 발생")
         return []
 
     def get_best_bubble_target(self, image_path, img_width=768, img_height=768, conf=0.25):
@@ -121,7 +124,10 @@ class BubbleDetector:
             bh = max(40, y2 - y1)
             offset_x = int(cx - (img_width / 2))
             offset_y = int(cy - (img_height / 2))
-            print(f"[BubbleDetector] 말풍선 검출 성공: Bbox={best['bbox']}, conf={best['conf']:.2f}, offset=({offset_x}, {offset_y})")
+            logger.info(
+                "말풍선 검출 성공: bbox=%s, conf=%.2f, offset=(%s, %s)",
+                best["bbox"], best["conf"], offset_x, offset_y,
+            )
             return {
                 "detected": True,
                 "bbox": [x1, y1, x2, y2],
@@ -136,7 +142,10 @@ class BubbleDetector:
         default_cy = img_height * 0.18
         offset_x = int(default_cx - (img_width / 2)) # 0
         offset_y = int(default_cy - (img_height / 2)) # 상단 쪽 오프셋
-        print(f"[BubbleDetector] 말풍선 미검출 -> 상단 기본 영역으로 안전 대체 (offset: {offset_x}, {offset_y})")
+        logger.info(
+            "말풍선 미검출 -> 상단 기본 영역으로 안전 대체 (offset: %s, %s)",
+            offset_x, offset_y,
+        )
         return {
             "detected": False,
             "bbox": [int(img_width * 0.1), int(img_height * 0.05), int(img_width * 0.9), int(img_height * 0.3)],

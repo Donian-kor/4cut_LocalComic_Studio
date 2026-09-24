@@ -25,8 +25,7 @@ def build_service(settings, model_id=None):
     workflow = WorkflowAdapter(
         profile.workflow, settings.base_dir, profile,
         font_path=comfy_settings.get("font_path", ""),
-        font_size=comfy_settings.get("font_size", 32),
-        stage2_path=profile.workflow.replace(".json", "_stage2.json"),
+        stage2_path=(getattr(profile, "stage2_workflow", "") or profile.workflow.replace(".json", "_stage2.json")),
     )
     return ComicService(lm, comfy, workflow, settings.data, settings.base_dir, image_model=profile)
 

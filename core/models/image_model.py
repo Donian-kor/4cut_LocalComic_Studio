@@ -15,6 +15,7 @@ class ImageModelProfile:
     sampler: str = "euler_ancestral"
     scheduler: str = "beta"
     negative_prompt: str = "low quality, blurry, deformed, bad anatomy, extra fingers, extra limbs"
+    stage2_workflow: str = ""
 
     def to_dict(self) -> Dict[str, Any]:
         return asdict(self)
@@ -27,6 +28,7 @@ class ImageModelProfile:
             name=str(values.get("name", values.get("id", "Custom Model"))),
             model_file=str(values.get("model_file", "")),
             workflow=str(values.get("workflow", "")),
+            stage2_workflow=str(values.get("stage2_workflow", "")),
             width=int(values.get("width", 768)),
             height=int(values.get("height", 768)),
             steps=int(values.get("steps", 28)),

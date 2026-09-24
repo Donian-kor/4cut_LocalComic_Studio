@@ -9,8 +9,7 @@
     "host": "127.0.0.1",
     "port": 8188,
     "workflow": "workflows/4cut_default.json",
-    "font_path": "C:/WINDOWS/Fonts/malgun.ttf",
-    "font_size": 32
+    "font_path": "C:/WINDOWS/Fonts/malgun.ttf"
   },
   "general": {
     "project_path": "projects",
@@ -18,7 +17,6 @@
     "height": 512,
     "auto_save": true,
     "style_prompt": "clean anime cel shading, crisp lineart, flat colors, expressive comedic timing, consistent character design",
-    "bubble_font_size": 28,
     "art_style_prompt": "super deformed chibi illustration style, cute characters with large heads and small bodies, rounded shapes, clean bold outlines, bright cheerful colors, simple shading, highly expressive cute facial expressions",
     "ui_font_family": null
   },

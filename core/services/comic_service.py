@@ -1,9 +1,12 @@
+import logging
 from pathlib import Path
 from datetime import datetime
 import random
 from core.services.story_service import StoryService
 from core.services.image_service import ImageService
 from core.services.compose_service import ComposeService
+
+logger = logging.getLogger(__name__)
 
 
 class ComicService:
@@ -19,9 +22,7 @@ class ComicService:
         self.image = ImageService(comfy_client, workflow_adapter, self.width, self.height)
         comfy_settings = settings.get("comfyui", {})
         # 최종 합성(Pillow 대체 합성)도 설정된 폰트/크기를 사용한다.
-        bubble_font_size = int(general.get("bubble_font_size", 28) or 28)
         self.compose_service = ComposeService(
-            font_size=bubble_font_size,
             font_path=str(comfy_settings.get("font_path", "") or ""),
         )
         self.font_name = self._resolve_font_name(workflow_adapter)
@@ -64,7 +65,7 @@ class ComicService:
             }
         return comic
 
-    def set_run_folder(self, folder):
+    def set_run_folder(self, folder: str | Path) -> Path:
         self._run_folder = Path(folder)
         self._run_folder.mkdir(parents=True, exist_ok=True)
         return self._run_folder
@@ -119,7 +120,7 @@ class ComicService:
         except FileNotFoundError:
             panel.dialogue_status = "skipped"
         except Exception as e:
-            print(f"[ComicService] 패널 {panel.index} 2단계 대사 합성 실패: {e}")
+            logger.exception("패널 %s 2단계 대사 합성 실패", panel.index)
             panel.dialogue_status = "failed"
 
     def compose(self, comic):
