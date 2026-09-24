@@ -38,34 +38,69 @@ class Sidebar(QFrame):
         self.settings_button.clicked.connect(self.settingsRequested.emit)
 
     def set_sessions(self, sessions, selected_id=None):
+        scroll_bar = self.list.verticalScrollBar()
+        saved_scroll = scroll_bar.value() if scroll_bar else 0
+
         self.list.blockSignals(True)
-        self.list.clear()
-        for session in sessions:
-            item = QListWidgetItem(session.title or "새 대화")
+        existing_count = self.list.count()
+        target_count = len(sessions)
+
+        while self.list.count() > target_count:
+            # takeItem은 C++에 남는 QListWidgetItem을 명시적으로 삭제해 누수를 막는다.
+            item = self.list.takeItem(self.list.count() - 1)
+            del item
+
+        for i, session in enumerate(sessions):
+            title = session.title or "새 대화"
+            status = session.status
+            suffix = {"generating": "  ⟳", "failed": "  !", "cancelled": "  ·"}.get(status, "")
+            display_title = title if not suffix else f"{title.rstrip()}{suffix}"
+
+            if i < existing_count:
+                item = self.list.item(i)
+                if item.text() != display_title:
+                    item.setText(display_title)
+            else:
+                item = QListWidgetItem(display_title)
+                self.list.addItem(item)
+
             item.setData(Qt.ItemDataRole.UserRole, session.id)
-            item.setData(Qt.ItemDataRole.UserRole + 1, session.status)
-            if session.status != "generating":
-                item.setFlags(item.flags() | Qt.ItemFlag.ItemIsEditable)
+            item.setData(Qt.ItemDataRole.UserRole + 1, status)
+
+            flags = item.flags()
+            if status != "generating":
+                flags |= Qt.ItemFlag.ItemIsEditable
+            else:
+                flags &= ~Qt.ItemFlag.ItemIsEditable
+            item.setFlags(flags)
+
             item.setToolTip(
-                f"{session.title or '새 대화'}\n생성 중인 대화는 삭제할 수 없습니다."
-                if session.status == "generating"
-                else (session.title or "새 대화")
+                f"{title}\n생성 중인 대화는 삭제할 수 없습니다."
+                if status == "generating"
+                else title
             )
-            self.list.addItem(item)
-            self._decorate_item(item, session.status)
+
         self.list.blockSignals(False)
+
+        matched = False
         if selected_id:
             for i in range(self.list.count()):
-                if self.list.item(i).data(Qt.ItemDataRole.UserRole) == selected_id:
+                item = self.list.item(i)
+                if item.data(Qt.ItemDataRole.UserRole) == selected_id:
                     self.list.setCurrentRow(i)
-                    self._update_action_state(self.list.item(i))
-                    return
-        if self.list.count():
-            self.list.setCurrentRow(0)
-            self._update_action_state(self.list.item(0))
-        else:
-            self.rename_button.setEnabled(False)
-            self.delete_button.setEnabled(False)
+                    self._update_action_state(item)
+                    matched = True
+                    break
+        if not matched:
+            if self.list.count():
+                self.list.setCurrentRow(0)
+                self._update_action_state(self.list.item(0))
+            else:
+                self.rename_button.setEnabled(False)
+                self.delete_button.setEnabled(False)
+
+        if scroll_bar:
+            scroll_bar.setValue(saved_scroll)
 
     def _update_action_state(self, item):
         if not item:
@@ -78,14 +113,6 @@ class Sidebar(QFrame):
         self.delete_button.setEnabled(not generating)
         self.delete_button.setToolTip("생성 중인 대화는 삭제할 수 없습니다." if generating else "현재 대화 삭제")
         self.rename_button.setToolTip("생성 중인 대화는 이름을 변경할 수 없습니다." if generating else "대화 이름 변경")
-
-    def add_session(self, session):
-        self.set_sessions([session], session.id)
-
-    def _decorate_item(self, item, status):
-        suffix = {"generating": "  ⟳", "failed": "  !", "cancelled": "  ·"}.get(status, "")
-        if suffix and not item.text().endswith(suffix):
-            item.setText(item.text().rstrip() + suffix)
 
     def _selection_changed(self, current, previous):
         self._update_action_state(current)

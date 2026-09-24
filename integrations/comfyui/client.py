@@ -58,12 +58,12 @@ class ComfyUIClient:
                 messages = status.get("messages") or []
                 if status_str == "error":
                     raise RuntimeError(f"ComfyUI workflow 실행 오류: {status}")
-                if completed is False and status_str != "success":
+                if completed is False and (status_str != "success" or messages):
                     # history에는 기록됐으나 완료로 판정할 수 없는 상태는
                     # 타임아웃까지 무의미하게 대기하지 않는다.
+                    if messages:
+                        raise RuntimeError(f"ComfyUI workflow 오류 메시지: {messages}")
                     raise RuntimeError(f"ComfyUI workflow가 완료되지 않았습니다: {status}")
-                if completed is False and messages:
-                    raise RuntimeError(f"ComfyUI workflow 오류 메시지: {messages}")
                 for node_output in item.get("outputs", {}).values():
                     # 최종 결과물(output)을 우선하고, 임시 미리보기(temp)는 나중에 본다.
                     candidates = []

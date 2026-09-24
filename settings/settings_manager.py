@@ -2,6 +2,7 @@ import json
 import logging
 import shutil
 import time
+import uuid
 from pathlib import Path
 from typing import Any
 
@@ -12,8 +13,8 @@ DEFAULTS = {
     "comfyui": {"host": "127.0.0.1", "port": 8188, "workflow": "workflows/4cut_default.json", "font_path": ""},
     "general": {
         "project_path": "projects",
-        "width": 768,
-        "height": 768,
+        "width": 512,
+        "height": 512,
         "auto_save": True,
         "style_prompt": "clean anime cel shading, crisp lineart, flat colors, consistent character design",
         "ui_font_family": None,
@@ -59,7 +60,7 @@ class SettingsManager:
     def save(self):
         self._normalize()
         # 임시파일에 먼저 쓰고 원자적으로 교체해 중간 종료 시 파일 손상을 막는다.
-        tmp = self.path.with_name(f"{self.path.name}.tmp")
+        tmp = self.path.with_name(f"{self.path.name}.{uuid.uuid4().hex}.tmp")
         tmp.write_text(
             json.dumps(self.data, ensure_ascii=False, indent=2), encoding="utf-8"
         )

@@ -61,8 +61,8 @@ class WorkflowAdapter:
     def prepare(self, prompt, seed, width=None, height=None, dialogue=None, style_prompt=""):
         wf = copy.deepcopy(self.load())
         profile = self.profile
-        width = int(width or getattr(profile, "width", 768))
-        height = int(height or getattr(profile, "height", 768))
+        width = int(width or getattr(profile, "width", 512))
+        height = int(height or getattr(profile, "height", 512))
 
         full_prompt = self._styled_prompt(prompt, style_prompt)
 
@@ -137,7 +137,7 @@ class WorkflowAdapter:
         # ComfyUI에서 대사 합성 안 함. dialogue 인자는 하위 호환용으로만 유지.
         return wf
 
-    def prepare_stage2(self, image_name, dialogue, width=768, height=768, font_name=None, font_size=32, offset_x=0, offset_y=0):
+    def prepare_stage2(self, image_name, dialogue, width=512, height=512, font_name=None, font_size=32, offset_x=0, offset_y=0):
         """2단계 워크플로우: 안전하게 계산된 오프셋 좌표로 DrawText+ 대사를 합성한다."""
         if not self.stage2_path or not self.stage2_path.exists():
             raise FileNotFoundError(f"2단계(대사 합성) workflow 파일이 없습니다: {self.stage2_path}")

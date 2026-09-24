@@ -2,7 +2,7 @@
 
 ## 현재 버전
 
-**v1.1**
+**v1.2**
 
 4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다. UI는 단일 테마 토큰(ui/theme.py) 기반의 웜 그레이 + 코랄 악센트 디자인이며, UI 폰트는 설정에서 고를 수 있습니다(기본값 Malgun Gothic).
 
@@ -23,7 +23,7 @@
 - 단일 테마 토큰(ui/theme.py) 기반 UI(웜 그레이 + 코랄 악센트, 상태색 각 1종, 카드 그림자, 커스텀 스크롤바)
 - 설정 - 일반 탭에서 UI 폰트 선택
 - 전송 버튼 연필 아이콘(assets/icons/send_pen.svg)
-- 프로그램 버전 표기 `v1.1` 기준 관리
+- 프로그램 버전 표기 `v1.2` 기준 관리
 
 ## UI 기준
 
@@ -125,7 +125,7 @@ Character Prompt / Style Prompt / Master Seed 확정
 
 - 프로그램명: **4cut Local Comic Studio**
 - 테마: `ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
-- 현재 버전: **v1.1**
+- 현재 버전: **v1.2**
 - UI 프레임워크: PySide6
 - 스토리/대사: LM Studio Local Server
 - 이미지 생성: ComfyUI API
@@ -138,32 +138,42 @@ Character Prompt / Style Prompt / Master Seed 확정
 app.py
 app/version.py
 app/main_controller.py
+config/config.json
 ui/theme.py
 ui/main/main_window.py
+ui/main/main_window.qss
+ui/main/styles.py
+ui/main/chat_view_manager.py
+ui/main/components/composer.py + composer.ui
+ui/main/components/sidebar.py + sidebar.ui
+ui/main/components/empty_state.py + empty_state.ui
 ui/chat/chat_widgets.py
-ui/generation/generation_section.py
-ui/idea/idea_section.py
-ui/preview/preview_section.py
-ui/result/result_section.py
+ui/idea/idea_section.py + idea_section.ui
+ui/settings/settings_window.ui
 settings/settings_window.py
 settings/settings_manager.py
 settings/model_manager.py
-tests/
-assets/icons/send_pen.svg
+compose/bubble.py
+compose/layout.py
 core/models/comic.py
 core/models/chat.py
+core/models/image_model.py
 core/services/story_service.py
 core/services/comic_service.py
 core/services/image_service.py
+core/services/compose_service.py
 core/services/session_manager.py
+core/services/bubble_detector.py
 core/workers/comic_worker.py
 core/workers/panel_regeneration_worker.py
+core/workers/server_status_worker.py
 integrations/lmstudio/client.py
 integrations/comfyui/client.py
 integrations/comfyui/workflow.py
+tests/
+assets/icons/send_pen.svg
 workflows/
 projects/
-디자인.md
 ```
 
 ## 세션 저장
@@ -183,7 +193,18 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 
 ## 버전 규칙 및 이력
 
-프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
+프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, `v1.2`처럼 소수점 단위로, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
+
+### v1.2 (UI-로직 분리)
+- `ChatViewManager` 신규 추가: 채팅 스크롤 영역·빈 상태 위젯·생성/결과 카드 캐시를 캡슐화하고 `MainWindow`에서 직접 관리하던 `_generation_widgets`/`_result_widgets` 제거
+- 사이드바·컴포지터·빈 상태를 `ui/main/components/` 컴포넌트로 분리, QSS 템플릿을 `ui/main/styles.py` + `main_window.qss`로 분리
+- 사이드바 세션 목록을 전체 재생성 대신 증분 갱신하도록 변경(스크롤 위치·선택 상태 보존)
+- 전송 버튼 `clicked` → `_submit` 시그널 연결 복구
+- 이미지 해상도 기본값 768 → 512로 코드 전반 통일, `config.json`의 `font_path` 절대경로 제거(자동 탐색 사용)
+- 설정 저장 임시파일을 UUID 이름으로 원자 교체(세션 저장 방식과 통일)
+- Ruff lint 규칙에 `F`(미사용 import/변수) 추가, 미사용 import 제거
+- ComfyUI 완료/오류 메시지 판정 조건 병합(`wait_for_image`)
+- 세션 삭제 후 사이드바 즉시 갱신(`_refresh_sidebar`), 2단계 합성 `stage2_workflow` 필드 추가
 
 ### v1.1 (테마-폰트-전송 버튼)
 - 단일 테마 토큰(ui/theme.py) 기반 UI: 웜 그레이 배경, 코랄 악센트(#e87e60) 단일, 상태색 각 1종
@@ -213,7 +234,3 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 - 기본 4컷 스토리/이미지/대사 생성 파이프라인
 - LM Studio 및 ComfyUI 연동
 - 프로젝트 파일 저장 구조
-
-## 디자인 문서
-
-`디자인.md`에는 UI/UX 설계와 동작 기준만 기록합니다. 버전 정보와 프로젝트 전체 상태는 이 README를 기준으로 합니다.

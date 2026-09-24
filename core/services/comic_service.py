@@ -17,8 +17,8 @@ class ComicService:
         self.image_model = image_model
         self.story = StoryService(llm_client)
         general = settings.get("general", {})
-        self.width = int(getattr(image_model, "width", general.get("width", 768)))
-        self.height = int(getattr(image_model, "height", general.get("height", 768)))
+        self.width = int(getattr(image_model, "width", general.get("width", 512)))
+        self.height = int(getattr(image_model, "height", general.get("height", 512)))
         self.image = ImageService(comfy_client, workflow_adapter, self.width, self.height)
         comfy_settings = settings.get("comfyui", {})
         # 최종 합성(Pillow 대체 합성)도 설정된 폰트/크기를 사용한다.

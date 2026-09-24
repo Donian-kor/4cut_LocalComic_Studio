@@ -102,7 +102,7 @@ class BubbleDetector:
             logger.exception("YOLO 추론 중 오류 발생")
         return []
 
-    def get_best_bubble_target(self, image_path, img_width=768, img_height=768, conf=0.25):
+    def get_best_bubble_target(self, image_path, img_width=512, img_height=512, conf=0.25):
         """가장 적합한 말풍선의 중심 오프셋(offset_x, offset_y)과 최대 허용 너비/높이를 반환한다.
 
         ComfyUI DrawText+ 기준:

@@ -4,7 +4,7 @@ line-length = 120
 exclude = [".git", ".venv", "venv", "build", "dist", "__pycache__"]
 
 [tool.ruff.lint]
-select = ["E", "W"]
+select = ["E", "W", "F"]
 ignore = ["E501"]
 
 [tool.mypy]

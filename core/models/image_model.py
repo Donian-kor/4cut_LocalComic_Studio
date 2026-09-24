@@ -8,8 +8,8 @@ class ImageModelProfile:
     name: str
     model_file: str
     workflow: str
-    width: int = 768
-    height: int = 768
+    width: int = 512
+    height: int = 512
     steps: int = 28
     cfg: float = 4.0
     sampler: str = "euler_ancestral"
@@ -29,8 +29,8 @@ class ImageModelProfile:
             model_file=str(values.get("model_file", "")),
             workflow=str(values.get("workflow", "")),
             stage2_workflow=str(values.get("stage2_workflow", "")),
-            width=int(values.get("width", 768)),
-            height=int(values.get("height", 768)),
+            width=int(values.get("width", 512)),
+            height=int(values.get("height", 512)),
             steps=int(values.get("steps", 28)),
             cfg=float(values.get("cfg", 4.0)),
             sampler=str(values.get("sampler", "euler_ancestral")),

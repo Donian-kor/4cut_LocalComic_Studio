@@ -40,7 +40,7 @@ def _wrap_cjk(text, max_width, font):
 
 
 class ImageService:
-    def __init__(self, comfy_client, workflow_adapter, width=768, height=768, detector=None):
+    def __init__(self, comfy_client, workflow_adapter, width=512, height=512, detector=None):
         self.comfy = comfy_client
         self.workflow = workflow_adapter
         self.width = width

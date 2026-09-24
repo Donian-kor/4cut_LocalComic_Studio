@@ -1,4 +1,4 @@
-﻿from pathlib import Path
+from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QLabel, QListWidgetItem, QLineEdit, QFormLayout, QHBoxLayout, QPushButton
@@ -145,8 +145,8 @@ class SettingsWindow:
         self.form.comfyWorkflowEdit.setText(str(cf.get("workflow", "workflows/4cut_default.json")))
         self.form.comfyStatusLabel.setText("상태: 연결 확인 필요")
         self.form.projectPathEdit.setText(str(g.get("project_path", "projects")))
-        self.form.widthSpin.setValue(int(g.get("width", 768)))
-        self.form.heightSpin.setValue(int(g.get("height", 768)))
+        self.form.widthSpin.setValue(int(g.get("width", 512)))
+        self.form.heightSpin.setValue(int(g.get("height", 512)))
         self.form.autoSaveCheck.setChecked(bool(g.get("auto_save", True)))
         stored = g.get("ui_font_family")
         if stored:

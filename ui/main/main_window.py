@@ -1,4 +1,3 @@
-from datetime import datetime
 from pathlib import Path
 import shutil
 
@@ -11,7 +10,6 @@ from PySide6.QtWidgets import (
     QMainWindow,
     QMessageBox,
     QSplitter,
-    QSizePolicy,
     QVBoxLayout,
     QWidget,
 )
