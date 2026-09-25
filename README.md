@@ -2,7 +2,7 @@
 
 ## 현재 버전
 
-**v1.2.1**
+**v1.2.2**
 
 4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다. UI는 단일 테마 토큰(studio/ui/theme.py) 기반의 웜 그레이 + 코랄 악센트 디자인이며, UI 폰트는 설정에서 고를 수 있습니다(기본값 Malgun Gothic).
 
@@ -23,7 +23,7 @@
 - 단일 테마 토큰(studio/ui/theme.py) 기반 UI(웜 그레이 + 코랄 악센트, 상태색 각 1종, 카드 그림자, 커스텀 스크롤바)
 - 설정 - 일반 탭에서 UI 폰트 선택
 - 전송 버튼 연필 아이콘(resources/send_pen.svg)
-- 프로그램 버전 표기 `v1.2.1` 기준 관리
+- 프로그램 버전 표기 `v1.2.2` 기준 관리
 
 ## UI 기준
 
@@ -125,7 +125,7 @@ Character Prompt / Style Prompt / Master Seed 확정
 
 - 프로그램명: **4cut Local Comic Studio**
 - 테마: `studio/ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
-- 현재 버전: **v1.2.1**
+- 현재 버전: **v1.2.2**
 - UI 프레임워크: PySide6
 - 스토리/대사: LM Studio Local Server
 - 이미지 생성: ComfyUI API
@@ -196,6 +196,12 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 ## 버전 규칙 및 이력
 
 프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, `v1.2`처럼 소수점 단위로, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
+
+### v1.2.2 (UI 배치 회귀 수정)
+- `Sidebar`/`Composer`를 Host 레이아웃에 명시적 `addWidget`으로 배치 — parent만 지정해 레이아웃에서 누락되던 버그 수정(사이드바·입력창이 화면에 안 보이던 원인)
+- `mainSplitter` 초기 `setSizes([260, 940])` + `setStretchFactor` 설정 — 사이드바 칸 0px 폭 회귀 방지, `sidebar` 최소폭 220px 보장
+- `mainHost`의 `emptyHost`/`chatHost` stretch=1, `composerHost` stretch=0으로 세로 배분 명시
+- 배치 회귀 방지 GUI smoke 테스트 추가(`tests/test_main_window_layout.py`): Host 레이아웃 진입 여부, 위젯 크기/가시성, splitter 초기 폭 검증
 
 ### v1.2.1 (안정화 — 리뷰 잔여 이슈 정리)
 - 설정 기본값(`settings_manager.py` `DEFAULTS`)에 `art_style_prompt` 키 추가로 설정 키 누락 제거

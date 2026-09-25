@@ -4,7 +4,7 @@ import shutil
 
 from PySide6.QtCore import Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox, QWidget
+from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox, QSplitter, QWidget
 
 from studio.settings.settings_window import SettingsWindow
 from studio.ui import theme
@@ -61,8 +61,12 @@ class MainWindow(QMainWindow):
         self.logo_label.setText(f"✦ 4cut Studio <span style='font-size:12px; font-weight:700; color:{theme.TEXT_FAINT}'>{APP_VERSION}</span>")
         self._set_status_label("● AI 서버 확인 중...", "checking")
 
-        self.sidebar = Sidebar(self.sidebar_host)
-        self.composer = Composer(self.composer_host)
+        # host 레이아웃에 명시적으로 넣어야 Host가 비어 있어도 위젯이 배치된다.
+        # (parent만 지정하면 레이아웃이 위젯을 잡지 못해 0px로 접혀 안 보인다.)
+        self.sidebar = Sidebar()
+        self.sidebar_host.layout().addWidget(self.sidebar)
+        self.composer = Composer()
+        self.composer_host.layout().addWidget(self.composer)
         self.chat_view = ChatViewManager(
             on_save_comic=self.save_comic,
             on_cancel=self._on_cancel_requested,
@@ -74,6 +78,18 @@ class MainWindow(QMainWindow):
         )
         self.chat = self.chat_view.chat
         self.empty = self.chat_view.empty
+
+        main_splitter = self.ui.findChild(QSplitter, "mainSplitter")
+        if main_splitter is not None:
+            main_splitter.setStretchFactor(0, 0)
+            main_splitter.setStretchFactor(1, 1)
+            main_splitter.setSizes([260, 940])
+        self.sidebar.setMinimumWidth(220)
+        main_layout = self.composer_host.parentWidget().layout()
+        if main_layout is not None:
+            main_layout.setStretch(main_layout.indexOf(self.empty_host), 1)
+            main_layout.setStretch(main_layout.indexOf(self.chat_host), 1)
+            main_layout.setStretch(main_layout.indexOf(self.composer_host), 0)
 
         self.sidebar.newChatRequested.connect(self.new_chat)
         self.sidebar.sessionSelected.connect(self.open_session)
