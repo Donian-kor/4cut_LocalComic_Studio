@@ -13,6 +13,7 @@ from studio.ui.composer import Composer
 from studio.ui.sidebar import Sidebar
 from studio.ui.styles import MAIN_WINDOW_QSS_TEMPLATE
 from studio.workers.server_status_worker import ServerStatusWorker
+from studio.version import APP_NAME, APP_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -39,7 +40,7 @@ class MainWindow(QMainWindow):
         self._server_state = (False, False)
         self._generating_session_id = None
         self.settings_dialog = None
-        self.setWindowTitle("4cut Studio")
+        self.setWindowTitle(f"{APP_NAME} {APP_VERSION}")
         self.resize(1200, 820)
         self.setMinimumSize(960, 700)
         self.setStyleSheet(theme.render(self.QSS_TEMPLATE))

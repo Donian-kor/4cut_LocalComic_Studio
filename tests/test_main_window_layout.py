@@ -15,6 +15,7 @@ os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 from PySide6.QtWidgets import QApplication, QFrame, QLayout, QLabel, QSplitter  # noqa: E402
 
 from studio.ui.main_window import MainWindow  # noqa: E402
+from studio.version import APP_NAME, APP_VERSION  # noqa: E402
 
 ROOT = Path(__file__).resolve().parents[1]
 
@@ -69,10 +70,10 @@ def test_header_removed_and_status_label_left_of_send_button():
         window.show()
         app.processEvents()
 
-        # 창 안 헤더(제목/로고)는 제거, 타이틀바는 짧은 이름만 남는다(A안).
+        # 창 안 헤더(제목/로고)는 제거, 타이틀바(제목 표시줄)에는 앱 전체 이름+버전이 남는다.
         assert window.findChild(QFrame, "headerFrame") is None
         assert window.findChild(QLabel, "logoLabel") is None
-        assert window.windowTitle() == "4cut Studio"
+        assert window.windowTitle() == f"{APP_NAME} {APP_VERSION}"
 
         # 상태 라벨은 composer의 전송버튼 왼쪽에 있어야 한다.
         assert window.status_label is not None

@@ -9,7 +9,7 @@
     "host": "127.0.0.1",
     "port": 8188,
     "workflow": "resources/4cut_default.json",
-    "font_path": ""
+    "font_path": "C:/WINDOWS/Fonts/malgun.ttf"
   },
   "general": {
     "project_path": "projects",

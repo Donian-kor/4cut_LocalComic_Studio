@@ -199,7 +199,7 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 
 ### v1.2.3 (헤더 제거 · 상태라벨 이동 · 채팅 영역 배차 수정)
 - 창 안 상단 헤더(`headerFrame` + `logoLabel` 제목/버전) 제거 — 윈도우 타이틀바와 중복되던 제목 정리, 레이아웃이 64px 위로 올라와 채팅 영역 확대
-- 윈도우 타이틀바는 짧은 이름 `4cut Studio`만 표시(A안 — 작업표시줄/Alt+Tab 표기는 유지)
+- 윈도우 타이틀바(제목 표시줄)에는 프로그램 전체 이름과 버전을 표시: `4cut Local Comic Studio v1.2.3` (`APP_NAME` + `APP_VERSION` 자동 반영 — 버전 올리면 타이틀도 함께 갱신)
 - 서버·생성 상태 라벨(`saveStatusLabel`)을 헤더에서 입력창 전송버튼 좌측으로 이동(`composer.ui`) — objectName 재사용으로 QSS 상태색(`done`/`busy`/`error` 등) 그대로 유지
 - `set_empty_visible()`이 `emptyHost`/`chatHost` 컨테이너 자체도 토글하도록 수정 — 숨겨진 빈 상태 컨테이너가 stretch 절반을 차지해 채팅창이 반반으로 접히던 버그 수정, 초기 상태는 빈 화면만 표시
 - 회귀 테스트 추가/보강: 헤더 제거·상태라벨 위치(`test_main_window_layout.py`), 빈화면/채팅 Host 토글, `composer.ui` 상태라벨 존재(`test_architecture_boundaries.py`)
