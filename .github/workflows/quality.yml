@@ -1,23 +1,20 @@
-name: 품질 검사
+name: quality
 
 on:
   push:
   pull_request:
 
 jobs:
-  test:
-    strategy:
-      matrix:
-        # PySide6 휠 제공 버전 기준. 프로젝트 대상: Python 3.11~3.13
-        python-version: ['3.11', '3.13']
+  quality:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: ${{ matrix.python-version }}
-          cache: 'pip'
+          python-version: "3.12"
+          cache: pip
       - run: python -m pip install --upgrade pip
       - run: pip install -r requirements.txt -r requirements-dev.txt
-      - run: python -m compileall -q app.py studio tests
-      - run: python -m pytest tests/ -q
+      - run: ruff check app.py studio tests
+      - run: mypy studio/models studio/services studio/integrations studio/settings --ignore-missing-imports
+      - run: pytest -q

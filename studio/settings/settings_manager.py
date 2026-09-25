@@ -17,6 +17,7 @@ DEFAULTS = {
         "height": 512,
         "auto_save": True,
         "style_prompt": "clean anime cel shading, crisp lineart, flat colors, consistent character design",
+        "art_style_prompt": "",
         "ui_font_family": None,
     },
 }

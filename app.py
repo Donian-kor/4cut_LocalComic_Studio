@@ -1,6 +1,7 @@
 ﻿import sys
 from PySide6.QtWidgets import QApplication
 from studio.settings.settings_manager import SettingsManager
+from studio.services.session_manager import SessionManager
 from studio.integrations.lmstudio import LMStudioClient
 from studio.integrations.comfyui import ComfyUIClient
 from studio.integrations.workflow import WorkflowAdapter
@@ -32,12 +33,13 @@ def build_service(settings, model_id=None):
 def main():
     app = QApplication(sys.argv)
     app.setApplicationName(APP_NAME)
-    app.setApplicationDisplayName(APP_NAME)
     app.setApplicationVersion(APP_VERSION)
     settings = SettingsManager()
     theme.apply_font(settings.data.get("general", {}).get("ui_font_family"))
-    window = MainWindow(settings, LMStudioClient, ComfyUIClient)
-    _controller = MainController(window, lambda model_id=None: build_service(settings, model_id))
+    session_manager = SessionManager(settings)
+    window = MainWindow(settings, LMStudioClient, ComfyUIClient, session_manager=session_manager)
+    controller = MainController(window, lambda model_id=None: build_service(settings, model_id), session_manager=session_manager)
+    controller.initialize()
     window.show()
     sys.exit(app.exec())
 

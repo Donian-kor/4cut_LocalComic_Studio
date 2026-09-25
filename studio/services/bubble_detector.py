@@ -93,11 +93,17 @@ class BubbleDetector:
                 timeout=15,
                 check=True,
             )
-            output = res.stdout.strip()
-            # 마지막 줄에서 json 파싱
-            lines = [line.strip() for line in output.splitlines() if line.strip()]
-            if lines:
-                return json.loads(lines[-1])
+            # stdout에는 ultralytics 경고 등이 섞일 수 있으므로 마지막 줄부터
+            # 역순으로 스캔해 JSON 배열을 찾는다. 경고가 뒤에 붙어도 정상
+            # 검출 결과를 버리지 않는 것이 목적이다.
+            lines = [line.strip() for line in res.stdout.splitlines() if line.strip()]
+            for line in reversed(lines):
+                try:
+                    data = json.loads(line)
+                except (json.JSONDecodeError, ValueError):
+                    continue
+                if isinstance(data, list):
+                    return data
         except Exception:
             logger.exception("YOLO 추론 중 오류 발생")
         return []

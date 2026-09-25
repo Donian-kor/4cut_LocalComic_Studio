@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<ui version="4.0">
+ <class>MainWindowForm</class>
+ <widget class="QWidget" name="MainWindowForm">
+  <property name="geometry"><rect><x>0</x><y>0</y><width>1200</width><height>820</height></rect></property>
+  <layout class="QVBoxLayout" name="rootLayout">
+   <property name="spacing"><number>0</number></property>
+   <property name="leftMargin"><number>0</number></property>
+   <property name="topMargin"><number>0</number></property>
+   <property name="rightMargin"><number>0</number></property>
+   <property name="bottomMargin"><number>0</number></property>
+   <item>
+    <widget class="QFrame" name="headerFrame">
+     <property name="minimumSize"><size><width>0</width><height>64</height></size></property>
+     <property name="maximumSize"><size><width>16777215</width><height>64</height></size></property>
+     <layout class="QHBoxLayout" name="headerLayout">
+      <property name="leftMargin"><number>24</number></property>
+      <property name="rightMargin"><number>20</number></property>
+      <property name="spacing"><number>12</number></property>
+      <item><widget class="QLabel" name="logoLabel"><property name="text"><string>✦ 4cut Studio</string></property></widget></item>
+      <item><widget class="QLabel" name="saveStatusLabel"><property name="text"><string>● AI 서버 확인 중...</string></property></widget></item>
+      <item><spacer name="headerSpacer"><property name="orientation"><enum>Qt::Horizontal</enum></property><property name="sizeHint" stdset="0"><size><width>40</width><height>20</height></size></property></spacer></item>
+     </layout>
+    </widget>
+   </item>
+   <item>
+    <widget class="QSplitter" name="mainSplitter">
+     <property name="orientation"><enum>Qt::Horizontal</enum></property>
+     <property name="childrenCollapsible"><bool>false</bool></property>
+     <widget class="QWidget" name="sidebarHost">
+      <layout class="QVBoxLayout" name="sidebarHostLayout">
+       <property name="spacing"><number>0</number></property>
+       <property name="leftMargin"><number>0</number></property>
+       <property name="topMargin"><number>0</number></property>
+       <property name="rightMargin"><number>0</number></property>
+       <property name="bottomMargin"><number>0</number></property>
+      </layout>
+     </widget>
+     <widget class="QWidget" name="mainHost">
+      <layout class="QVBoxLayout" name="mainLayout">
+       <property name="spacing"><number>0</number></property>
+       <property name="leftMargin"><number>0</number></property>
+       <property name="topMargin"><number>0</number></property>
+       <property name="rightMargin"><number>0</number></property>
+       <property name="bottomMargin"><number>0</number></property>
+       <item><widget class="QWidget" name="emptyHost"><layout class="QVBoxLayout" name="emptyHostLayout"><property name="spacing"><number>0</number></property><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property></layout></widget></item>
+       <item><widget class="QWidget" name="chatHost"><layout class="QVBoxLayout" name="chatHostLayout"><property name="spacing"><number>0</number></property><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property></layout></widget></item>
+       <item><widget class="QWidget" name="composerHost"><property name="minimumSize"><size><width>0</width><height>96</height></size></property><layout class="QVBoxLayout" name="composerHostLayout"><property name="spacing"><number>0</number></property><property name="leftMargin"><number>0</number></property><property name="topMargin"><number>0</number></property><property name="rightMargin"><number>0</number></property><property name="bottomMargin"><number>0</number></property></layout></widget></item>
+      </layout>
+     </widget>
+    </widget>
+   </item>
+  </layout>
+ </widget>
+ <resources/>
+ <connections/>
+</ui>

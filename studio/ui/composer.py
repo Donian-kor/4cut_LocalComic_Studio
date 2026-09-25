@@ -5,7 +5,7 @@ from PySide6.QtGui import QIcon
 from PySide6.QtUiTools import QUiLoader
 from PySide6.QtWidgets import QFrame, QVBoxLayout
 
-from studio.ui.idea_section import IdeaSection
+from studio.core.presets import STYLE_PRESETS, ART_STYLE_PRESETS
 
 
 class Composer(QFrame):
@@ -15,7 +15,7 @@ class Composer(QFrame):
         # studio/ui/composer.py → studio/ → 프로젝트 루트 (2단계 상위)
         return Path(__file__).resolve().parents[2] / "resources" / "send_pen.svg"
 
-    def __init__(self, settings_manager, parent=None):
+    def __init__(self, parent=None):
         super().__init__(parent)
         self.setObjectName("composerFrame")
         loader = QUiLoader()
@@ -38,8 +38,8 @@ class Composer(QFrame):
         self.idea.setMinimumHeight(two_line_height)
         self.idea.setMaximumHeight(two_line_height)
         self.idea.installEventFilter(self)
-        self.mood.addItems(list(IdeaSection.STYLE_PRESETS.keys()))
-        self.art.addItems(list(IdeaSection.ART_STYLE_PRESETS.keys()))
+        self.mood.addItems(list(STYLE_PRESETS.keys()))
+        self.art.addItems(list(ART_STYLE_PRESETS.keys()))
         self.send.setIconSize(QSize(20, 20))
         self.send.clicked.connect(self._submit)
         self.set_busy(False)
@@ -59,8 +59,8 @@ class Composer(QFrame):
             return
         mood = self.mood.currentText() or "자동"
         art = self.art.currentText() or "캐주얼 만화"
-        mood_prompt = IdeaSection.STYLE_PRESETS.get(mood, "")
-        art_prompt = IdeaSection.ART_STYLE_PRESETS.get(art, "")
+        mood_prompt = STYLE_PRESETS.get(mood, "")
+        art_prompt = ART_STYLE_PRESETS.get(art, "")
         style_prompt = ", ".join([x for x in (art_prompt, mood_prompt) if x])
         self.submitted.emit(text, style_prompt, mood, art)
 

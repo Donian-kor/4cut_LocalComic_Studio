@@ -1,0 +1,12 @@
+[tool.ruff]
+line-length = 120
+exclude = ["*_ui.py"]
+
+[tool.ruff.lint]
+select = ["E4", "E7", "E9", "F"]
+
+[tool.mypy]
+python_version = "3.12"
+ignore_missing_imports = true
+check_untyped_defs = false
+warn_unused_ignores = false

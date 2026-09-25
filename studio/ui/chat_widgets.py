@@ -274,18 +274,12 @@ class GenerationCard(QFrame):
         self.update()
 
     def set_status(self, message, current, total):
+        # 표시용 문구와 진행바만 갱신한다. 단계 전환(스토리/컷/합성 모드)은
+        # panel_started/compose_started 타입 신호 경로가 담당하므로
+        # 문구 파싱에 의존하지 않는다.
         self.status.setText(message)
         self.progress.setMaximum(max(1, total))
         self.progress.setValue(max(0, min(current, total)))
-        lower = str(message).lower()
-        for idx in range(1, 5):
-            if f"{idx}컷" in message and "생성 중" in message:
-                self.set_panel_active(idx)
-                return
-        if "합성 중" in message or "합성" in lower:
-            self.set_compose_mode()
-        elif current <= 0:
-            self.set_story_mode()
 
     def set_failed(self, message):
         self.stop()
