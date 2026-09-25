@@ -29,6 +29,10 @@ def _template(resources_dir, model_file="YOUR_MODEL.safetensors"):
     resources = Path(resources_dir)
     resources.mkdir(parents=True, exist_ok=True)
     (resources / wf.TEMPLATE_FILENAME).write_text(json.dumps(data), encoding="utf-8")
+    (resources / wf.STAGE2_TEMPLATE_FILENAME).write_text(
+        json.dumps({"1": {"class_type": "LoadImage", "inputs": {}}}),
+        encoding="utf-8",
+    )
     return resources
 
 
@@ -41,6 +45,18 @@ def test_build_from_template_injects_checkpoint_without_touching_template(tmp_pa
     original = json.loads((resources / wf.TEMPLATE_FILENAME).read_text(encoding="utf-8"))
     assert original["3"]["inputs"]["ckpt_name"] == "YOUR_MODEL.safetensors"
     assert wf.validate_workflow(path, model_file="my-model.safetensors") == []
+
+
+def test_resolve_stage2_uses_template_for_matching_workflow(tmp_path):
+    resources = _template(tmp_path)
+    workflow = resources / "my_model.json"
+    workflow.write_text("{}", encoding="utf-8")
+
+    resolved = wf.resolve_stage2(workflow, resources)
+
+    assert resolved == resources / "my_model_stage2.json"
+    assert resolved.is_file()
+    assert json.loads(resolved.read_text(encoding="utf-8"))["1"]["class_type"] == "LoadImage"
 
 
 def test_build_from_template_needs_template_and_checkpoint_node(tmp_path):
@@ -176,6 +192,9 @@ def test_build_service_autocreates_missing_workflow(tmp_path):
     data = json.loads(workflow_path.read_text(encoding="utf-8"))
     ckpts = [n["inputs"]["ckpt_name"] for n in data.values() if n.get("class_type") == "CheckpointLoaderSimple"]
     assert ckpts == ["brand-new.safetensors"]
+    stage2_path = Path(getattr(service.workflow, "stage2_path", "") or "")
+    assert stage2_path.is_file(), "대사 합성 워크플로우도 템플릿에서 자동 생성되어야 한다"
+    assert stage2_path.name == "brand_new_stage2.json"
 
 
 def test_settings_window_autocreates_workflow_when_model_file_chosen(tmp_path):

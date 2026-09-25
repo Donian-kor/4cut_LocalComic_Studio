@@ -13,6 +13,7 @@ from pathlib import Path
 logger = logging.getLogger(__name__)
 
 TEMPLATE_FILENAME = "4cut_default.json"
+STAGE2_TEMPLATE_FILENAME = "4cut_default_stage2.json"
 DEFAULT_MODEL_PLACEHOLDER = "YOUR_MODEL.safetensors"
 CHECKPOINT_NODE_TYPE = "CheckpointLoaderSimple"
 CHECKPOINT_INPUT_NAME = "ckpt_name"
@@ -88,6 +89,64 @@ def build_from_template(model_file, model_id, resources_dir, template_name=TEMPL
     target.parent.mkdir(parents=True, exist_ok=True)
     target.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
     return target
+
+
+def resolve_stage2(
+    workflow_path,
+    resources_dir,
+    template_name=STAGE2_TEMPLATE_FILENAME,
+    base_dir=None,
+) -> Path | None:
+    """1단계 워크플로우에 대응하는 2단계(대사 합성) 워크플로우를 찾거나 생성한다.
+
+    1) 같은 폴더(또는 resources_dir)에 이미 존재하면 반환한다.
+    2) 없으면 기본 템플릿을 ``<1단계 이름>_stage2.json``으로 복사한다.
+    3) 템플릿이 없거나 복사할 수 없으면 ``None``을 반환한다.
+    """
+    if not workflow_path:
+        return None
+
+    resources_dir = Path(resources_dir)
+    base_dir = Path(base_dir) if base_dir is not None else resources_dir
+    raw_path = Path(workflow_path)
+    workflow_file = raw_path if raw_path.is_absolute() else base_dir / raw_path
+    stem = workflow_file.stem
+    if stem.endswith("_stage2"):
+        expected_name = f"{stem}.json"
+    else:
+        expected_name = f"{stem}_stage2.json"
+
+    candidates = []
+    if raw_path.is_absolute():
+        candidates.append(raw_path.parent / expected_name)
+    else:
+        # 설정값은 resources/foo.json처럼 프로젝트 기준이거나,
+        # 호출자가 resources 디렉터리를 직접 넘긴 경우 모두 지원한다.
+        candidates.append(workflow_file.parent / expected_name)
+        candidates.append(raw_path.parent / expected_name)
+    candidates.append(resources_dir / expected_name)
+
+    checked = set()
+    for candidate in candidates:
+        key = str(candidate)
+        if key in checked:
+            continue
+        checked.add(key)
+        if candidate.is_file():
+            return candidate
+
+    source = template_path(resources_dir, template_name)
+    if not source.is_file():
+        return None
+
+    target = candidates[0]
+    try:
+        target.parent.mkdir(parents=True, exist_ok=True)
+        target.write_text(source.read_text(encoding="utf-8"), encoding="utf-8")
+        return target
+    except OSError as e:
+        logger.warning("stage2 워크플로우 파일 생성 실패 (%s): %s", target, e)
+        return None
 
 
 def _first_node(data: dict, class_type: str):

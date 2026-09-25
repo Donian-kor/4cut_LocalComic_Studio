@@ -1,0 +1,35 @@
+{
+  "1": {
+    "class_type": "LoadImage",
+    "inputs": {
+      "image": ""
+    }
+  },
+  "2": {
+    "class_type": "DrawText+",
+    "inputs": {
+      "text": "",
+      "font": "malgun.ttf",
+      "size": 28,
+      "color": "#000000",
+      "background_color": "#00000000",
+      "shadow_distance": 4,
+      "shadow_blur": 6,
+      "shadow_color": "#FFFFFF",
+      "horizontal_align": "center",
+      "vertical_align": "center",
+      "offset_x": 0,
+      "offset_y": 0,
+      "direction": "ltr",
+      "img_composite": ["1", 0]
+    }
+  },
+  "3": {
+    "class_type": "SaveImage",
+    "inputs": {
+      "filename_prefix": "4cut_dialogue",
+      "images": ["2", 0]
+    }
+  }
+}
+

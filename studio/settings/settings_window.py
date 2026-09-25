@@ -77,10 +77,6 @@ class SettingsWindow:
         self.form.setStyleSheet(theme.render(SETTINGS_QSS_TEMPLATE))
 
         self._setup_font_combo()
-        # 워크플로우 도우미/대사 합성 행은 settings_window.ui(Designer)에 정의되어 있다.
-        self.stage2WorkflowEdit = self.form.stage2WorkflowEdit
-        self.stage2BrowseButton = self.form.stage2BrowseButton
-
         self.aiWorkflowButton = self.form.aiWorkflowButton
         self.workflowStatusLabel = self.form.workflowStatusLabel
         self.workflowStatusLabel.setWordWrap(True)
@@ -98,7 +94,6 @@ class SettingsWindow:
         self.form.saveImageModelButton.clicked.connect(self.save_image_model)
         self.form.browseImageModelButton.clicked.connect(self.browse_image_model)
         self.form.browseImageModelWorkflowButton.clicked.connect(self.browse_image_model_workflow)
-        self.stage2BrowseButton.clicked.connect(self.browse_stage2_workflow)
         self.aiWorkflowButton.clicked.connect(self.generate_workflow_with_ai)
 
     def _setup_font_combo(self):
@@ -272,7 +267,6 @@ class SettingsWindow:
             self.form.imageModelNameEdit.setText(profile.name)
             self.form.imageModelFileEdit.setText(profile.model_file)
             self.form.imageModelWorkflowEdit.setText(profile.workflow)
-            self.stage2WorkflowEdit.setText(profile.stage2_workflow)
             self.form.imageModelWidthSpin.setValue(profile.width)
             self.form.imageModelHeightSpin.setValue(profile.height)
             self.form.imageModelStepsSpin.setValue(profile.steps)
@@ -287,13 +281,15 @@ class SettingsWindow:
     def _form_profile(self):
         row = self.form.imageModelList.currentRow()
         profiles = self.image_models.profiles()
-        old_id = profiles[row].id if 0 <= row < len(profiles) else ""
+        old_profile = profiles[row] if 0 <= row < len(profiles) else None
+        old_id = old_profile.id if old_profile else ""
         return ImageModelProfile(
             id=old_id,
             name=self.form.imageModelNameEdit.text().strip() or "Custom Model",
             model_file=self.form.imageModelFileEdit.text().strip(),
             workflow=self.form.imageModelWorkflowEdit.text().strip(),
-            stage2_workflow=self.stage2WorkflowEdit.text().strip(),
+            # 설정 UI에서 수동 지정하지 않으므로 기존 설정값을 보존한다.
+            stage2_workflow=old_profile.stage2_workflow if old_profile else "",
             width=self.form.imageModelWidthSpin.value(),
             height=self.form.imageModelHeightSpin.value(),
             steps=self.form.imageModelStepsSpin.value(),
@@ -506,11 +502,6 @@ class SettingsWindow:
         path, _ = QFileDialog.getOpenFileName(self.form, "이미지 모델 Workflow 선택", "", "JSON (*.json)")
         if path:
             self.form.imageModelWorkflowEdit.setText(path)
-
-    def browse_stage2_workflow(self):
-        path, _ = QFileDialog.getOpenFileName(self.form, "대사 합성 Workflow 선택", "", "JSON (*.json)")
-        if path:
-            self.stage2WorkflowEdit.setText(path)
 
     def apply(self):
         if self.worker is not None and self.worker.isRunning():

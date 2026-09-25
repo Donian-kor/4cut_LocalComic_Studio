@@ -41,10 +41,18 @@ def build_service(settings, model_id=None):
             logger.info("워크플로우 자동 생성: %s", workflow_path)
         except Exception:
             logger.exception("워크플로우 자동 생성 실패: %s", profile.model_file)
+    stage2_value = str(getattr(profile, "stage2_workflow", "") or "").strip()
+    if not stage2_value:
+        resources_dir = Path(settings.path).parent
+        stage2_path = workflow_factory.resolve_stage2(
+            workflow_path, resources_dir, base_dir=settings.base_dir
+        )
+        if stage2_path is not None:
+            stage2_value = workflow_factory.to_config_path(stage2_path, settings.base_dir)
     workflow = WorkflowAdapter(
         workflow_path or profile.workflow, settings.base_dir, profile,
         font_path=comfy_settings.get("font_path", ""),
-        stage2_path=(getattr(profile, "stage2_workflow", "") or profile.workflow.replace(".json", "_stage2.json")),
+        stage2_path=stage2_value or None,
     )
     return ComicService(lm, comfy, workflow, settings.data, settings.base_dir, image_model=profile)
 

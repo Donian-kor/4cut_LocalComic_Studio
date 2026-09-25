@@ -9,7 +9,7 @@ from pathlib import Path
 
 os.environ.setdefault("QT_QPA_PLATFORM", "offscreen")
 
-from PySide6.QtWidgets import QApplication, QFormLayout, QLabel, QLineEdit, QPlainTextEdit, QPushButton, QSpinBox  # noqa: E402
+from PySide6.QtWidgets import QApplication, QFormLayout, QLabel, QPlainTextEdit, QPushButton, QSpinBox  # noqa: E402
 
 from studio.settings.settings_manager import SettingsManager  # noqa: E402
 from studio.settings.settings_window import SettingsWindow  # noqa: E402
@@ -48,8 +48,10 @@ def _row_of(form, widget):
 
 def test_helper_widgets_are_defined_in_designer_ui():
     ui_text = (ROOT / "studio" / "ui" / "settings_window.ui").read_text(encoding="utf-8")
-    for name in ("aiWorkflowButton", "workflowStatusLabel", "stage2WorkflowEdit", "stage2BrowseButton"):
+    for name in ("aiWorkflowButton", "workflowStatusLabel"):
         assert f'name="{name}"' in ui_text, name
+    for name in ("stage2WorkflowEdit", "stage2BrowseButton", "stage2WorkflowLabel"):
+        assert f'name="{name}"' not in ui_text, name
 
     # 이미지 모델 폼 위젯을 파이썬에서 새로 만들거나 뒤에 덧붙이지 않는다(Designer 정의만 사용).
     source = (ROOT / "studio" / "settings" / "settings_window.py").read_text(encoding="utf-8")
@@ -63,8 +65,8 @@ def test_window_exposes_helper_widgets_from_ui(tmp_path):
         assert isinstance(window.aiWorkflowButton, QPushButton)
         assert isinstance(window.workflowStatusLabel, QLabel)
         assert window.workflowStatusLabel.wordWrap() is True
-        assert isinstance(window.stage2WorkflowEdit, QLineEdit)
-        assert isinstance(window.stage2BrowseButton, QPushButton)
+        assert not hasattr(window, "stage2WorkflowEdit")
+        assert not hasattr(window, "stage2BrowseButton")
     finally:
         window.form.close()
 
