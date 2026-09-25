@@ -4,7 +4,7 @@ import shutil
 
 from PySide6.QtCore import Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QFileDialog, QLabel, QMainWindow, QMessageBox, QSplitter, QWidget
+from PySide6.QtWidgets import QFileDialog, QMainWindow, QMessageBox, QSplitter, QWidget
 
 from studio.settings.settings_window import SettingsWindow
 from studio.ui import theme
@@ -13,7 +13,6 @@ from studio.ui.composer import Composer
 from studio.ui.sidebar import Sidebar
 from studio.ui.styles import MAIN_WINDOW_QSS_TEMPLATE
 from studio.workers.server_status_worker import ServerStatusWorker
-from studio.version import APP_NAME, APP_VERSION
 
 logger = logging.getLogger(__name__)
 
@@ -40,7 +39,7 @@ class MainWindow(QMainWindow):
         self._server_state = (False, False)
         self._generating_session_id = None
         self.settings_dialog = None
-        self.setWindowTitle(f"{APP_NAME} {APP_VERSION}")
+        self.setWindowTitle("4cut Studio")
         self.resize(1200, 820)
         self.setMinimumSize(960, 700)
         self.setStyleSheet(theme.render(self.QSS_TEMPLATE))
@@ -52,14 +51,10 @@ class MainWindow(QMainWindow):
             raise RuntimeError(f"UI 파일 로드 실패: {ui_path}")
         self.setCentralWidget(self.ui)
 
-        self.status_label = self.ui.findChild(QLabel, "saveStatusLabel")
         self.sidebar_host = self.ui.findChild(QWidget, "sidebarHost")
         self.chat_host = self.ui.findChild(QWidget, "chatHost")
         self.empty_host = self.ui.findChild(QWidget, "emptyHost")
         self.composer_host = self.ui.findChild(QWidget, "composerHost")
-        self.logo_label = self.ui.findChild(QLabel, "logoLabel")
-        self.logo_label.setText(f"✦ 4cut Studio <span style='font-size:12px; font-weight:700; color:{theme.TEXT_FAINT}'>{APP_VERSION}</span>")
-        self._set_status_label("● AI 서버 확인 중...", "checking")
 
         # host 레이아웃에 명시적으로 넣어야 Host가 비어 있어도 위젯이 배치된다.
         # (parent만 지정하면 레이아웃이 위젯을 잡지 못해 0px로 접혀 안 보인다.)
@@ -67,6 +62,9 @@ class MainWindow(QMainWindow):
         self.sidebar_host.layout().addWidget(self.sidebar)
         self.composer = Composer()
         self.composer_host.layout().addWidget(self.composer)
+        # 상태 라벨은 composer.ui의 전송버튼 좌측에 산다(헤더 제거로 이동).
+        self.status_label = self.composer.status_label
+        self._set_status_label("● AI 서버 확인 중...", "checking")
         self.chat_view = ChatViewManager(
             on_save_comic=self.save_comic,
             on_cancel=self._on_cancel_requested,

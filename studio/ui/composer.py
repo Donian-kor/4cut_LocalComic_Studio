@@ -30,6 +30,7 @@ class Composer(QFrame):
         self.mood = self.form.moodCombo
         self.art = self.form.artCombo
         self.send = self.form.sendButton
+        self.status_label = self.form.saveStatusLabel
         self.idea.setObjectName("composerEdit")
         self.mood.setObjectName("composerCombo")
         self.art.setObjectName("composerCombo")

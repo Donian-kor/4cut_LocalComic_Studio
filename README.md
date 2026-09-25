@@ -197,6 +197,13 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 
 프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, `v1.2`처럼 소수점 단위로, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
 
+### v1.2.3 (헤더 제거 · 상태라벨 이동 · 채팅 영역 배차 수정)
+- 창 안 상단 헤더(`headerFrame` + `logoLabel` 제목/버전) 제거 — 윈도우 타이틀바와 중복되던 제목 정리, 레이아웃이 64px 위로 올라와 채팅 영역 확대
+- 윈도우 타이틀바는 짧은 이름 `4cut Studio`만 표시(A안 — 작업표시줄/Alt+Tab 표기는 유지)
+- 서버·생성 상태 라벨(`saveStatusLabel`)을 헤더에서 입력창 전송버튼 좌측으로 이동(`composer.ui`) — objectName 재사용으로 QSS 상태색(`done`/`busy`/`error` 등) 그대로 유지
+- `set_empty_visible()`이 `emptyHost`/`chatHost` 컨테이너 자체도 토글하도록 수정 — 숨겨진 빈 상태 컨테이너가 stretch 절반을 차지해 채팅창이 반반으로 접히던 버그 수정, 초기 상태는 빈 화면만 표시
+- 회귀 테스트 추가/보강: 헤더 제거·상태라벨 위치(`test_main_window_layout.py`), 빈화면/채팅 Host 토글, `composer.ui` 상태라벨 존재(`test_architecture_boundaries.py`)
+
 ### v1.2.2 (UI 배치 회귀 수정)
 - `Sidebar`/`Composer`를 Host 레이아웃에 명시적 `addWidget`으로 배치 — parent만 지정해 레이아웃에서 누락되던 버그 수정(사이드바·입력창이 화면에 안 보이던 원인)
 - `mainSplitter` 초기 `setSizes([260, 940])` + `setStretchFactor` 설정 — 사이드바 칸 0px 폭 회귀 방지, `sidebar` 최소폭 220px 보장

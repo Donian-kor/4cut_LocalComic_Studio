@@ -1,7 +1,5 @@
     * { font-family: $FONT_STACK; }
     QMainWindow, QWidget { background: $BG; color: $TEXT; }
-    QFrame#headerFrame { background: $SURFACE; border-bottom: 1px solid $BORDER; }
-    QLabel#logoLabel { color: $TEXT; font-size: 20px; font-weight: 800; }
     QLabel#saveStatusLabel { color: $TEXT_MUTED; font-size: 14px; font-weight: 800; padding: 6px 10px; background: $SURFACE_RAISED; border: 1px solid $BORDER; border-radius: $RADIUS_SM; }
     QLabel#saveStatusLabel[state="busy"] { color: $ACCENT_SOFT_TEXT; border-color: $ACCENT_SOFT_BORDER; background: $ACCENT_SOFT; }
     QLabel#saveStatusLabel[state="done"] { color: $SUCCESS_TEXT; border-color: $SUCCESS_BORDER; background: $SUCCESS_SOFT; }

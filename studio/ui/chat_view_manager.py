@@ -18,6 +18,8 @@ class ChatViewManager:
         self._on_regenerate = on_regenerate
         self._on_panel_regenerate = on_panel_regenerate
         self._on_panel_revision = on_panel_revision
+        self.chat_parent = chat_parent
+        self.empty_parent = empty_parent
         self.chat = ChatScrollArea(chat_parent)
         self.empty = EmptyState(empty_parent)
         self._generation_widgets = {}
@@ -25,6 +27,8 @@ class ChatViewManager:
         self._current_session = None
         self._install(self.chat, chat_parent)
         self._install(self.empty, empty_parent)
+        # 첫 화면은 빈 상태만 보이고 채팅 Host는 접어 둔다(반반 분할 방지).
+        self.set_empty_visible(True)
 
     @staticmethod
     def _install(widget, host):
@@ -119,6 +123,11 @@ class ChatViewManager:
     def set_empty_visible(self, visible):
         self.empty.setVisible(visible)
         self.chat.setVisible(not visible)
+        # 컨테이너 자체도 토글해야 레이아웃 stretch 공간이 재분배된다.
+        if self.empty_parent is not None:
+            self.empty_parent.setVisible(visible)
+        if self.chat_parent is not None:
+            self.chat_parent.setVisible(not visible)
 
     def add_ai_text(self, text):
         row = ChatMessageRow("ai")

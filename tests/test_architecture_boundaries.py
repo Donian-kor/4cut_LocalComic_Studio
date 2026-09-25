@@ -51,8 +51,21 @@ def test_main_window_has_designer_ui():
     ui = ROOT / "studio" / "ui" / "main_window.ui"
     assert ui.exists()
     text = ui.read_text(encoding="utf-8")
-    for name in ("headerFrame", "mainSplitter", "sidebarHost", "emptyHost", "chatHost", "composerHost"):
+    for name in ("mainSplitter", "sidebarHost", "emptyHost", "chatHost", "composerHost"):
         assert f'name="{name}"' in text
+    # 헤더(제목/로고/상태라벨)는 제거됐다 — 타이틀바 중복 제목 정리.
+    assert 'name="headerFrame"' not in text
+    assert 'name="logoLabel"' not in text
+    assert 'name="saveStatusLabel"' not in text
+
+
+def test_composer_has_status_label_left_of_send_button():
+    ui = ROOT / "studio" / "ui" / "composer.ui"
+    assert ui.exists()
+    text = ui.read_text(encoding="utf-8")
+    # 상태라벨은 헤더 대신 전송버튼 왼쪽에 배치되어야 한다.
+    assert 'name="saveStatusLabel"' in text
+    assert text.index('name="saveStatusLabel"') < text.index('name="sendButton"')
 
 
 def test_shared_presets_have_expected_keys():
