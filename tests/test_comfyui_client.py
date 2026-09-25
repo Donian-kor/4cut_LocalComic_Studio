@@ -87,6 +87,20 @@ def test_cancel_triggers_interrupt_in_worker_thread(monkeypatch):
     assert "/interrupt" in posts[0][0]
 
 
+def test_list_checkpoints_parses_object_info(monkeypatch):
+    client = ComfyUIClient({})
+    payload = {"CheckpointLoaderSimple": {"input": {"required": {"ckpt_name": [["a.safetensors", "sub/b.safetensors"]]}}}}
+    monkeypatch.setattr("studio.integrations.comfyui.requests.get", lambda *a, **k: _Resp(payload))
+    assert client.list_checkpoints() == ["a.safetensors", "sub/b.safetensors"]
+
+
+def test_list_checkpoints_returns_empty_on_unexpected_payload(monkeypatch):
+    client = ComfyUIClient({})
+    payload = {"CheckpointLoaderSimple": {"input": {"required": {}}}}
+    monkeypatch.setattr("studio.integrations.comfyui.requests.get", lambda *a, **k: _Resp(payload))
+    assert client.list_checkpoints() == []
+
+
 def test_no_outputs_raises_after_grace_polls(monkeypatch):
     client = ComfyUIClient({})
     payload = {"pid": {

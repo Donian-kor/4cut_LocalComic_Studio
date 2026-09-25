@@ -274,6 +274,65 @@
            </property>
           </widget>
          </item>
+         <item row="3" column="0">
+          <widget class="QLabel" name="workflowHelperLabel">
+           <property name="text">
+            <string>워크플로우 도우미</string>
+           </property>
+          </widget>
+         </item>
+         <item row="3" column="1">
+          <layout class="QVBoxLayout" name="workflowHelperLayout">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <item>
+            <widget class="QPushButton" name="aiWorkflowButton">
+             <property name="text">
+              <string>AI로 워크플로우 만들기 (실험적)</string>
+             </property>
+             <property name="toolTip">
+              <string>LM Studio의 언어모델에게 이 모델용 ComfyUI 워크플로우 JSON을 만들게 합니다. 생성 결과는 필수 노드 검사를 통과했을 때만 적용됩니다.</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="workflowStatusLabel">
+             <property name="text">
+              <string>모델 파일을 선택하면 워크플로우가 자동 생성됩니다.</string>
+             </property>
+             <property name="wordWrap">
+              <bool>true</bool>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
+         <item row="4" column="0">
+          <widget class="QLabel" name="stage2WorkflowLabel">
+           <property name="text">
+            <string>대사 합성 Workflow</string>
+           </property>
+          </widget>
+         </item>
+         <item row="4" column="1">
+          <layout class="QHBoxLayout" name="stage2WorkflowLayout">
+           <item>
+            <widget class="QLineEdit" name="stage2WorkflowEdit">
+             <property name="placeholderText">
+              <string>비우면 이미지 Workflow 이름에서 자동 추정</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QPushButton" name="stage2BrowseButton">
+             <property name="text">
+              <string>찾아보기</string>
+             </property>
+            </widget>
+           </item>
+          </layout>
+         </item>
          <item row="2" column="1">
           <layout class="QHBoxLayout" name="imageModelWorkflowLayout">
            <item>
@@ -288,48 +347,80 @@
            </item>
           </layout>
          </item>
-         <item row="3" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>너비</string>
-           </property>
-          </widget>
-         </item>
-         <item row="3" column="1">
-          <widget class="QSpinBox" name="imageModelWidthSpin">
-           <property name="minimum">
-            <number>64</number>
-           </property>
-           <property name="maximum">
-            <number>4096</number>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>높이</string>
-           </property>
-          </widget>
-         </item>
-         <item row="4" column="1">
-          <widget class="QSpinBox" name="imageModelHeightSpin">
-           <property name="minimum">
-            <number>64</number>
-           </property>
-           <property name="maximum">
-            <number>4096</number>
-           </property>
-          </widget>
-         </item>
          <item row="5" column="0">
+          <widget class="QLabel" name="imageSizeLabel">
+           <property name="text">
+            <string>너비 / 높이</string>
+           </property>
+          </widget>
+         </item>
+         <item row="5" column="1">
+          <layout class="QHBoxLayout" name="imageModelSizeLayout">
+           <property name="spacing">
+            <number>6</number>
+           </property>
+           <item>
+            <widget class="QSpinBox" name="imageModelWidthSpin">
+             <property name="minimum">
+              <number>64</number>
+             </property>
+             <property name="maximum">
+              <number>4096</number>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>110</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QLabel" name="imageSizeTimesLabel">
+             <property name="text">
+              <string>×</string>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <widget class="QSpinBox" name="imageModelHeightSpin">
+             <property name="minimum">
+              <number>64</number>
+             </property>
+             <property name="maximum">
+              <number>4096</number>
+             </property>
+             <property name="maximumSize">
+              <size>
+               <width>110</width>
+               <height>16777215</height>
+              </size>
+             </property>
+            </widget>
+           </item>
+           <item>
+            <spacer name="imageModelSizeSpacer">
+             <property name="orientation">
+              <enum>Qt::Horizontal</enum>
+             </property>
+             <property name="sizeHint" stdset="0">
+              <size>
+               <width>40</width>
+               <height>20</height>
+              </size>
+             </property>
+            </spacer>
+           </item>
+          </layout>
+         </item>
+         <item row="6" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
             <string>Steps</string>
            </property>
           </widget>
          </item>
-         <item row="5" column="1">
+         <item row="6" column="1">
           <widget class="QSpinBox" name="imageModelStepsSpin">
            <property name="minimum">
             <number>1</number>
@@ -339,14 +430,14 @@
            </property>
           </widget>
          </item>
-         <item row="6" column="0">
+         <item row="7" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
             <string>CFG</string>
            </property>
           </widget>
          </item>
-         <item row="6" column="1">
+         <item row="7" column="1">
           <widget class="QDoubleSpinBox" name="imageModelCfgSpin">
            <property name="decimals">
             <number>2</number>
@@ -359,29 +450,15 @@
            </property>
           </widget>
          </item>
-         <item row="7" column="0">
+         <item row="8" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
             <string>Sampler</string>
            </property>
           </widget>
          </item>
-         <item row="7" column="1">
-          <widget class="QComboBox" name="imageModelSamplerCombo">
-           <property name="editable">
-            <bool>true</bool>
-           </property>
-          </widget>
-         </item>
-         <item row="8" column="0">
-          <widget class="QLabel" name="label">
-           <property name="text">
-            <string>Scheduler</string>
-           </property>
-          </widget>
-         </item>
          <item row="8" column="1">
-          <widget class="QComboBox" name="imageModelSchedulerCombo">
+          <widget class="QComboBox" name="imageModelSamplerCombo">
            <property name="editable">
             <bool>true</bool>
            </property>
@@ -390,14 +467,41 @@
          <item row="9" column="0">
           <widget class="QLabel" name="label">
            <property name="text">
-            <string>Negative Prompt</string>
+            <string>Scheduler</string>
            </property>
           </widget>
          </item>
          <item row="9" column="1">
-          <widget class="QPlainTextEdit" name="imageModelNegativeEdit"/>
+          <widget class="QComboBox" name="imageModelSchedulerCombo">
+           <property name="editable">
+            <bool>true</bool>
+           </property>
+          </widget>
+         </item>
+         <item row="10" column="0">
+          <widget class="QLabel" name="label">
+           <property name="text">
+            <string>Negative Prompt</string>
+           </property>
+          </widget>
          </item>
          <item row="10" column="1">
+          <widget class="QPlainTextEdit" name="imageModelNegativeEdit">
+           <property name="minimumSize">
+            <size>
+             <width>0</width>
+             <height>60</height>
+            </size>
+           </property>
+           <property name="maximumSize">
+            <size>
+             <width>16777215</width>
+             <height>72</height>
+            </size>
+           </property>
+          </widget>
+         </item>
+         <item row="11" column="1">
           <widget class="QPushButton" name="saveImageModelButton">
            <property name="text">
             <string>모델 정보 저장</string>

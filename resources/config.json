@@ -20,7 +20,7 @@
     "art_style_prompt": "super deformed chibi illustration style, cute characters with large heads and small bodies, rounded shapes, clean bold outlines, bright cheerful colors, simple shading, highly expressive cute facial expressions",
     "ui_font_family": null
   },
-  "image_model": "z_anime_base_aio_fp8",
+  "image_model": "custom_model",
   "image_models": [
     {
       "id": "z_anime_base_aio_fp8",
@@ -34,6 +34,20 @@
       "sampler": "euler_ancestral",
       "scheduler": "beta",
       "negative_prompt": "low quality, blurry, deformed, bad anatomy, extra fingers, extra limbs, distorted face",
+      "stage2_workflow": ""
+    },
+    {
+      "id": "custom_model",
+      "name": "ERNIE-AIO-Turbo-fp8",
+      "model_file": "ERNIE-AIO-Turbo-fp8.safetensors",
+      "workflow": "resources/ernie_aio_turbo_fp8.json",
+      "width": 512,
+      "height": 512,
+      "steps": 28,
+      "cfg": 4.0,
+      "sampler": "euler_ancestral",
+      "scheduler": "simple",
+      "negative_prompt": "low quality, blurry, deformed",
       "stage2_workflow": ""
     }
   ]

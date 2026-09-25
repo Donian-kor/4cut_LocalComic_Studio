@@ -1,9 +1,10 @@
 from pathlib import Path
 from PySide6.QtCore import QThread, Signal
 from PySide6.QtUiTools import QUiLoader
-from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QLabel, QListWidgetItem, QLineEdit, QFormLayout, QHBoxLayout, QPushButton
+from PySide6.QtWidgets import QComboBox, QDialog, QFileDialog, QLabel, QListWidgetItem, QMessageBox
 from studio.settings.model_manager import ImageModelManager
 from studio.models.image_model import ImageModelProfile
+from studio.services import workflow_factory
 from studio.ui import theme
 
 
@@ -62,6 +63,7 @@ class SettingsWindow:
         self.lm_factory = lm_factory
         self.comfy_factory = comfy_factory
         self.worker = None
+        self.ai_worker = None
         self.image_models = ImageModelManager(manager)
         self._loading_model = False
         self.parent_widget = parent
@@ -75,13 +77,13 @@ class SettingsWindow:
         self.form.setStyleSheet(theme.render(SETTINGS_QSS_TEMPLATE))
 
         self._setup_font_combo()
-        self.stage2WorkflowEdit = QLineEdit(self.form)
-        self.stage2WorkflowEdit.setPlaceholderText("비우면 이미지 Workflow 이름에서 자동 추정")
-        stage2_layout = QHBoxLayout()
-        stage2_layout.addWidget(self.stage2WorkflowEdit)
-        self.stage2BrowseButton = QPushButton("찾아보기", self.form)
-        stage2_layout.addWidget(self.stage2BrowseButton)
-        self.form.findChild(QFormLayout, "imageModelForm").addRow("대사 합성 Workflow", stage2_layout)
+        # 워크플로우 도우미/대사 합성 행은 settings_window.ui(Designer)에 정의되어 있다.
+        self.stage2WorkflowEdit = self.form.stage2WorkflowEdit
+        self.stage2BrowseButton = self.form.stage2BrowseButton
+
+        self.aiWorkflowButton = self.form.aiWorkflowButton
+        self.workflowStatusLabel = self.form.workflowStatusLabel
+        self.workflowStatusLabel.setWordWrap(True)
 
         self._load()
         self.form.applyButton.clicked.connect(self.apply)
@@ -97,6 +99,7 @@ class SettingsWindow:
         self.form.browseImageModelButton.clicked.connect(self.browse_image_model)
         self.form.browseImageModelWorkflowButton.clicked.connect(self.browse_image_model_workflow)
         self.stage2BrowseButton.clicked.connect(self.browse_stage2_workflow)
+        self.aiWorkflowButton.clicked.connect(self.generate_workflow_with_ai)
 
     def _setup_font_combo(self):
         label = QLabel("UI 폰트", self.form)
@@ -279,6 +282,7 @@ class SettingsWindow:
             self.form.imageModelNegativeEdit.setPlainText(profile.negative_prompt)
         finally:
             self._loading_model = False
+        self._update_workflow_status(profile)
 
     def _form_profile(self):
         row = self.form.imageModelList.currentRow()
@@ -299,13 +303,158 @@ class SettingsWindow:
             negative_prompt=self.form.imageModelNegativeEdit.toPlainText().strip(),
         )
 
+    # ----- workflow automation -----
+    def _resources_dir(self):
+        """워크플로우·config가 함께 사는 폴더(기본 resources/)."""
+        return Path(self.manager.path).parent
+
+    def _resolve_workflow(self, value):
+        if not str(value or "").strip():
+            return None
+        return Path(self.manager.resolve_path(value))
+
+    def _display_workflow_path(self, path):
+        return workflow_factory.to_config_path(path, self.manager.base_dir)
+
+    def _set_workflow_status(self, text, ok=None):
+        colors = {True: theme.SUCCESS_TEXT, False: theme.DANGER_TEXT, None: theme.TEXT_MUTED}
+        self.workflowStatusLabel.setText(text)
+        self.workflowStatusLabel.setStyleSheet(f"color: {colors.get(ok, theme.TEXT_MUTED)};")
+
+    def _comfy_client(self):
+        return self.comfy_factory({
+            "host": self.form.comfyHostEdit.text().strip() or "127.0.0.1",
+            "port": self.form.comfyPortSpin.value(),
+        })
+
+    def _current_model_context(self):
+        """현재 폼에서 (프로필, 모델 id, 모델 파일명) 을 뽑는다."""
+        row = self.form.imageModelList.currentRow()
+        profiles = self.image_models.profiles()
+        profile = profiles[row] if 0 <= row < len(profiles) else None
+        model_file = self.form.imageModelFileEdit.text().strip()
+        model_id = profile.id if profile is not None else workflow_factory.slugify(model_file)
+        return profile, model_id, model_file
+
+    def _update_workflow_status(self, profile):
+        """리스트에서 모델을 고를 때는 구조 검사만 빠르게 보여준다(네트워크 호출 없음)."""
+        if not profile.model_file:
+            self._set_workflow_status("모델 파일을 선택하면 워크플로우가 자동 생성됩니다.", ok=None)
+            return
+        if not profile.workflow:
+            self._set_workflow_status("워크플로우가 없습니다 — 모델 파일을 다시 선택하면 자동 생성합니다.", ok=None)
+            return
+        self._report_workflow(profile.workflow, profile.model_file, check_comfy=False)
+
+    def _report_workflow(self, workflow_value, model_file, check_comfy=True):
+        """워크플로우 구조 검사(+선택적 ComfyUI 보유 확인) 후 결과를 상태 라벨에 보여준다."""
+        path = self._resolve_workflow(workflow_value)
+        if path is None:
+            self._set_workflow_status("⚠ 워크플로우가 지정되지 않았습니다.", ok=False)
+            return False
+        errors = workflow_factory.validate_workflow(path, model_file=model_file)
+        if not errors:
+            profile, _, _ = self._current_model_context()
+            if profile is not None and profile.model_file == model_file:
+                errors = workflow_factory.validate_runnable(path, profile)
+        if errors:
+            self._set_workflow_status("⚠ 호환성 검사 실패 — " + " / ".join(errors), ok=False)
+            return False
+        if not check_comfy:
+            self._set_workflow_status("✓ 워크플로우 검사 통과 — 저장할 때 ComfyUI 보유 여부까지 확인합니다.", ok=True)
+            return True
+        status, detail = workflow_factory.check_model_file(self._comfy_client(), model_file)
+        if status == "missing":
+            self._set_workflow_status("⚠ " + detail, ok=False)
+            return False
+        if status == "ok":
+            self._set_workflow_status("✓ 사용 준비 완료 — " + detail, ok=True)
+        else:
+            self._set_workflow_status("✓ 워크플로우 검사 통과 · " + detail, ok=None)
+        return True
+
+    def _autocreate_workflow(self, model_file):
+        """모델 파일만 골랐을 때 기본 템플릿으로 워크플로우를 만들어 준다."""
+        if not model_file:
+            return None
+        current = self.form.imageModelWorkflowEdit.text().strip()
+        existing = self._resolve_workflow(current)
+        if existing is not None and existing.is_file():
+            self._report_workflow(current, model_file)
+            return current
+        _, model_id, _ = self._current_model_context()
+        try:
+            path = workflow_factory.build_from_template(model_file, model_id, self._resources_dir())
+        except Exception as e:
+            self._set_workflow_status(f"⚠ 워크플로우 자동 생성 실패: {e}", ok=False)
+            return None
+        value = self._display_workflow_path(path)
+        self.form.imageModelWorkflowEdit.setText(value)
+        self._report_workflow(value, model_file)
+        return value
+
+    def generate_workflow_with_ai(self):
+        """LM Studio로 워크플로우 생성을 시도하고, 검증을 통과한 결과만 적용한다(실험적)."""
+        _, model_id, model_file = self._current_model_context()
+        if not model_file:
+            self._set_workflow_status("⚠ 모델 파일을 먼저 선택하세요.", ok=False)
+            return
+        lm_settings = dict(self.manager.section("lmstudio"))
+        if not str(lm_settings.get("model", "")).strip():
+            self._set_workflow_status("⚠ LM Studio 모델이 설정되지 않아 AI 생성을 쓸 수 없습니다. AI 서버 탭에서 모델을 고르세요.", ok=False)
+            return
+        if self.ai_worker is not None and self.ai_worker.isRunning():
+            return
+        resources_dir = self._resources_dir()
+        template_name = Path(self.form.comfyWorkflowEdit.text().strip() or workflow_factory.TEMPLATE_FILENAME).name
+        if not (resources_dir / template_name).is_file():
+            template_name = workflow_factory.TEMPLATE_FILENAME
+        lm_client = self.lm_factory(lm_settings)
+        self.aiWorkflowButton.setEnabled(False)
+        self._set_workflow_status("AI가 워크플로우를 만드는 중입니다…", ok=None)
+        self.ai_worker = ConnectionWorker(
+            lambda: workflow_factory.generate_with_llm(
+                lm_client, model_file, resources_dir, model_id, template_name=template_name
+            ),
+            self.form,
+        )
+        self.ai_worker.done.connect(self._ai_workflow_done)
+        self.ai_worker.start()
+
+    def _ai_workflow_done(self, ok, message, payload):
+        self.aiWorkflowButton.setEnabled(True)
+        self.ai_worker = None
+        if not ok or payload is None:
+            self._set_workflow_status(f"⚠ AI 생성 실패 — 기존 워크플로우를 유지합니다: {message}", ok=False)
+            return
+        self.form.imageModelWorkflowEdit.setText(self._display_workflow_path(payload))
+        self._report_workflow(payload, self.form.imageModelFileEdit.text().strip())
+
     def save_image_model(self):
         profile = self._form_profile()
         if not profile.model_file:
+            self._set_workflow_status("⚠ 모델 파일을 먼저 선택하세요.", ok=False)
+            return
+        if not profile.workflow:
+            self._autocreate_workflow(profile.model_file)
+            profile.workflow = self.form.imageModelWorkflowEdit.text().strip()
+        path = self._resolve_workflow(profile.workflow)
+        errors = workflow_factory.validate_workflow(path, model_file=profile.model_file) if path else ["워크플로우가 지정되지 않았습니다."]
+        if not errors:
+            errors = workflow_factory.validate_runnable(path, profile)
+        if errors:
+            QMessageBox.warning(
+                self.form,
+                "워크플로우 확인 필요",
+                "모델 정보를 저장할 수 없습니다.\n\n- " + "\n- ".join(errors)
+                + "\n\n'AI로 워크플로우 만들기 (실험적)'를 시도하거나, 워크플로우 파일을 직접 지정해 주세요.",
+            )
+            self._set_workflow_status("⚠ " + errors[0], ok=False)
             return
         saved = self.image_models.upsert(profile)
         self.image_models.save()
         self._refresh_model_list(saved.id)
+        self._report_workflow(profile.workflow, profile.model_file)
 
     def add_image_model(self):
         existing_ids = {p.id for p in self.image_models.profiles()}
@@ -330,6 +479,7 @@ class SettingsWindow:
         saved = self.image_models.upsert(profile)
         self.image_models.save()
         self._refresh_model_list(saved.id)
+        self._set_workflow_status("모델 파일을 선택하면 워크플로우가 자동 생성됩니다.", ok=None)
 
     def remove_image_model(self):
         row = self.form.imageModelList.currentRow()
@@ -345,8 +495,12 @@ class SettingsWindow:
         path, _ = QFileDialog.getOpenFileName(
             self.form, "ComfyUI 이미지 모델 선택", "", "Model (*.safetensors *.gguf);;All Files (*)"
         )
-        if path:
-            self.form.imageModelFileEdit.setText(Path(path).name)
+        if not path:
+            return
+        model_file = Path(path).name
+        self.form.imageModelFileEdit.setText(model_file)
+        # 워크플로우를 몰라도 되도록, 모델 파일만 고르면 기본 템플릿으로 자동 생성한다.
+        self._autocreate_workflow(model_file)
 
     def browse_image_model_workflow(self):
         path, _ = QFileDialog.getOpenFileName(self.form, "이미지 모델 Workflow 선택", "", "JSON (*.json)")

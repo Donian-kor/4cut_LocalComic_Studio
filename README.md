@@ -121,11 +121,32 @@ Character Prompt / Style Prompt / Master Seed 확정
 
 패널 재생성은 해당 세션이 처음 생성될 때 사용했던 생성 설정을 우선 유지합니다.
 
+### 새 모델 추가 (워크플로우 자동 생성)
+
+워크플로우 JSON을 직접 만들 줄 몰라도 모델을 추가할 수 있습니다.
+
+1. `설정 → 이미지 모델 → ＋ 추가`로 프로필을 만든 뒤 **모델 파일(.safetensors)** 만 고릅니다.
+2. 프로그램이 기본 템플릿(`resources/4cut_default.json`, SD1.5 계열 API 골격)을 복사해 `resources/<모델파일명>.json`을 자동 생성하고, 체크포인트 이름만 새 모델로 바꿔 넣습니다.
+3. 곧바로 자동 검사 결과를 `워크플로우 도우미` 줄에 표시합니다.
+   - 필수 노드(`CheckpointLoaderSimple`/`CLIPTextEncode`/`KSampler`/`SaveImage`) 존재
+   - 체크포인트 지정 여부(템플릿 자리표시자 `YOUR_MODEL.safetensors` 거부)
+   - `WorkflowAdapter.prepare()` 조립 드라이런 통과 여부
+   - ComfyUI가 해당 체크포인트를 실제로 갖고 있는지(`/object_info/CheckpointLoaderSimple`)
+4. `모델 정보 저장`은 위 검사를 모두 통과해야 저장됩니다(실패 시 저장 차단 + 사유 안내).
+
+자동 생성이 맞지 않는 계열(Flux/SD3 등 노드 구조가 다른 모델)은 **`AI로 워크플로우 만들기 (실험적)`** 버튼을 씁니다.
+
+- LM Studio 언어모델에게 참조 워크플로우와 실패 사유를 함께 보내 최대 3회 생성 요청합니다.
+- 생성 결과는 같은 검사를 통과했을 때만 `resources/<모델파일명>_ai.json`으로 저장·적용되고, 실패하면 기존 워크플로우를 그대로 유지합니다.
+- AI 서버 탭에 LM Studio 모델이 설정되어 있어야 하며, 생성은 백그라운드 스레드에서 돌아 UI가 멈추지 않습니다.
+
+워크플로우가 비어 있는 프로필로 프로그램을 실행하면, 시작 시점에 템플릿으로 자동 생성을 한 번 더 시도합니다(마지막 안전망).
+
 ## 프로그램 정보
 
 - 프로그램명: **4cut Local Comic Studio**
 - 테마: `studio/ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
-- 현재 버전: **v1.2.2**
+- 현재 버전: **v1.3.0**
 - UI 프레임워크: PySide6
 - 스토리/대사: LM Studio Local Server
 - 이미지 생성: ComfyUI API
@@ -147,6 +168,7 @@ studio/services/story_service.py
 studio/services/comic_service.py
 studio/services/image_service.py
 studio/services/compose_service.py
+studio/services/workflow_factory.py
 studio/services/session_manager.py
 studio/services/bubble_detector.py
 studio/services/bubble.py
@@ -196,6 +218,15 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 ## 버전 규칙 및 이력
 
 프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, `v1.2`처럼 소수점 단위로, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
+
+### v1.3.0 (새 모델 추가 자동화 — 워크플로우 자동 생성/검증)
+- `studio/services/workflow_factory.py` 신설: 모델 파일만 고르면 기본 템플릿(`resources/4cut_default.json`)을 복사해 체크포인트명을 주입한 워크플로우를 `resources/<모델파일명>.json`으로 생성
+- 생성/저장 전 자동 검사: 필수 노드 존재, 자리표시자(`YOUR_MODEL.safetensors`) 거부, 체크포인트-모델명 일치, `KSampler.positive` 연결, `WorkflowAdapter.prepare()` 드라이런
+- `ComfyUIClient.list_checkpoints()` 추가(`/object_info/CheckpointLoaderSimple`) → ComfyUI에 모델 파일이 실제로 있는지 확인(연결 안 되면 "확인 불가"로 구분)
+- 설정창 `이미지 모델` 탭에 `워크플로우 도우미` 행 추가: 자동 생성 결과·검사 상태를 색으로 표시하고, 저장 시 검사 실패면 저장 차단 + 사유 안내
+- `AI로 워크플로우 만들기 (실험적)` 버튼 추가: LM Studio에 워크플로우 생성을 요청(최대 3회, 실패 사유 피드백)하고 검증 통과분만 `resources/<모델파일명>_ai.json`으로 적용, 실패 시 기존 워크플로우 유지(백그라운드 스레드 실행)
+- 앱 시작 시 워크플로우가 비어 있는 프로필이면 템플릿으로 자동 생성하는 안전망 추가(`app.py`)
+- 회귀 테스트 추가: `tests/test_workflow_factory.py`(생성·검증·재시도·폴백·설정창 자동 생성), `tests/test_comfyui_client.py`(체크포인트 목록 파싱)
 
 ### v1.2.3 (헤더 제거 · 상태라벨 이동 · 채팅 영역 배차 수정)
 - 창 안 상단 헤더(`headerFrame` + `logoLabel` 제목/버전) 제거 — 윈도우 타이틀바와 중복되던 제목 정리, 레이아웃이 64px 위로 올라와 채팅 영역 확대

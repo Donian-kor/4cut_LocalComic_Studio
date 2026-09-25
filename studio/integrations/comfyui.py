@@ -83,6 +83,18 @@ class ComfyUIClient:
             time.sleep(poll)
         raise TimeoutError("ComfyUI 이미지 생성 시간이 초과되었습니다. (600초)")
 
+    def list_checkpoints(self, timeout=5):
+        """CheckpointLoaderSimple 노드가 요구하는 체크포인트 목록을 ComfyUI에서 조회한다."""
+        r = requests.get(self.base_url + "/object_info/CheckpointLoaderSimple", timeout=timeout)
+        r.raise_for_status()
+        data = r.json()
+        node = (data or {}).get("CheckpointLoaderSimple") or {}
+        values = ((node.get("input") or {}).get("required") or {}).get("ckpt_name")
+        if not isinstance(values, list) or not values:
+            return []
+        options = values[0]
+        return [str(v) for v in options] if isinstance(options, list) else []
+
     def download_image(self, filename, subfolder="", image_type="output"):
         params = {"filename": filename, "subfolder": subfolder, "type": image_type}
         r = requests.get(self.base_url + "/view", params=params, timeout=30)
