@@ -2,7 +2,7 @@
 
 ## 현재 버전
 
-**v1.2.2**
+**v1.2.3**
 
 4cut Local Comic Studio는 LM Studio를 스토리/대사 생성용 로컬 LLM으로 사용하고, ComfyUI를 이미지 생성 엔진으로 사용하는 로컬 4컷 만화 제작 프로그램입니다. 현재 기준본은 채팅형 UI와 순차 컷 생성, 개별 컷 재생성, 컷 간 생성 일관성 유지, 세션 저장/복원을 하나의 흐름으로 통합합니다. UI는 단일 테마 토큰(studio/ui/theme.py) 기반의 웜 그레이 + 코랄 악센트 디자인이며, UI 폰트는 설정에서 고를 수 있습니다(기본값 Malgun Gothic).
 
@@ -23,7 +23,7 @@
 - 단일 테마 토큰(studio/ui/theme.py) 기반 UI(웜 그레이 + 코랄 악센트, 상태색 각 1종, 카드 그림자, 커스텀 스크롤바)
 - 설정 - 일반 탭에서 UI 폰트 선택
 - 전송 버튼 연필 아이콘(resources/send_pen.svg)
-- 프로그램 버전 표기 `v1.2.2` 기준 관리
+- 프로그램 버전 표기 `v1.2.3` 기준 관리
 
 ## UI 기준
 
@@ -113,7 +113,8 @@ Character Prompt / Style Prompt / Master Seed 확정
 
 - 모델 ID / 이름
 - ComfyUI 모델 파일
-- Workflow JSON
+- Workflow JSON (1단계 이미지 생성)
+- 2단계 Workflow JSON (대사 합성) — 미지정 시 `<1단계 파일명>_stage2.json`을 자동 찾아 사용하고, 없으면 `resources/4cut_default_stage2.json`에서 복사합니다. 템플릿조차 없으면 대사 합성만 비활성되고 1단계 생성은 계속 동작합니다.
 - 해상도
 - Steps / CFG
 - Sampler / Scheduler
@@ -146,7 +147,7 @@ Character Prompt / Style Prompt / Master Seed 확정
 
 - 프로그램명: **4cut Local Comic Studio**
 - 테마: `studio/ui/theme.py` 단일 토큰(웜 그레이 + 코랄 악센트, 상태색 각 1종)
-- 현재 버전: **v1.3.0**
+- 현재 버전: **v1.2.3**
 - UI 프레임워크: PySide6
 - 스토리/대사: LM Studio Local Server
 - 이미지 생성: ComfyUI API
@@ -219,7 +220,9 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 
 프로그램 버전은 개발 단계에서는 `v0.1`, `v0.2`처럼 소수점 단위로 관리하고, 최초 정식 기준본을 `v1.0`으로 시작합니다. 이후 기능 추가는 `v1.1`, `v1.2`처럼 소수점 단위로, 호환성/수정 중심 변경은 `v1.0.x` 체계를 사용할 수 있습니다.
 
-### v1.3.0 (새 모델 추가 자동화 — 워크플로우 자동 생성/검증)
+### v1.2.3 (새 모델 추가 자동화 + 헤더 제거 · 채팅 영역 배차 수정)
+
+#### 새 모델 추가 자동화 — 워크플로우 자동 생성/검증
 - `studio/services/workflow_factory.py` 신설: 모델 파일만 고르면 기본 템플릿(`resources/4cut_default.json`)을 복사해 체크포인트명을 주입한 워크플로우를 `resources/<모델파일명>.json`으로 생성
 - 생성/저장 전 자동 검사: 필수 노드 존재, 자리표시자(`YOUR_MODEL.safetensors`) 거부, 체크포인트-모델명 일치, `KSampler.positive` 연결, `WorkflowAdapter.prepare()` 드라이런
 - `ComfyUIClient.list_checkpoints()` 추가(`/object_info/CheckpointLoaderSimple`) → ComfyUI에 모델 파일이 실제로 있는지 확인(연결 안 되면 "확인 불가"로 구분)
@@ -228,7 +231,14 @@ LM Studio Local Server와 ComfyUI가 실행되어 있어야 생성 기능을 사
 - 앱 시작 시 워크플로우가 비어 있는 프로필이면 템플릿으로 자동 생성하는 안전망 추가(`app.py`)
 - 회귀 테스트 추가: `tests/test_workflow_factory.py`(생성·검증·재시도·폴백·설정창 자동 생성), `tests/test_comfyui_client.py`(체크포인트 목록 파싱)
 
-### v1.2.3 (헤더 제거 · 상태라벨 이동 · 채팅 영역 배차 수정)
+#### 2단계(대사 합성) 워크플로우
+- `workflow_factory.resolve_stage2()` 신설: 1단계 워크플로우에 대응하는 `<1단계 파일명>_stage2.json`을 찾고, 없으면 기본 템플릿(`resources/4cut_default_stage2.json`)에서 자동 복사
+- `app.py`에서 프로필에 `stage2_workflow`가 비어 있으면 `resolve_stage2()`로 자동 해석 → `WorkflowAdapter(stage2_path=...)`에 주입
+- 대사 합성 워크플로우를 못 찾으면 조용히 실패하지 않고 로그로 경고한 뒤 stage2 비활성 처리(`workflow.py`)
+- 설정 - 이미지 모델 탭에 `2단계 워크플로우` 입력란 추가(기존 1단계 값 자동 역참조)
+- 회귀 테스트 추가: `resolve_stage2` 자동 생성·재사용(`test_workflow_factory.py`), 설정 UI 2단계 입력란(`test_settings_window_layout.py`)
+
+#### 헤더 제거 · 상태라벨 이동 · 채팅 영역 배차 수정
 - 창 안 상단 헤더(`headerFrame` + `logoLabel` 제목/버전) 제거 — 윈도우 타이틀바와 중복되던 제목 정리, 레이아웃이 64px 위로 올라와 채팅 영역 확대
 - 윈도우 타이틀바(제목 표시줄)에는 프로그램 전체 이름과 버전을 표시: `4cut Local Comic Studio v1.2.3` (`APP_NAME` + `APP_VERSION` 자동 반영 — 버전 올리면 타이틀도 함께 갱신)
 - 서버·생성 상태 라벨(`saveStatusLabel`)을 헤더에서 입력창 전송버튼 좌측으로 이동(`composer.ui`) — objectName 재사용으로 QSS 상태색(`done`/`busy`/`error` 등) 그대로 유지
